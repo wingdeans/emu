@@ -1,5 +1,5 @@
 [package]
-name = "emu-emulator"
+name = "emu-library"
 version = "0.1.0"
 edition = "2021"
 

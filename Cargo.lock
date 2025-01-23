@@ -7,9 +7,13 @@ name = "emu"
 version = "0.1.0"
 
 [[package]]
-name = "emulator"
+name = "emu-emulator"
 version = "0.1.0"
 
 [[package]]
-name = "translator"
+name = "emu-library"
+version = "0.1.0"
+
+[[package]]
+name = "emu-translator"
 version = "0.1.0"
