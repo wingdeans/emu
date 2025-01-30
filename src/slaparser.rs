@@ -1,57 +1,198 @@
 use crate::slaformat::{AId, EId};
-use crate::slareader::{Attribute, SlaReader, Tag};
+use crate::slareader::Attribute::{Int, Str, Uint};
+use crate::slareader::SlaItem::{Attr, Elem};
+use crate::slareader::{SlaBuf, SlaReader};
 
-pub(crate) struct SlaParser<'a> {
-    reader: &'a mut SlaReader<'a>,
-    level: u32
-}
-
-impl<'a> SlaParser<'a> {
-    pub(crate) fn new(reader: &'a mut SlaReader<'a>) -> Self {
-        SlaParser { reader, level: 0 }
-    }
+#[derive(Debug)]
+struct Mask {
+    id: u16,
+    off: u8,
+    nonzero: u8,
+    mask: u64,
+    val: u64,
 }
 
 #[derive(Debug)]
-pub(crate) enum SlaItem<'a> {
-    Elem(EId),
-    Attr(AId, Attribute<'a>),
+enum Decision {
+    Bits(u8, u8, Vec<Decision>),
+    Masks(Vec<Mask>),
 }
 
-impl<'a> SlaParser<'a> {
-    pub fn skip_elem(&mut self) {
-        let mut level = 1;
-        for tag in &mut *self.reader {
-            match tag {
-                Tag::ElStart(_) => level += 1,
-                Tag::ElEnd => {
-                    level -= 1;
-                    if level == 0 {
-                        break;
-                    }
+#[derive(Debug)]
+struct Subtable {
+    id: u16,
+    name: String,
+    decision: Decision,
+}
+
+#[derive(Debug)]
+pub(crate) struct SymbolTable {
+    subtables: Vec<Subtable>,
+}
+
+struct SlaParser<'a> {
+    r: SlaReader<'a>,
+    heads: Vec<(u16, String)>,
+}
+
+impl SlaParser<'_> {
+    fn parse_constructor(&mut self) {
+        while let Some(item) = self.r.next() {
+            match item {
+                Elem(EId::OPER | EId::PRINT | EId::OPPRINT | EId::CONSTRUCT_TPL) => {
+                    self.r.skip_elem()
                 }
-                _ => (),
+                Attr(_, _) => (),
+                _ => unreachable!("unknown constructor item: {:?}", item),
             }
         }
     }
 
-    pub fn enter(&mut self) {
-        self.level += 1
+    fn parse_pair(&mut self) -> Mask {
+        let mut id = 0;
+        let (mut off, mut nonzero) = (0, 0);
+        let (mut mask, mut val) = (0, 0);
+        while let Some(item) = self.r.next() {
+            match item {
+                // pair
+                Attr(AId::ID, Int(aid)) => id = aid,
+                // pair -> instruct pat
+                Elem(EId::INSTRUCT_PAT) => self.r.enter(),
+                // pair -> instruct pat -> pat block
+                Elem(EId::PAT_BLOCK) => self.r.enter(),
+                Attr(AId::OFF, Int(aoff)) => off = aoff,
+                Attr(AId::NONZERO, Int(anonzero)) => nonzero = anonzero,
+                // pair -> instruct pat -> pat block -> mask word
+                Elem(EId::MASK_WORD) => self.r.enter(),
+                Attr(AId::MASK, Uint(amask)) => mask = amask,
+                Attr(AId::VAL, Uint(aval)) => val = aval,
+                // end
+                Attr(_, _) => (),
+                _ => unreachable!("unknown pair item: {:?}", item),
+            }
+        }
+        let id = id.try_into().unwrap();
+        let off = off.try_into().unwrap();
+        let nonzero = nonzero.try_into().unwrap();
+        Mask {
+            id,
+            off,
+            nonzero,
+            mask,
+            val,
+        }
+    }
+
+    fn parse_decision(&mut self) -> Decision {
+        let (mut start, mut size) = (0, 0);
+        let mut masks = Vec::new();
+        let mut options = Vec::new();
+        while let Some(item) = self.r.next() {
+            match item {
+                Elem(EId::PAIR) => masks.push(self.parse_pair()),
+                Elem(EId::DECISION) => options.push(self.parse_decision()),
+                Attr(AId::STARTBIT, Int(astart)) => start = astart,
+                Attr(AId::SIZE, Int(asize)) => size = asize,
+                Attr(_, _) => (),
+                _ => unreachable!("unknown decision item: {:?}", item),
+            }
+        }
+
+        if size != 0 {
+            assert_eq!(options.len(), 1 << size);
+            let start = start.try_into().unwrap();
+            let size = size.try_into().unwrap();
+            Decision::Bits(start, size, options)
+        } else {
+            Decision::Masks(masks)
+        }
+    }
+
+    fn parse_subtable(&mut self) -> Subtable {
+        let mut id = 0;
+        let mut decision = None;
+        while let Some(item) = self.r.next() {
+            match item {
+                Elem(EId::CONSTRUCTOR) => self.parse_constructor(),
+                Elem(EId::DECISION) => decision = Some(self.parse_decision()),
+                Attr(AId::ID, Uint(aid)) => id = aid,
+                Attr(_, _) => (),
+                _ => unreachable!("unknown subtable item: {:?}", item),
+            }
+        }
+
+        let id: u16 = id.try_into().unwrap();
+        let name = {
+            let idx = self.heads.binary_search_by_key(&id, |&(id, _)| id).unwrap();
+            self.heads[idx].1.clone()
+        };
+        Subtable {
+            id,
+            name,
+            decision: decision.unwrap(),
+        }
+    }
+
+    fn parse_head(&mut self) {
+        let mut name = None;
+        let mut id = 0;
+        while let Some(item) = self.r.next() {
+            match item {
+                Attr(AId::NAME, Str(aname)) => name = Some(aname),
+                Attr(AId::ID, Uint(aid)) => id = aid,
+                Attr(AId::SCOPE, Uint(_)) => (),
+                _ => unreachable!("unknown head item: {:?}", item),
+            }
+        }
+        self.heads.push((id.try_into().unwrap(), name.unwrap()))
+    }
+
+    fn parse_symbol_table(&mut self) -> SymbolTable {
+        let mut subtables = Vec::new();
+        while let Some(item) = self.r.next() {
+            match item {
+                Elem(EId::SUBTABLE_SYM_HEAD) => self.parse_head(),
+                Elem(EId::SUBTABLE_SYM) => subtables.push(self.parse_subtable()),
+                Elem(_) => self.r.skip_elem(),
+                Attr(_, _) => (),
+                _ => unreachable!("unknown symbol table item: {:?}", item),
+            }
+        }
+
+        /*
+        let instruction_id = heads.iter().find(|(_, name)|name == &"instruction").unwrap().0;
+        let instruction_idx = subtables.iter().position(|(id, _)| *id == instruction_id).unwrap();
+        let instruction = subtables.swap_remove(instruction_idx).1;
+         */
+
+        SymbolTable { subtables }
+    }
+
+    fn parse_sleigh(&mut self) -> SymbolTable {
+        let mut symtab = None;
+
+        if let Elem(EId::SLEIGH) = self.r.next().unwrap() {
+            while let Some(item) = self.r.next() {
+                match item {
+                    Elem(EId::SOURCEFILES | EId::SPACES) => self.r.skip_elem(),
+                    Elem(EId::SYMBOL_TABLE) => symtab = Some(self.parse_symbol_table()),
+                    Attr(_, _) => (),
+                    _ => unreachable!("unknown sleigh item: {:?}", item),
+                }
+            }
+        } else {
+            unreachable!()
+        }
+
+        symtab.unwrap()
     }
 }
 
-impl<'a> Iterator for SlaParser<'a> {
-    type Item = SlaItem<'a>;
-    fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            match self.reader.next().unwrap() {
-                Tag::ElStart(id) => return Some(SlaItem::Elem(id)),
-                Tag::Attr(id, attr) => return Some(SlaItem::Attr(id, attr)),
-                Tag::ElEnd => {
-                    if self.level == 0 { return None }
-                    self.level -= 1;
-                }
-            }
-        }
-    }
+pub(crate) fn parse_sleigh(buf: SlaBuf) -> SymbolTable {
+    let mut reader = buf.into_iter();
+    let mut parser = SlaParser {
+        r: reader,
+        heads: Vec::new(),
+    };
+    parser.parse_sleigh()
 }

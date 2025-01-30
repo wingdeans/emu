@@ -4,21 +4,29 @@ use core::str::from_utf8;
 use std::io::Read;
 
 #[derive(Debug)]
-pub(crate) enum Attribute<'a> {
+pub(crate) enum Attribute {
     Bool(bool),
     Int(i64),
     Uint(u64),
     BasicAddr(u64),
     SpecialAddr(u8),
-    Str(&'a str),
+    Str(String),
 }
 
 #[derive(Debug)]
-pub(crate) enum Tag<'a> {
+enum Tag {
     ElStart(EId),
     ElEnd,
-    Attr(AId, Attribute<'a>),
+    Attr(AId, Attribute),
 }
+
+#[derive(Debug)]
+pub(crate) enum SlaItem {
+    Elem(EId),
+    Attr(AId, Attribute),
+}
+
+// BUFFER
 
 pub(crate) struct SlaBuf(Vec<u8>);
 
@@ -40,19 +48,23 @@ impl SlaBuf {
 }
 
 impl<'a> IntoIterator for &'a SlaBuf {
-    type Item = Tag<'a>;
+    type Item = SlaItem;
     type IntoIter = SlaReader<'a>;
     fn into_iter(self) -> Self::IntoIter {
-        SlaReader(self.0.iter())
+        SlaReader {
+            it: self.0.iter(),
+            level: 0,
+        }
     }
 }
 
-pub(crate) struct SlaReader<'a>(std::slice::Iter<'a, u8>);
+pub(crate) struct SlaReader<'a> {
+    it: std::slice::Iter<'a, u8>,
+    level: u32,
+}
 
-impl<'a> Iterator for SlaReader<'a> {
-    type Item = Tag<'a>;
-
-    fn next(&mut self) -> Option<Self::Item> {
+impl SlaReader<'_> {
+    fn next_tag(&mut self) -> Option<Tag> {
         // see Ghidra file: PackedDecode.java
         // commit: GP-4285 Compressed SLEIGH
 
@@ -61,10 +73,10 @@ impl<'a> Iterator for SlaReader<'a> {
         // | \-xbit
         // \-tagid
         let (tagid, id) = {
-            let b0 = *self.0.next()?;
+            let b0 = *self.it.next()?;
             let (tagid, xbit, mut id) = (b0 >> 6, b0 >> 5 & 1, b0 as u16 & 0b0001_1111);
             if xbit != 0 {
-                let b1 = *self.0.next().unwrap();
+                let b1 = *self.it.next().unwrap();
                 id <<= 7;
                 id |= b1 as u16 & 0b0111_1111;
             }
@@ -83,7 +95,7 @@ impl<'a> Iterator for SlaReader<'a> {
             0b01 => Tag::ElStart(id.into()),
             0b10 => Tag::ElEnd,
             0b11 => {
-                let b0 = *self.0.next().unwrap();
+                let b0 = *self.it.next().unwrap();
                 let (typ, len) = (b0 >> 4, b0 & 0b1111);
                 let attr = match typ {
                     1 => Attribute::Bool(len == 1),
@@ -91,7 +103,7 @@ impl<'a> Iterator for SlaReader<'a> {
                     _ => {
                         // length-reliant attributes
                         let mut x = 0;
-                        for b in take_slice(&mut self.0, len as usize) {
+                        for b in take_slice(&mut self.it, len as usize) {
                             x <<= 7;
                             x |= *b as u64 & 0b0111_1111;
                         }
@@ -101,7 +113,9 @@ impl<'a> Iterator for SlaReader<'a> {
                             4 => Attribute::Uint(x),
                             5 => Attribute::BasicAddr(x),
                             7 => Attribute::Str(
-                                from_utf8(take_slice(&mut self.0, x as usize)).unwrap(),
+                                from_utf8(take_slice(&mut self.it, x as usize))
+                                    .unwrap()
+                                    .to_string(),
                             ),
                             _ => unreachable!(),
                         }
@@ -112,5 +126,43 @@ impl<'a> Iterator for SlaReader<'a> {
             _ => unreachable!("invalid tagid: {}", tagid),
         };
         Some(tag)
+    }
+
+    pub(crate) fn skip_elem(&mut self) {
+        let mut level = 1;
+        while let Some(tag) = self.next_tag() {
+            match tag {
+                Tag::ElStart(_) => level += 1,
+                Tag::ElEnd => {
+                    level -= 1;
+                    if level == 0 {
+                        break;
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+
+    pub(crate) fn enter(&mut self) {
+        self.level += 1
+    }
+}
+
+impl<'a> Iterator for SlaReader<'a> {
+    type Item = SlaItem;
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            match self.next_tag().unwrap() {
+                Tag::ElStart(id) => return Some(SlaItem::Elem(id)),
+                Tag::Attr(id, attr) => return Some(SlaItem::Attr(id, attr)),
+                Tag::ElEnd => {
+                    if self.level == 0 {
+                        return None;
+                    }
+                    self.level -= 1;
+                }
+            }
+        }
     }
 }
