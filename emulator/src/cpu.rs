@@ -67,6 +67,7 @@ fn sub8(a: u8, b: u8, c: bool) -> (u8, bool, bool) {
     (result, c1 || c2, (half & 0x0f) != 0)
 }
 
+#[allow(dead_code)]
 impl Cpu {
     pub fn new(bus: Rc<RefCell<dyn Bus>>) -> Self {
         Self {
