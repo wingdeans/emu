@@ -67,15 +67,6 @@ fn sub8(a: u8, b: u8, c: bool) -> (u8, bool, bool) {
     (result, c1 || c2, (half & 0x0f) != 0)
 }
 
-fn sub16(a: u16, b: u16, c: bool) -> (u16, bool, bool) {
-    let (value, c1) = a.overflowing_sub(b);
-    let (result, c2) = value.overflowing_sub(if c { 1 } else { 0 });
-
-    let half = (a & 0xf000).wrapping_sub(b & 0xf000); // WARN Not sure about this one
-
-    (result, c1 || c2, (half & 0x0fff) != 0)
-}
-
 impl Cpu {
     pub fn new(bus: Rc<RefCell<dyn Bus>>) -> Self {
         Self {
@@ -871,7 +862,7 @@ impl Cpu {
 
     fn call_cond(&mut self, ins: u8) -> Result<u32> {
         if self.cond(ins!(ins, cond))? {
-            self.stack_push(self.pc + 2);
+            self.stack_push(self.pc + 2)?;
             self.pc = self.imm16()?;
             Ok(6)
         } else {
@@ -880,13 +871,13 @@ impl Cpu {
     }
 
     fn call(&mut self, _ins: u8) -> Result<u32> {
-        self.stack_push(self.pc + 2);
+        self.stack_push(self.pc + 2)?;
         self.pc = self.imm16()?;
         Ok(6)
     }
 
     fn rst(&mut self, ins: u8) -> Result<u32> {
-        self.stack_push(self.pc + 2);
+        self.stack_push(self.pc + 2)?;
         self.pc = (ins!(ins, tgt3) as u16) * 8;
         Ok(4)
     }
@@ -920,7 +911,7 @@ impl Cpu {
             _ => unreachable!(),
         };
 
-        self.stack_push(value);
+        self.stack_push(value)?;
         Ok(4)
     }
 
@@ -1291,13 +1282,25 @@ impl Cpu {
                     0b0011 => Ok(Self::inc_r16),
                     0b1011 => Ok(Self::dec_r16),
                     0b1001 => Ok(Self::add_hl_r16),
-                    _ => match ins & 0b111 {
-                        0b100 => Ok(Self::inc_r8),
-                        0b101 => Ok(Self::dec_r8),
-                        0b110 => Ok(Self::ld_r8_imm8),
-                        0b000 if (ins & (1 << 5)) != 0 => Ok(Self::jr_cond),
-                        _ => Err(Error::InvalidOperation(ins)),
-                    },
+                    0b0000 if (ins & (1 << 5)) != 0 => Ok(Self::jr_cond),
+                    0b1000 if (ins & (1 << 5)) != 0 => Ok(Self::jr_cond),
+                    _ => {
+                        if ins!(ins, r8) == 6 {
+                            match ins & 0b111 {
+                                0b100 => Ok(Self::inc_hl),
+                                0b101 => Ok(Self::dec_hl),
+                                0b110 => Ok(Self::ld_hl_imm8),
+                                _ => Err(Error::InvalidOperation(ins)),
+                            }
+                        } else {
+                            match ins & 0b111 {
+                                0b100 => Ok(Self::inc_r8),
+                                0b101 => Ok(Self::dec_r8),
+                                0b110 => Ok(Self::ld_r8_imm8),
+                                _ => Err(Error::InvalidOperation(ins)),
+                            }
+                        }
+                    }
                 },
             },
             1 => {
@@ -1376,38 +1379,42 @@ impl Cpu {
     }
 
     fn decode_cb(ins: u8) -> Result<fn(&mut Self, u8) -> Result<u32>> {
-        match ins >> 6 {
-            0b00 => {
-                if ins!(ins, r8l) == 6 {
-                    match (ins >> 3) & 0b111 {
-                        0b000 => Ok(Self::rlc_hl),
-                        0b001 => Ok(Self::rrc_hl),
-                        0b010 => Ok(Self::rl_hl),
-                        0b011 => Ok(Self::rr_hl),
-                        0b100 => Ok(Self::sla_hl),
-                        0b101 => Ok(Self::sra_hl),
-                        0b110 => Ok(Self::swap_hl),
-                        0b111 => Ok(Self::srl_hl),
-                        _ => unreachable!(),
-                    }
-                } else {
-                    match (ins >> 3) & 0b111 {
-                        0b000 => Ok(Self::rlc),
-                        0b001 => Ok(Self::rrc),
-                        0b010 => Ok(Self::rl),
-                        0b011 => Ok(Self::rr),
-                        0b100 => Ok(Self::sla),
-                        0b101 => Ok(Self::sra),
-                        0b110 => Ok(Self::swap),
-                        0b111 => Ok(Self::srl),
-                        _ => unreachable!(),
-                    }
-                }
+        if ins!(ins, r8l) == 6 {
+            match ins >> 6 {
+                0b00 => match (ins >> 3) & 0b111 {
+                    0b000 => Ok(Self::rlc_hl),
+                    0b001 => Ok(Self::rrc_hl),
+                    0b010 => Ok(Self::rl_hl),
+                    0b011 => Ok(Self::rr_hl),
+                    0b100 => Ok(Self::sla_hl),
+                    0b101 => Ok(Self::sra_hl),
+                    0b110 => Ok(Self::swap_hl),
+                    0b111 => Ok(Self::srl_hl),
+                    _ => unreachable!(),
+                },
+                0b01 => Ok(Self::bit_hl),
+                0b10 => Ok(Self::res_hl),
+                0b11 => Ok(Self::set_hl),
+                _ => unreachable!(),
             }
-            0b01 => Ok(Self::bit),
-            0b10 => Ok(Self::res),
-            0b11 => Ok(Self::set),
-            _ => unreachable!(),
+        } else {
+            match ins >> 6 {
+                0b00 => match (ins >> 3) & 0b111 {
+                    0b000 => Ok(Self::rlc),
+                    0b001 => Ok(Self::rrc),
+                    0b010 => Ok(Self::rl),
+                    0b011 => Ok(Self::rr),
+                    0b100 => Ok(Self::sla),
+                    0b101 => Ok(Self::sra),
+                    0b110 => Ok(Self::swap),
+                    0b111 => Ok(Self::srl),
+                    _ => unreachable!(),
+                },
+                0b01 => Ok(Self::bit),
+                0b10 => Ok(Self::res),
+                0b11 => Ok(Self::set),
+                _ => unreachable!(),
+            }
         }
     }
 
