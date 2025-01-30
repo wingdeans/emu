@@ -26,8 +26,6 @@ pub(crate) enum SlaItem {
     Attr(AId, Attribute),
 }
 
-// BUFFER
-
 pub(crate) struct SlaBuf(Vec<u8>);
 
 impl SlaBuf {
@@ -83,14 +81,6 @@ impl SlaReader<'_> {
             (tagid, id)
         };
 
-        fn take_slice<'a>(it: &mut std::slice::Iter<'a, u8>, len: usize) -> &'a [u8] {
-            let slice = &it.as_slice()[..len];
-            if len != 0 {
-                it.nth(len - 1).unwrap();
-            }
-            slice
-        }
-
         let tag = match tagid {
             0b01 => Tag::ElStart(id.into()),
             0b10 => Tag::ElEnd,
@@ -103,7 +93,7 @@ impl SlaReader<'_> {
                     _ => {
                         // length-reliant attributes
                         let mut x = 0;
-                        for b in take_slice(&mut self.it, len as usize) {
+                        for b in self.it.by_ref().take(len as usize) {
                             x <<= 7;
                             x |= *b as u64 & 0b0111_1111;
                         }
@@ -113,9 +103,12 @@ impl SlaReader<'_> {
                             4 => Attribute::Uint(x),
                             5 => Attribute::BasicAddr(x),
                             7 => Attribute::Str(
-                                from_utf8(take_slice(&mut self.it, x as usize))
-                                    .unwrap()
-                                    .to_string(),
+                                String::from_utf8(
+                                    self.it.by_ref()
+                                        .take(x as usize)
+                                        .copied()
+                                        .collect()
+                                ).unwrap()
                             ),
                             _ => unreachable!(),
                         }
