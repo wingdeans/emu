@@ -8,3 +8,4 @@ library = { path = "../library" }
 thiserror = "2.0.11"
 eframe = "0.30.0"
 egui_memory_editor = "0.2.11"
+egui_extras = "0.30.0"

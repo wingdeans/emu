@@ -1,7 +1,17 @@
 mod cpu;
 mod error;
+mod memory;
 
-use eframe::egui;
+use cpu::Cpu;
+use eframe::{
+    egui::{self, Button, Label, Layout, RichText, Window},
+    epaint::Color32,
+};
+use egui_extras::{Column, TableBuilder};
+use egui_memory_editor::MemoryEditor;
+use library::bus::Bus;
+use memory::Memory;
+use std::{cell::RefCell, rc::Rc};
 
 fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
@@ -12,14 +22,124 @@ fn main() -> eframe::Result {
     eframe::run_native("Emulator", options, Box::new(|_| Ok(Box::new(App::new()))))
 }
 
-struct App {}
+struct State {
+    control_open: bool,
+    memory_editor_open: bool,
+    registers_open: bool,
+}
+
+struct App {
+    bus: Rc<RefCell<dyn Bus>>,
+    cpu: Cpu,
+    memory_editor: MemoryEditor,
+    state: State,
+    last_execute: Option<error::Result<u32>>,
+}
 
 impl App {
     pub fn new() -> Self {
-        Self {}
+        let bus: Rc<RefCell<dyn Bus>> = Memory::new();
+
+        Self {
+            bus: Rc::clone(&bus),
+            cpu: Cpu::new(Rc::clone(&bus)),
+            memory_editor: MemoryEditor::new().with_address_range("All", 0..0xffff),
+            state: State {
+                control_open: true,
+                memory_editor_open: true,
+                registers_open: true,
+            },
+            last_execute: None,
+        }
+    }
+}
+
+impl App {
+    fn draw_control(&mut self, ctx: &egui::Context) {
+        use cpu::State::*;
+
+        let color = match self.cpu.state() {
+            Stopped => Color32::from_rgb(255, 0, 0),
+            Halted => Color32::from_rgb(255, 255, 0),
+            Running => Color32::from_rgb(0, 255, 0),
+        };
+
+        Window::new("Control")
+            .open(&mut self.state.control_open)
+            .collapsible(false)
+            .show(ctx, |ui| {
+                ui.with_layout(Layout::left_to_right(egui::Align::LEFT), |ui| {
+                    ui.set_width(300.0);
+
+                    ui.add_sized([25.0, 25.0], Label::new(RichText::new("⏺").color(color)));
+
+                    if ui.add_sized([25.0, 25.0], Button::new("▶")).clicked() {
+                        self.last_execute = Some(self.cpu.execute());
+                    }
+
+                    if ui.add_sized([25.0, 25.0], Button::new("↺")).clicked() {
+                        self.cpu = Cpu::new(Rc::clone(&self.bus));
+                        self.last_execute = None;
+                    }
+
+                    if let Some(exe) = &self.last_execute {
+                        ui.label(RichText::new(format!("{:?}", exe)).size(18.0));
+                    }
+                });
+            });
+    }
+
+    fn draw_memory_editor(&mut self, ctx: &egui::Context) {
+        self.memory_editor.window_ui(
+            ctx,
+            &mut self.state.memory_editor_open,
+            &mut self.bus,
+            |bus, addr| bus.borrow_mut().read(addr as u16).ok(),
+            |bus, addr, value| _ = bus.borrow_mut().write(addr as u16, value),
+        );
+    }
+
+    fn draw_registers(&mut self, ctx: &egui::Context) {
+        Window::new("Registers")
+            .open(&mut self.state.registers_open)
+            .collapsible(false)
+            .resizable(false)
+            .show(ctx, |ui| {
+                TableBuilder::new(ui)
+                    .column(Column::exact(100.0))
+                    .column(Column::exact(100.0))
+                    .body(|mut body| {
+                        let mut add = |label: &str, value: String| {
+                            body.row(20.0, |mut row| {
+                                row.col(|ui| _ = ui.label(label));
+                                row.col(|ui| _ = ui.monospace(value));
+                            });
+                        };
+
+                        add("A", format!("0x{:02x}", self.cpu.af >> 8));
+                        add("F", format!("0b{:08b}", self.cpu.af & 0x0f));
+                        add("BC", format!("0x{:04x}", self.cpu.bc));
+                        add("DE", format!("0x{:04x}", self.cpu.de));
+                        add("HL", format!("0x{:04x}", self.cpu.hl));
+                        add("Stack Pointer", format!("0x{:04x}", self.cpu.sp));
+                        add("Program Counter", format!("0x{:04x}", self.cpu.pc));
+                    });
+            });
     }
 }
 
 impl eframe::App for App {
-    fn update(&mut self, _: &egui::Context, _frame: &mut eframe::Frame) {}
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
+            egui::menu::bar(ui, |ui| {
+                ui.toggle_value(&mut self.state.control_open, "Control");
+                ui.toggle_value(&mut self.state.registers_open, "Registers");
+                ui.toggle_value(&mut self.state.memory_editor_open, "Memory Editor");
+            });
+        });
+
+        self.draw_control(ctx);
+        self.draw_memory_editor(ctx);
+        self.draw_registers(ctx);
+    }
 }

@@ -2,16 +2,22 @@ use crate::error::{Error, Result};
 use library::bus::Bus;
 use std::{cell::RefCell, rc::Rc};
 
+#[derive(Clone, PartialEq, Debug)]
+pub enum State {
+    Running,
+    Halted,
+    Stopped,
+}
+
 pub struct Cpu {
-    af: u16,
-    bc: u16,
-    de: u16,
-    hl: u16,
-    sp: u16,
-    pc: u16,
+    pub af: u16,
+    pub bc: u16,
+    pub de: u16,
+    pub hl: u16,
+    pub sp: u16,
+    pub pc: u16,
     ime: bool,
-    halted: bool,
-    stopped: bool,
+    state: State,
     bus: Rc<RefCell<dyn Bus>>,
 }
 
@@ -67,7 +73,6 @@ fn sub8(a: u8, b: u8, c: bool) -> (u8, bool, bool) {
     (result, c1 || c2, (half & 0x0f) != 0)
 }
 
-#[allow(dead_code)]
 impl Cpu {
     pub fn new(bus: Rc<RefCell<dyn Bus>>) -> Self {
         Self {
@@ -78,8 +83,7 @@ impl Cpu {
             sp: 0xfffe,
             pc: 0x100,
             ime: true,
-            halted: false,
-            stopped: false,
+            state: State::Running,
             bus,
         }
     }
@@ -508,7 +512,7 @@ impl Cpu {
 
     fn stop(&mut self, _ins: u8) -> Result<u32> {
         self.pc += 1;
-        self.stopped = true;
+        self.state = State::Stopped;
         Ok(0)
     }
 
@@ -1257,7 +1261,7 @@ impl Cpu {
     }
 
     fn halt(&mut self, _ins: u8) -> Result<u32> {
-        self.halted = true;
+        self.state = State::Halted;
         Ok(0)
     }
 
@@ -1420,7 +1424,7 @@ impl Cpu {
     }
 
     pub fn execute(&mut self) -> Result<u32> {
-        if self.halted || self.stopped {
+        if self.state != State::Running {
             return Ok(0);
         }
 
@@ -1437,5 +1441,9 @@ impl Cpu {
         };
 
         func(self, ins)
+    }
+
+    pub fn state(&self) -> State {
+        self.state.clone()
     }
 }
