@@ -76,8 +76,22 @@ fn sub16(a: u16, b: u16, c: bool) -> (u16, bool, bool) {
     (result, c1 || c2, (half & 0x0fff) != 0)
 }
 
-#[allow(dead_code)]
 impl Cpu {
+    pub fn new(bus: Rc<RefCell<dyn Bus>>) -> Self {
+        Self {
+            af: 0,
+            bc: 0,
+            de: 0,
+            hl: 0,
+            sp: 0xfffe,
+            pc: 0x100,
+            ime: true,
+            halted: false,
+            stopped: false,
+            bus,
+        }
+    }
+
     fn get_flag(&self, bit: u8) -> bool {
         (self.af & (1 << bit)) != 0
     }
@@ -1395,5 +1409,25 @@ impl Cpu {
             0b11 => Ok(Self::set),
             _ => unreachable!(),
         }
+    }
+
+    pub fn execute(&mut self) -> Result<u32> {
+        if self.halted || self.stopped {
+            return Ok(0);
+        }
+
+        let mut ins = self.read(self.pc)?;
+        self.pc += 1;
+
+        let func = if ins == 0xcb {
+            ins = self.read(self.pc)?;
+            self.pc += 1;
+
+            Self::decode_cb(ins)?
+        } else {
+            Self::decode(ins)?
+        };
+
+        func(self, ins)
     }
 }
