@@ -159,12 +159,6 @@ impl SlaParser<'_> {
             }
         }
 
-        /*
-        let instruction_id = heads.iter().find(|(_, name)|name == &"instruction").unwrap().0;
-        let instruction_idx = subtables.iter().position(|(id, _)| *id == instruction_id).unwrap();
-        let instruction = subtables.swap_remove(instruction_idx).1;
-         */
-
         SymbolTable { subtables }
     }
 
@@ -188,11 +182,12 @@ impl SlaParser<'_> {
     }
 }
 
-pub(crate) fn parse_sleigh(buf: SlaBuf) -> SymbolTable {
-    let mut reader = buf.into_iter();
-    let mut parser = SlaParser {
-        r: reader,
-        heads: Vec::new(),
-    };
-    parser.parse_sleigh()
+impl SlaBuf {
+    pub(crate) fn parse_sleigh(&self) -> SymbolTable {
+        let mut parser = SlaParser {
+            r: self.into_iter(),
+            heads: Vec::new(),
+        };
+        parser.parse_sleigh()
+    }
 }

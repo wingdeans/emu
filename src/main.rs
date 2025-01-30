@@ -2,7 +2,6 @@ mod slaformat;
 mod slaparser;
 mod slareader;
 
-use crate::slaparser::parse_sleigh;
 use crate::slareader::SlaBuf;
 
 /*
@@ -30,7 +29,7 @@ fn disassemble(decision: &Decision, byte: u8) {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let buf = SlaBuf::new("sm83.sla")?;
-    let sleigh = parse_sleigh(buf);
+    let sleigh = buf.parse_sleigh();
 
     println!("{:#?}", sleigh);
 
