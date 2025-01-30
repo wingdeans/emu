@@ -1,5 +1,6 @@
 use crate::error::{Error, Result};
-use library::memory;
+use library::bus::Bus;
+use std::{cell::RefCell, rc::Rc};
 
 pub struct Cpu {
     af: u16,
@@ -11,6 +12,7 @@ pub struct Cpu {
     ime: bool,
     halted: bool,
     stopped: bool,
+    bus: Rc<RefCell<dyn Bus>>,
 }
 
 macro_rules! ins {
@@ -188,32 +190,48 @@ impl Cpu {
         self.af = ((value as u16) << 8) | (self.af & 0xff);
     }
 
-    fn imm8(&mut self) -> u8 {
-        let value = memory::read(self.pc);
-        self.pc += 1;
-        value
+    fn read(&mut self, addr: u16) -> Result<u8> {
+        self.bus
+            .borrow_mut()
+            .read(addr)
+            .map_err(|_| Error::BusFault(addr))
     }
 
-    fn imm16(&mut self) -> u16 {
-        let lo = memory::read(self.pc + 0);
-        let hi = memory::read(self.pc + 1);
+    fn write(&mut self, addr: u16, value: u8) -> Result<()> {
+        self.bus
+            .borrow_mut()
+            .write(addr, value)
+            .map_err(|_| Error::BusFault(addr))
+    }
+
+    fn imm8(&mut self) -> Result<u8> {
+        let value = self.read(self.pc)?;
+        self.pc += 1;
+        Ok(value)
+    }
+
+    fn imm16(&mut self) -> Result<u16> {
+        let lo = self.read(self.pc + 0)?;
+        let hi = self.read(self.pc + 1)?;
 
         self.pc += 2;
-        ((hi as u16) << 8) | (lo as u16)
+        Ok(((hi as u16) << 8) | (lo as u16))
     }
 
-    fn stack_push(&mut self, value: u16) {
-        memory::write(self.sp - 1, (value >> 8) as u8);
-        memory::write(self.sp - 2, (value & 0xff) as u8);
+    fn stack_push(&mut self, value: u16) -> Result<()> {
+        self.write(self.sp - 1, (value >> 8) as u8)?;
+        self.write(self.sp - 2, (value & 0xff) as u8)?;
         self.sp -= 2;
+
+        Ok(())
     }
 
-    fn stack_pop(&mut self) -> u16 {
-        let lo = memory::read(self.sp + 0);
-        let hi = memory::read(self.sp + 1);
+    fn stack_pop(&mut self) -> Result<u16> {
+        let lo = self.read(self.sp + 0)?;
+        let hi = self.read(self.sp + 1)?;
         self.sp += 2;
 
-        ((hi as u16) << 8) | (lo as u16)
+        Ok(((hi as u16) << 8) | (lo as u16))
     }
 
     fn nop(&mut self, _ins: u8) -> Result<u32> {
@@ -221,7 +239,7 @@ impl Cpu {
     }
 
     fn ld_r16_imm16(&mut self, ins: u8) -> Result<u32> {
-        let value = self.imm16();
+        let value = self.imm16()?;
         self.set_r16(ins, value);
         Ok(3)
     }
@@ -241,7 +259,7 @@ impl Cpu {
             _ => unreachable!(),
         };
 
-        memory::write(addr, self.a());
+        self.write(addr, self.a())?;
         Ok(2)
     }
 
@@ -260,14 +278,16 @@ impl Cpu {
             _ => unreachable!(),
         };
 
-        self.set_a(memory::read(addr));
+        let value = self.read(addr)?;
+        self.set_a(value);
+
         Ok(2)
     }
 
     fn ld_imm16_sp(&mut self, _ins: u8) -> Result<u32> {
-        let addr = self.imm16();
-        memory::write(addr + 0, self.sp as u8);
-        memory::write(addr + 1, (self.sp >> 8) as u8);
+        let addr = self.imm16()?;
+        self.write(addr + 0, self.sp as u8)?;
+        self.write(addr + 1, (self.sp >> 8) as u8)?;
         Ok(5)
     }
 
@@ -307,14 +327,14 @@ impl Cpu {
     }
 
     fn inc_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
         let (result, _c, hc) = add8(value, 1, false);
 
         self.set_zero(value == 0);
         self.set_sub(false);
         self.set_half_carry(hc);
 
-        memory::write(self.hl, result);
+        self.write(self.hl, result)?;
         Ok(3)
     }
 
@@ -331,26 +351,26 @@ impl Cpu {
     }
 
     fn dec_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
         let (result, _c, hc) = sub8(value, 1, false);
 
         self.set_zero(value == 0);
         self.set_sub(true);
         self.set_half_carry(hc);
 
-        memory::write(self.hl, result);
+        self.write(self.hl, result)?;
         Ok(3)
     }
 
     fn ld_r8_imm8(&mut self, ins: u8) -> Result<u32> {
-        let value = self.imm8();
+        let value = self.imm8()?;
         self.set_r8(ins!(ins, r8), value)?;
         Ok(2)
     }
 
     fn ld_hl_imm8(&mut self, _ins: u8) -> Result<u32> {
-        let value = self.imm8();
-        memory::write(self.hl, value);
+        let value = self.imm8()?;
+        self.write(self.hl, value)?;
         Ok(3)
     }
 
@@ -463,14 +483,14 @@ impl Cpu {
     }
 
     fn jr(&mut self, _ins: u8) -> Result<u32> {
-        let value = self.imm8();
+        let value = self.imm8()?;
         self.pc = self.pc.wrapping_add_signed(value as i16);
         Ok(3)
     }
 
     fn jr_cond(&mut self, ins: u8) -> Result<u32> {
         let cond = self.cond(ins!(ins, cond))?;
-        let value = self.imm8();
+        let value = self.imm8()?;
 
         if cond {
             self.pc = self.pc.wrapping_add_signed(value as i16);
@@ -510,7 +530,7 @@ impl Cpu {
     }
 
     fn add_a_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
         let (result, c, hc) = add8(self.a(), value, false);
 
         self.set_zero(result == 0);
@@ -536,7 +556,7 @@ impl Cpu {
     }
 
     fn adc_a_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
         let (result, c, hc) = add8(self.a(), value, self.carry());
 
         self.set_zero(result == 0);
@@ -562,7 +582,7 @@ impl Cpu {
     }
 
     fn sub_a_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
         let (result, c, hc) = sub8(self.a(), value, false);
 
         self.set_zero(result == 0);
@@ -570,7 +590,7 @@ impl Cpu {
         self.set_half_carry(hc);
         self.set_carry(c);
 
-        memory::write(self.hl, result);
+        self.write(self.hl, result)?;
         Ok(2)
     }
 
@@ -588,7 +608,7 @@ impl Cpu {
     }
 
     fn sbc_a_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
         let (result, c, hc) = sub8(self.a(), value, self.carry());
 
         self.set_zero(result == 0);
@@ -596,7 +616,7 @@ impl Cpu {
         self.set_half_carry(hc);
         self.set_carry(c);
 
-        memory::write(self.hl, result);
+        self.write(self.hl, result)?;
         Ok(2)
     }
 
@@ -613,7 +633,7 @@ impl Cpu {
     }
 
     fn and_a_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
         self.set_a(self.a() & value);
 
         self.set_zero(self.a() == 0);
@@ -637,7 +657,7 @@ impl Cpu {
     }
 
     fn xor_a_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
         self.set_a(self.a() ^ value);
 
         self.set_zero(self.a() == 0);
@@ -661,7 +681,7 @@ impl Cpu {
     }
 
     fn or_a_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
         self.set_a(self.a() | value);
 
         self.set_zero(self.a() == 0);
@@ -685,7 +705,7 @@ impl Cpu {
     }
 
     fn cp_a_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
         let (result, c, hc) = sub8(self.a(), value, false);
 
         self.set_zero(result == 0);
@@ -697,7 +717,7 @@ impl Cpu {
     }
 
     fn add_a_imm8(&mut self, _ins: u8) -> Result<u32> {
-        let value = self.imm8();
+        let value = self.imm8()?;
         let (result, c, hc) = add8(self.a(), value, false);
 
         self.set_zero(result == 0);
@@ -710,7 +730,7 @@ impl Cpu {
     }
 
     fn adc_a_imm8(&mut self, _ins: u8) -> Result<u32> {
-        let value = self.imm8();
+        let value = self.imm8()?;
         let (result, c, hc) = add8(self.a(), value, self.carry());
 
         self.set_zero(result == 0);
@@ -723,7 +743,7 @@ impl Cpu {
     }
 
     fn sub_a_imm8(&mut self, _ins: u8) -> Result<u32> {
-        let value = self.imm8();
+        let value = self.imm8()?;
         let (result, c, hc) = sub8(self.a(), value, false);
 
         self.set_zero(result == 0);
@@ -736,7 +756,7 @@ impl Cpu {
     }
 
     fn sbc_a_imm8(&mut self, _ins: u8) -> Result<u32> {
-        let value = self.imm8();
+        let value = self.imm8()?;
         let (result, c, hc) = sub8(self.a(), value, self.carry());
 
         self.set_zero(result == 0);
@@ -749,7 +769,7 @@ impl Cpu {
     }
 
     fn and_a_imm8(&mut self, _ins: u8) -> Result<u32> {
-        let value = self.imm8();
+        let value = self.imm8()?;
         self.set_a(self.a() & value);
 
         self.set_zero(self.a() == 0);
@@ -761,7 +781,7 @@ impl Cpu {
     }
 
     fn xor_a_imm8(&mut self, _ins: u8) -> Result<u32> {
-        let value = self.imm8();
+        let value = self.imm8()?;
         self.set_a(self.a() ^ value);
 
         self.set_zero(self.a() == 0);
@@ -773,7 +793,7 @@ impl Cpu {
     }
 
     fn or_a_imm8(&mut self, _ins: u8) -> Result<u32> {
-        let value = self.imm8();
+        let value = self.imm8()?;
         self.set_a(self.a() | value);
 
         self.set_zero(self.a() == 0);
@@ -785,7 +805,7 @@ impl Cpu {
     }
 
     fn cp_a_imm8(&mut self, _ins: u8) -> Result<u32> {
-        let value = self.imm8();
+        let value = self.imm8()?;
         let (result, c, hc) = sub8(self.a(), value, false);
 
         self.set_zero(result == 0);
@@ -798,7 +818,7 @@ impl Cpu {
 
     fn ret_cond(&mut self, ins: u8) -> Result<u32> {
         if self.cond(ins!(ins, cond))? {
-            self.pc = self.stack_pop();
+            self.pc = self.stack_pop()?;
             Ok(5)
         } else {
             Ok(2)
@@ -806,19 +826,19 @@ impl Cpu {
     }
 
     fn ret(&mut self, _ins: u8) -> Result<u32> {
-        self.pc = self.stack_pop();
+        self.pc = self.stack_pop()?;
         Ok(4)
     }
 
     fn reti(&mut self, _ins: u8) -> Result<u32> {
-        self.pc = self.stack_pop();
+        self.pc = self.stack_pop()?;
         self.ime = true;
         Ok(4)
     }
 
     fn jp_cond(&mut self, ins: u8) -> Result<u32> {
         if self.cond(ins!(ins, cond))? {
-            self.pc = self.imm16();
+            self.pc = self.imm16()?;
             Ok(4)
         } else {
             Ok(3)
@@ -826,7 +846,7 @@ impl Cpu {
     }
 
     fn jp(&mut self, _ins: u8) -> Result<u32> {
-        self.pc = self.imm16();
+        self.pc = self.imm16()?;
         Ok(4)
     }
 
@@ -838,7 +858,7 @@ impl Cpu {
     fn call_cond(&mut self, ins: u8) -> Result<u32> {
         if self.cond(ins!(ins, cond))? {
             self.stack_push(self.pc + 2);
-            self.pc = self.imm16();
+            self.pc = self.imm16()?;
             Ok(6)
         } else {
             Ok(3)
@@ -847,7 +867,7 @@ impl Cpu {
 
     fn call(&mut self, _ins: u8) -> Result<u32> {
         self.stack_push(self.pc + 2);
-        self.pc = self.imm16();
+        self.pc = self.imm16()?;
         Ok(6)
     }
 
@@ -858,7 +878,7 @@ impl Cpu {
     }
 
     fn pop(&mut self, ins: u8) -> Result<u32> {
-        let value = self.stack_pop();
+        let value = self.stack_pop()?;
 
         match ins!(ins, r16) {
             0 => self.bc = value,
@@ -891,39 +911,48 @@ impl Cpu {
     }
 
     fn ldh_c_a(&mut self, _ins: u8) -> Result<u32> {
-        memory::write(0xff00 | (self.bc & 0xff), (self.af >> 8) as u8);
+        self.write(0xff00 | (self.bc & 0xff), (self.af >> 8) as u8)?;
         Ok(2)
     }
 
     fn ldh_imm8_a(&mut self, _ins: u8) -> Result<u32> {
-        memory::write(0xff00 | (self.imm8() as u16), (self.af >> 8) as u8);
+        let value = self.imm8()?;
+        self.write(0xff00 | (value as u16), (self.af >> 8) as u8)?;
         Ok(3)
     }
 
     fn ld_imm16_a(&mut self, _ins: u8) -> Result<u32> {
-        memory::write(self.imm16(), (self.af >> 8) as u8);
+        let value = self.imm16()?;
+        self.write(value, (self.af >> 8) as u8)?;
         Ok(4)
     }
 
     fn ldh_a_c(&mut self, _ins: u8) -> Result<u32> {
-        self.af = ((memory::read(0xff00 | (self.bc & 0xff)) as u16) << 8) | (self.af & 0xff);
+        let value = self.read(0xff00 | (self.bc & 0x00ff))?;
+        self.af = ((value as u16) << 8) | (self.af & 0xff);
         Ok(2)
     }
 
     fn ldh_a_imm8(&mut self, _ins: u8) -> Result<u32> {
-        let addr = 0xff00 | (self.imm8() as u16);
-        self.set_a(memory::read(addr));
+        let imm = self.imm8()?;
+        let addr = 0xff00 | (imm as u16);
+
+        let value = self.read(addr)?;
+        self.set_a(value);
+
         Ok(3)
     }
 
     fn ld_a_imm16(&mut self, _ins: u8) -> Result<u32> {
-        let value = self.imm16();
-        self.set_a(memory::read(value));
+        let addr = self.imm16()?;
+        let value = self.read(addr)?;
+
+        self.set_a(value);
         Ok(3)
     }
 
     fn add_sp_imm8(&mut self, _ins: u8) -> Result<u32> {
-        let value = self.imm8();
+        let value = self.imm8()?;
         let (result, c, hc) = add16(self.sp, value as i8 as i16 as u16, false);
 
         self.set_zero(false);
@@ -936,7 +965,7 @@ impl Cpu {
     }
 
     fn ld_hl_sp_imm8(&mut self, _ins: u8) -> Result<u32> {
-        let value = self.imm8();
+        let value = self.imm8()?;
         let (result, c, hc) = add16(self.sp, value as i8 as i16 as u16, false);
 
         self.set_zero(false);
@@ -976,8 +1005,8 @@ impl Cpu {
     }
 
     fn rlc_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl).rotate_left(1);
-        memory::write(self.hl, value);
+        let value = self.read(self.hl)?.rotate_left(1);
+        self.write(self.hl, value)?;
 
         self.set_zero(value == 0);
         self.set_sub(false);
@@ -1000,8 +1029,8 @@ impl Cpu {
     }
 
     fn rrc_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl).rotate_right(1);
-        memory::write(self.hl, value);
+        let value = self.read(self.hl)?.rotate_right(1);
+        self.write(self.hl, value)?;
 
         self.set_zero(value == 0);
         self.set_sub(false);
@@ -1026,7 +1055,7 @@ impl Cpu {
     }
 
     fn rl_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
         let bit = if self.carry() { 1 } else { 0 };
         let result = (value << 1) | bit;
 
@@ -1035,7 +1064,7 @@ impl Cpu {
         self.set_sub(false);
         self.set_half_carry(false);
 
-        memory::write(self.hl, result);
+        self.write(self.hl, result)?;
         Ok(4)
     }
 
@@ -1054,7 +1083,7 @@ impl Cpu {
     }
 
     fn rr_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
         let bit = if self.carry() { 1 } else { 0 };
         let result = (bit << 7) | (value >> 1);
 
@@ -1063,7 +1092,7 @@ impl Cpu {
         self.set_sub(false);
         self.set_half_carry(false);
 
-        memory::write(self.hl, result);
+        self.write(self.hl, result)?;
         Ok(4)
     }
 
@@ -1080,14 +1109,14 @@ impl Cpu {
     }
 
     fn sla_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
 
         self.set_zero((value << 1) != 0);
         self.set_sub(false);
         self.set_half_carry(false);
         self.set_carry((value & 0x80) != 0);
 
-        memory::write(self.hl, value << 1);
+        self.write(self.hl, value << 1)?;
         Ok(4)
     }
 
@@ -1105,7 +1134,7 @@ impl Cpu {
     }
 
     fn sra_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
         let result = (value & 0x80) | (value >> 1);
 
         self.set_zero(result != 0);
@@ -1113,7 +1142,7 @@ impl Cpu {
         self.set_half_carry(false);
         self.set_carry((value & 1) != 0);
 
-        memory::write(self.hl, result);
+        self.write(self.hl, result)?;
         Ok(4)
     }
 
@@ -1131,9 +1160,9 @@ impl Cpu {
     }
 
     fn swap_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
         let result = (value << 4) | (value >> 4);
-        memory::write(self.hl, result);
+        self.write(self.hl, result)?;
 
         self.set_zero(result == 0);
         self.set_sub(false);
@@ -1156,14 +1185,14 @@ impl Cpu {
     }
 
     fn srl_hl(&mut self, _ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
 
         self.set_zero((value >> 1) != 0);
         self.set_sub(false);
         self.set_half_carry(false);
         self.set_carry((value & 1) != 0);
 
-        memory::write(self.hl, value >> 1);
+        self.write(self.hl, value >> 1)?;
         Ok(4)
     }
 
@@ -1179,7 +1208,7 @@ impl Cpu {
     }
 
     fn bit_hl(&mut self, ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
         let bit = ins!(ins, b3);
 
         self.set_zero((value & (1 << bit)) != 0);
@@ -1198,9 +1227,9 @@ impl Cpu {
     }
 
     fn res_hl(&mut self, ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
         let bit = ins!(ins, b3);
-        memory::write(self.hl, value & !(1 << bit));
+        self.write(self.hl, value & !(1 << bit))?;
 
         Ok(4)
     }
@@ -1214,9 +1243,9 @@ impl Cpu {
     }
 
     fn set_hl(&mut self, ins: u8) -> Result<u32> {
-        let value = memory::read(self.hl);
+        let value = self.read(self.hl)?;
         let bit = ins!(ins, b3);
-        memory::write(self.hl, value | (1 << bit));
+        self.write(self.hl, value | (1 << bit))?;
 
         Ok(4)
     }

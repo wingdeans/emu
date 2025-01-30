@@ -6,6 +6,8 @@ pub enum Error {
     InvalidIndexWidth(u8, u8),
     #[error("not implemented")]
     NotImplemented,
+    #[error("bus fault accessing address `0x{0:04x}`")]
+    BusFault(u16),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
