@@ -62,7 +62,7 @@ pub(crate) struct SlaReader<'a> {
 }
 
 impl SlaReader<'_> {
-    fn next_tag(&mut self) -> Option<Tag> {
+    fn next_tag(&mut self) -> Tag {
         // see Ghidra file: PackedDecode.java
         // commit: GP-4285 Compressed SLEIGH
 
@@ -71,7 +71,7 @@ impl SlaReader<'_> {
         // | \-xbit
         // \-tagid
         let (tagid, id) = {
-            let b0 = *self.it.next()?;
+            let b0 = *self.it.next().unwrap();
             let (tagid, xbit, mut id) = (b0 >> 6, b0 >> 5 & 1, b0 as u16 & 0b0001_1111);
             if xbit != 0 {
                 let b1 = *self.it.next().unwrap();
@@ -81,7 +81,7 @@ impl SlaReader<'_> {
             (tagid, id)
         };
 
-        let tag = match tagid {
+        match tagid {
             0b01 => Tag::ElStart(id.into()),
             0b10 => Tag::ElEnd,
             0b11 => {
@@ -117,14 +117,13 @@ impl SlaReader<'_> {
                 Tag::Attr(id.into(), attr)
             }
             _ => unreachable!("invalid tagid: {}", tagid),
-        };
-        Some(tag)
+        }
     }
 
     pub(crate) fn skip_elem(&mut self) {
         let mut level = 1;
-        while let Some(tag) = self.next_tag() {
-            match tag {
+        loop {
+            match self.next_tag() {
                 Tag::ElStart(_) => level += 1,
                 Tag::ElEnd => {
                     level -= 1;
@@ -146,7 +145,7 @@ impl<'a> Iterator for SlaReader<'a> {
     type Item = SlaItem;
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            match self.next_tag().unwrap() {
+            match self.next_tag() {
                 Tag::ElStart(id) => return Some(SlaItem::Elem(id)),
                 Tag::Attr(id, attr) => return Some(SlaItem::Attr(id, attr)),
                 Tag::ElEnd => {
