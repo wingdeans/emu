@@ -1,6 +1,5 @@
 use crate::slaformat::{AId, EId};
 
-use core::str::from_utf8;
 use std::io::Read;
 
 #[derive(Debug)]

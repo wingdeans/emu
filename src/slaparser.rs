@@ -136,7 +136,7 @@ impl SlaParser<'_> {
     fn parse_head(&mut self) {
         let mut name = None;
         let mut id = 0;
-        while let Some(item) = self.r.next() {
+        for item in self.r.by_ref() {
             match item {
                 Attr(AId::NAME, Str(aname)) => name = Some(aname),
                 Attr(AId::ID, Uint(aid)) => id = aid,
@@ -155,7 +155,6 @@ impl SlaParser<'_> {
                 Elem(EId::SUBTABLE_SYM) => subtables.push(self.parse_subtable()),
                 Elem(_) => self.r.skip_elem(),
                 Attr(_, _) => (),
-                _ => unreachable!("unknown symbol table item: {:?}", item),
             }
         }
 
