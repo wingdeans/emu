@@ -164,17 +164,17 @@ impl SlaParser<'_> {
     fn parse_sleigh(&mut self) -> SymbolTable {
         let mut symtab = None;
 
-        if let Elem(EId::SLEIGH) = self.r.next().unwrap() {
-            while let Some(item) = self.r.next() {
-                match item {
-                    Elem(EId::SOURCEFILES | EId::SPACES) => self.r.skip_elem(),
-                    Elem(EId::SYMBOL_TABLE) => symtab = Some(self.parse_symbol_table()),
-                    Attr(_, _) => (),
-                    _ => unreachable!("unknown sleigh item: {:?}", item),
-                }
+        let Elem(EId::SLEIGH) = self.r.next().unwrap() else {
+            unreachable!("root element is not sleigh");
+        };
+
+        while let Some(item) = self.r.next() {
+            match item {
+                Elem(EId::SOURCEFILES | EId::SPACES) => self.r.skip_elem(),
+                Elem(EId::SYMBOL_TABLE) => symtab = Some(self.parse_symbol_table()),
+                Attr(_, _) => (),
+                _ => unreachable!("unknown sleigh item: {:?}", item),
             }
-        } else {
-            unreachable!()
         }
 
         symtab.unwrap()

@@ -103,11 +103,9 @@ impl SlaReader<'_> {
                             5 => Attribute::BasicAddr(x),
                             7 => Attribute::Str(
                                 String::from_utf8(
-                                    self.it.by_ref()
-                                        .take(x as usize)
-                                        .copied()
-                                        .collect()
-                                ).unwrap()
+                                    self.it.by_ref().take(x as usize).copied().collect(),
+                                )
+                                .unwrap(),
                             ),
                             _ => unreachable!(),
                         }
