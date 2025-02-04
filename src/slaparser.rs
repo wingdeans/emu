@@ -4,7 +4,7 @@ use crate::slareader::SlaItem::{Attr, Elem};
 use crate::slareader::{SlaBuf, SlaReader};
 
 #[derive(Debug)]
-struct Mask {
+pub(crate) struct Mask {
     id: u16,
     off: u8,
     nonzero: u8,
@@ -13,21 +13,36 @@ struct Mask {
 }
 
 #[derive(Debug)]
-enum Decision {
-    Bits(u8, u8, Vec<Decision>),
+pub(crate) enum Decision {
+    Bits {
+        start: u8,
+        size: u8,
+        options: Vec<Decision>,
+    },
     Masks(Vec<Mask>),
 }
 
 #[derive(Debug)]
-struct Subtable {
+pub(crate) struct Subtable {
     id: u16,
     name: String,
-    decision: Decision,
+    pub(crate) decision: Decision,
 }
 
 #[derive(Debug)]
 pub(crate) struct SymbolTable {
     subtables: Vec<Subtable>,
+}
+
+impl SymbolTable {
+    pub(crate) fn get_subtable_by_id(&self, id: u16) -> Option<&Subtable> {
+        let idx = self.subtables.binary_search_by_key(&id, |st| st.id).ok()?;
+        Some(&self.subtables[idx])
+    }
+
+    pub(crate) fn get_subtable_by_name(&self, name: &str) -> Option<&Subtable> {
+        self.subtables.iter().find(|st| st.name == name)
+    }
 }
 
 struct SlaParser<'a> {
@@ -102,7 +117,11 @@ impl SlaParser<'_> {
             assert_eq!(options.len(), 1 << size);
             let start = start.try_into().unwrap();
             let size = size.try_into().unwrap();
-            Decision::Bits(start, size, options)
+            Decision::Bits {
+                start,
+                size,
+                options,
+            }
         } else {
             Decision::Masks(masks)
         }
@@ -157,6 +176,9 @@ impl SlaParser<'_> {
                 Attr(_, _) => (),
             }
         }
+
+        // sorted
+        assert!(subtables.windows(2).all(|w| w[0].id <= w[1].id));
 
         SymbolTable { subtables }
     }

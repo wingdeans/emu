@@ -31,7 +31,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let buf = SlaBuf::new("sm83.sla")?;
     let sleigh = buf.parse_sleigh();
 
-    println!("{:#?}", sleigh);
+    println!(
+        "{:#?}",
+        sleigh.get_subtable_by_name("instruction").unwrap().decision
+    );
 
     Ok(())
 }
