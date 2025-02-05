@@ -81,7 +81,10 @@ pub(crate) enum Sym {
         constructors: Vec<Constructor>,
         decision: Decision,
     },
-    Varlist,
+    Varlist {
+        tokenfield: TokenField,
+        vars: Vec<Option<SymIdx>>,
+    },
     Varnode,
 }
 
@@ -311,17 +314,25 @@ impl SlaParser<'_> {
 
     fn parse_varlist(&mut self, syms: &mut Vec<Sym>) {
         let mut id = 0;
+        let mut tokenfield = None;
+        let mut vars = Vec::new();
 
         while let Some(item) = self.0.next() {
             match item {
                 Attr(AId::ID, Uint(x)) => id = x,
-                Elem(_) => self.0.skip_elem(),
+                Elem(EId::TOKENFIELD) => tokenfield = Some(self.parse_tokenfield()),
+                Elem(EId::VAR) => vars.push(Some(sym_idx!(self.parse_element_id()))),
+                Elem(EId::NULL) => self.0.skip_elem(),
                 Attr(_, _) => (),
+                _ => unreachable!("unknown varlist item: {:?}", item),
             }
         }
 
         let id = id.try_into().unwrap();
-        let sym = Sym::Varlist;
+        let sym = Sym::Varlist {
+            tokenfield: tokenfield.unwrap(),
+            vars,
+        };
         Self::push_sym_at(syms, id, sym);
     }
 

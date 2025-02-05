@@ -94,12 +94,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         unreachable!()
                     };
                     match op {
-                        t @ Operand::Tok(_) => format!("{:?}:{:?}", sym_idx, t),
+                        t @ Operand::Tok(_) => "Token".to_string(), //format!("{:?}:{:?}", sym_idx, t),
                         Operand::Subsym {
                             subsym: subsym_idx, ..
                         } => match sleigh.get_sym(*subsym_idx) {
                             Sym::Subtable { .. } => "Subtable".to_string(),
                             Sym::Varnode => sleigh.get_sym_name(*subsym_idx).to_string(),
+                            Sym::Varlist { .. } => "VARLIST".to_string(),
                             other => format!("{:?}=>{:?}:{:?}", sym_idx, subsym_idx, other),
                         },
                         Operand::Unk => "<<UNKNOWN>>".to_string(),
