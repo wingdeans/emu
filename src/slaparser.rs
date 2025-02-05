@@ -69,11 +69,13 @@ impl SlaParser<'_> {
     fn parse_element_id(&mut self) -> u16 {
         let mut id = 0;
         for item in self.r.by_ref() {
-            if let Attr(AId::ID, Uint(aid)) = item {
-                id = aid
+            match item {
+                Attr(AId::ID, Uint(aid)) => id = aid.try_into().unwrap(),
+                Attr(AId::ID, Int(aid)) => id = aid.try_into().unwrap(),
+                _ => (),
             }
         }
-        id.try_into().unwrap()
+        id
     }
 
     fn push_sym_at(vec: &mut Vec<Sym>, id: usize, val: Sym) {

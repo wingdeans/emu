@@ -74,7 +74,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let Sym::Subtable {
         decision,
         constructors,
-    } = std::mem::replace(&mut sleigh.syms[sleigh.subtables["instruction"]], Sym::Unknown)
+    } = std::mem::replace(
+        &mut sleigh.syms[sleigh.subtables["instruction"]],
+        Sym::Unknown,
+    )
     else {
         unreachable!();
     };
@@ -91,7 +94,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Print::OpPrint(op_idx) => {
                     let sym_idx = constructor.operands[op_idx as usize];
                     format!("{}:{:?}", sym_idx, sleigh.syms[sym_idx as usize])
-                },
+                }
             })
             .collect::<Vec<_>>()
             .join("");
