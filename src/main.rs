@@ -69,27 +69,32 @@ fn gen_decision(decision: &Decision) -> TokenStream {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let buf = SlaBuf::new("sm83.sla")?;
-    let sleigh = buf.parse_sleigh();
+    let mut sleigh = buf.parse_sleigh();
 
     let Sym::Subtable {
-        ref decision,
-        ref constructors,
-    } = sleigh.syms[sleigh.subtables["instruction"]]
+        decision,
+        constructors,
+    } = std::mem::replace(&mut sleigh.syms[sleigh.subtables["instruction"]], Sym::Unknown)
     else {
         unreachable!();
     };
 
-    let decision_body = gen_decision(decision);
+    let decision_body = gen_decision(&decision);
 
-    let print_cases = constructors.iter().map(|constructor| {
-        let Print::Print(s) = &constructor.prints[0] else {
-            unreachable!();
-        };
+    let print_cases = constructors.into_iter().map(|constructor| {
         let id = constructor.id;
-
-        for operand in &constructor.operands {
-            println!("{:?}", sleigh.syms[*operand as usize]);
-        }
+        let s = constructor
+            .prints
+            .into_iter()
+            .map(|p| match p {
+                Print::Print(s) => s,
+                Print::OpPrint(op_idx) => {
+                    let sym_idx = constructor.operands[op_idx as usize];
+                    format!("{}:{:?}", sym_idx, sleigh.syms[sym_idx as usize])
+                },
+            })
+            .collect::<Vec<_>>()
+            .join("");
 
         quote! {
             #id => #s,
@@ -111,7 +116,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // println!("{:#?}", sleigh.operands);
-    // println!("{}", prettyplease::unparse(&syn::parse2(tokens)?));
+    println!("{}", prettyplease::unparse(&syn::parse2(tokens)?));
 
     Ok(())
 }

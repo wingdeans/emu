@@ -181,7 +181,7 @@ impl SlaParser<'_> {
 
     fn parse_operand(&mut self, syms: &mut Vec<Sym>) {
         let mut id = 0;
-        let (mut off, mut minlen, mut idx) = (0, 0, 0);
+        let (mut off, mut minlen) = (0, 0);
         while let Some(item) = self.r.next() {
             match item {
                 Elem(EId::OPERAND_EXP) => self.r.skip_elem(),
@@ -192,8 +192,8 @@ impl SlaParser<'_> {
                 // Elem(_) => self.r.skip_elem(),
                 Attr(AId::ID, Uint(aid)) => id = aid.try_into().unwrap(),
                 Attr(AId::OFF, Int(aoff)) => off = aoff.try_into().unwrap(),
-                Attr(AId::BASE, Int(abase)) => assert_eq!(abase, -1),
                 Attr(AId::MINLEN, Int(aminlen)) => minlen = aminlen.try_into().unwrap(),
+                Attr(AId::BASE, Int(abase)) => assert_eq!(abase, -1),
                 Attr(_, _) => (),
                 _ => unreachable!("unknown operand item: {:?}", item),
             }
