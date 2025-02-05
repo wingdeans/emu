@@ -5,11 +5,11 @@ use crate::slareader::{SlaBuf, SlaReader};
 
 #[derive(Debug)]
 pub(crate) struct Mask {
-    id: u16,
-    off: u8,
-    nonzero: u8,
-    mask: u64,
-    val: u64,
+    pub(crate) id: u16,
+    pub(crate) off: u8,
+    pub(crate) nonzero: u8,
+    pub(crate) mask: u64,
+    pub(crate) val: u64,
 }
 
 #[derive(Debug)]
