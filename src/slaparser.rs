@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::slaformat::{AId, EId};
 use crate::slareader::Attribute::{Int, Str, Uint};
 use crate::slareader::SlaItem::{Attr, Elem};
@@ -65,7 +63,7 @@ pub(crate) enum Sym {
 #[derive(Debug)]
 pub(crate) struct SymbolTable {
     pub(crate) syms: Vec<Sym>,
-    pub(crate) subtables: HashMap<String, usize>,
+    pub(crate) sym_names: Vec<String>,
 }
 
 // PARSER
@@ -280,7 +278,7 @@ impl SlaParser<'_> {
         Self::push_sym_at(syms, id, sym);
     }
 
-    fn parse_head(&mut self, subtables: &mut HashMap<String, usize>) {
+    fn parse_head(&mut self, sym_names: &mut Vec<String>) {
         let mut name = None;
         let mut id = 0;
         for item in self.r.by_ref() {
@@ -292,16 +290,27 @@ impl SlaParser<'_> {
             }
         }
 
-        subtables.insert(name.unwrap(), id.try_into().unwrap());
+        assert_eq!(id, sym_names.len().try_into().unwrap());
+        sym_names.push(name.unwrap());
     }
 
     fn parse_symbol_table(&mut self) -> SymbolTable {
         let mut syms = Vec::new();
-        let mut subtables = HashMap::new();
+        let mut sym_names = Vec::new();
 
         while let Some(item) = self.r.next() {
             match item {
-                Elem(EId::SUBTABLE_SYM_HEAD) => self.parse_head(&mut subtables),
+                Elem(
+                    EId::SUBTABLE_SYM_HEAD
+                    | EId::START_SYM_HEAD
+                    | EId::END_SYM_HEAD
+                    | EId::NEXT2_SYM_HEAD
+                    | EId::VARNODE_SYM_HEAD
+                    | EId::VALUE_SYM_HEAD
+                    | EId::VARLIST_SYM_HEAD
+                    | EId::OPERAND_SYM_HEAD
+                    | EId::USEROP_HEAD,
+                ) => self.parse_head(&mut sym_names),
                 Elem(EId::SUBTABLE_SYM) => self.parse_subtable(&mut syms),
                 Elem(EId::OPERAND_SYM) => self.parse_operand(&mut syms),
                 Elem(EId::VARLIST_SYM) => self.parse_varlist(&mut syms),
@@ -311,7 +320,7 @@ impl SlaParser<'_> {
             }
         }
 
-        SymbolTable { syms, subtables }
+        SymbolTable { syms, sym_names }
     }
 
     fn parse_sleigh(&mut self) -> SymbolTable {

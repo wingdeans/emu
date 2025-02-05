@@ -75,7 +75,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         decision,
         constructors,
     } = std::mem::replace(
-        &mut sleigh.syms[sleigh.subtables["instruction"]],
+        &mut sleigh.syms[sleigh
+            .sym_names
+            .iter()
+            .position(|n| n == "instruction")
+            .unwrap()],
         Sym::Unknown,
     )
     else {
