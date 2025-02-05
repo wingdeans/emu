@@ -41,16 +41,25 @@ pub(crate) enum Decision {
 }
 
 #[derive(Debug)]
-pub(crate) enum Sym {
-    Unknown,
-    Operand {
+pub(crate) enum Operand {
+    Subsym {
         off: u8,
         // minlen: u8,
+        subsym: u16,
     },
+    TokenField,
+}
+
+#[derive(Debug)]
+pub(crate) enum Sym {
+    Unknown,
+    Op(Operand),
     Subtable {
         constructors: Vec<Constructor>,
         decision: Decision,
     },
+    Varlist,
+    Varnode,
 }
 
 #[derive(Debug)]
@@ -184,6 +193,7 @@ impl SlaParser<'_> {
     fn parse_operand(&mut self, syms: &mut Vec<Sym>) {
         let mut id = 0;
         let (mut off, mut _minlen) = (0, 0);
+        let mut subsym = None;
         while let Some(item) = self.r.next() {
             match item {
                 Elem(EId::OPERAND_EXP) => self.r.skip_elem(),
@@ -195,13 +205,23 @@ impl SlaParser<'_> {
                 Attr(AId::ID, Uint(aid)) => id = aid.try_into().unwrap(),
                 Attr(AId::OFF, Int(aoff)) => off = aoff.try_into().unwrap(),
                 // Attr(AId::MINLEN, Int(aminlen)) => minlen = aminlen.try_into().unwrap(),
+                Attr(AId::SUBSYM, Uint(asubsym)) => subsym = Some(asubsym),
                 Attr(AId::BASE, Int(abase)) => assert_eq!(abase, -1),
                 Attr(_, _) => (),
                 _ => unreachable!("unknown operand item: {:?}", item),
             }
         }
 
-        Self::push_sym_at(syms, id.try_into().unwrap(), Sym::Operand { off });
+        let op = if let Some(subsym) = subsym {
+            Operand::Subsym {
+                off,
+                subsym: subsym.try_into().unwrap(),
+            }
+        } else {
+            Operand::TokenField
+        };
+
+        Self::push_sym_at(syms, id.try_into().unwrap(), Sym::Op(op));
     }
 
     fn parse_subtable(&mut self, syms: &mut Vec<Sym>) {
@@ -225,6 +245,38 @@ impl SlaParser<'_> {
             constructors,
             decision: decision.unwrap(),
         };
+        Self::push_sym_at(syms, id, sym);
+    }
+
+    fn parse_varlist(&mut self, syms: &mut Vec<Sym>) {
+        let mut id = 0;
+
+        while let Some(item) = self.r.next() {
+            match item {
+                Attr(AId::ID, Uint(aid)) => id = aid,
+                Elem(_) => self.r.skip_elem(),
+                Attr(_, _) => (),
+            }
+        }
+
+        let id = id.try_into().unwrap();
+        let sym = Sym::Varlist;
+        Self::push_sym_at(syms, id, sym);
+    }
+
+    fn parse_varnode(&mut self, syms: &mut Vec<Sym>) {
+        let mut id = 0;
+
+        while let Some(item) = self.r.next() {
+            match item {
+                Attr(AId::ID, Uint(aid)) => id = aid,
+                Elem(_) => self.r.skip_elem(),
+                Attr(_, _) => (),
+            }
+        }
+
+        let id = id.try_into().unwrap();
+        let sym = Sym::Varnode;
         Self::push_sym_at(syms, id, sym);
     }
 
@@ -252,6 +304,8 @@ impl SlaParser<'_> {
                 Elem(EId::SUBTABLE_SYM_HEAD) => self.parse_head(&mut subtables),
                 Elem(EId::SUBTABLE_SYM) => self.parse_subtable(&mut syms),
                 Elem(EId::OPERAND_SYM) => self.parse_operand(&mut syms),
+                Elem(EId::VARLIST_SYM) => self.parse_varlist(&mut syms),
+                Elem(EId::VARNODE_SYM) => self.parse_varnode(&mut syms),
                 Elem(_) => self.r.skip_elem(),
                 Attr(_, _) => (),
             }

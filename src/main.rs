@@ -2,7 +2,7 @@ mod slaformat;
 mod slaparser;
 mod slareader;
 
-use crate::slaparser::{Decision, Mask, Print, Sym};
+use crate::slaparser::{Decision, Mask, Operand, Print, Sym};
 use crate::slareader::SlaBuf;
 
 use proc_macro2::TokenStream;
@@ -93,7 +93,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Print::Print(s) => s,
                 Print::OpPrint(op_idx) => {
                     let sym_idx = constructor.operands[op_idx as usize];
-                    format!("{}:{:?}", sym_idx, sleigh.syms[sym_idx as usize])
+                    let Sym::Op(op) = &sleigh.syms[sym_idx as usize] else {
+                        unreachable!()
+                    };
+                    match op {
+                        Operand::TokenField => format!("{}:TokenField", sym_idx),
+                        Operand::Subsym { subsym, .. } => {
+                            format!(
+                                "{}=>{}:{:?}",
+                                sym_idx, subsym, sleigh.syms[*subsym as usize]
+                            )
+                        }
+                    }
                 }
             })
             .collect::<Vec<_>>()
