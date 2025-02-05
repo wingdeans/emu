@@ -2,7 +2,7 @@ mod slaformat;
 mod slaparser;
 mod slareader;
 
-use crate::slaparser::{Decision, Mask};
+use crate::slaparser::{Decision, Mask, Print};
 use crate::slareader::SlaBuf;
 
 use proc_macro2::TokenStream;
@@ -30,7 +30,7 @@ fn gen_decision(decision: &Decision) -> TokenStream {
             let branches = masks.iter().map(|Mask { id, off, nonzero, mask, val }| {
                 assert_eq!(*off, 0);
 
-                let mut range = 0..(*nonzero as usize);
+                let range = 0..(*nonzero as usize);
                 let (masks, vals): (Vec<u8>, Vec<u8>) = range.clone().map(|i| {
                     let shift = 32 - 8 * (i + 1);
                     ((mask >> shift) as u8, (val >> shift) as u8)
@@ -59,18 +59,37 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let insn_subtable = sleigh.get_subtable_by_name("instruction").unwrap();
     let decision = gen_decision(&insn_subtable.decision);
 
-    let mut tokens = quote! {
+    let print = insn_subtable.constructors.iter().map(|constructor| {
+        let Print::Print(s) = &constructor.prints[0] else {
+            unreachable!();
+        };
+        let id = constructor.id;
+
+        quote! {
+            #id => #s,
+        }
+    });
+
+    let tokens = quote! {
         // struct Decoder {
         // }
         //
         // impl Decoder {
-            #[allow(unused_parens)]
-            pub(crate) fn decode(buf: &[u8]) -> Option<u16> {
-                #decision
+        #[allow(unused_parens)]
+        pub(crate) fn decode(buf: &[u8]) -> Option<u16> {
+            #decision
+        }
+
+        pub(crate) fn print(op: u16) -> &'static str {
+            match op {
+                #(#print)*
+                _ => unreachable!()
             }
+        }
         // }
     };
 
+    // println!("{:#?}", sleigh.operands);
     println!("{}", prettyplease::unparse(&syn::parse2(tokens)?));
 
     Ok(())
