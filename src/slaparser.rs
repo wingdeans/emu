@@ -78,18 +78,16 @@ pub(crate) struct SymbolTable {
 
 // PARSER
 
-struct SlaParser<'a> {
-    r: SlaReader<'a>,
-}
+struct SlaParser<'a>(SlaReader<'a>);
 
 impl SlaParser<'_> {
     fn parse_element_id(&mut self) -> u16 {
         let mut id = 0;
-        while let Some(item) = self.r.next() {
+        while let Some(item) = self.0.next() {
             match item {
                 Attr(AId::ID, Uint(x)) => id = x.try_into().unwrap(),
                 Attr(AId::ID, Int(x)) => id = x.try_into().unwrap(),
-                Elem(_) => self.r.skip_elem(),
+                Elem(_) => self.0.skip_elem(),
                 _ => (),
             }
         }
@@ -107,16 +105,16 @@ impl SlaParser<'_> {
         let mut operands = Vec::new();
         let mut prints = Vec::new();
 
-        while let Some(item) = self.r.next() {
+        while let Some(item) = self.0.next() {
             match item {
                 Elem(EId::OPER) => operands.push(self.parse_element_id()),
                 Elem(EId::OPPRINT) => prints.push(Print::OpPrint(self.parse_element_id())),
                 // opprint
-                Elem(EId::PRINT) => self.r.enter(),
+                Elem(EId::PRINT) => self.0.enter(),
                 // opprint -> piece
                 Attr(AId::PIECE, Str(s)) => prints.push(Print::Print(s)),
                 // end
-                Elem(EId::CONSTRUCT_TPL) => self.r.skip_elem(),
+                Elem(EId::CONSTRUCT_TPL) => self.0.skip_elem(),
                 Attr(_, _) => (),
                 _ => unreachable!("unknown constructor item: {:?}", item),
             }
@@ -136,18 +134,18 @@ impl SlaParser<'_> {
         let (mut off, mut nonzero) = (0, 0);
         let (mut mask, mut val) = (0, 0);
 
-        while let Some(item) = self.r.next() {
+        while let Some(item) = self.0.next() {
             match item {
                 // pair
                 Attr(AId::ID, Int(x)) => id = x, // TODO
                 // pair -> instruct pat
-                Elem(EId::INSTRUCT_PAT) => self.r.enter(),
+                Elem(EId::INSTRUCT_PAT) => self.0.enter(),
                 // pair -> instruct pat -> pat block
-                Elem(EId::PAT_BLOCK) => self.r.enter(),
+                Elem(EId::PAT_BLOCK) => self.0.enter(),
                 Attr(AId::OFF, Int(x)) => off = x,
                 Attr(AId::NONZERO, Int(x)) => nonzero = x,
                 // pair -> instruct pat -> pat block -> mask word
-                Elem(EId::MASK_WORD) => self.r.enter(),
+                Elem(EId::MASK_WORD) => self.0.enter(),
                 Attr(AId::MASK, Uint(x)) => mask = x,
                 Attr(AId::VAL, Uint(x)) => val = x,
                 // end
@@ -172,7 +170,7 @@ impl SlaParser<'_> {
         let (mut start, mut size) = (0, 0);
         let mut masks = Vec::new();
         let mut options = Vec::new();
-        while let Some(item) = self.r.next() {
+        while let Some(item) = self.0.next() {
             match item {
                 Elem(EId::PAIR) => masks.push(self.parse_pair()),
                 Elem(EId::DECISION) => options.push(self.parse_decision()),
@@ -202,7 +200,7 @@ impl SlaParser<'_> {
     fn parse_tokenfield(&mut self) -> TokenField {
         let (mut startbit, mut endbit, mut startbyte, mut endbyte) = (0, 0, 0, 0);
 
-        while let Some(item) = self.r.next() {
+        while let Some(item) = self.0.next() {
             match item {
                 Attr(AId::STARTBIT, Int(x)) => startbit = x.try_into().unwrap(),
                 Attr(AId::ENDBIT, Int(x)) => startbit = x.try_into().unwrap(),
@@ -226,13 +224,13 @@ impl SlaParser<'_> {
         let mut subsym = None;
         let mut tokenfield = None;
 
-        while let Some(item) = self.r.next() {
+        while let Some(item) = self.0.next() {
             match item {
-                Elem(EId::OPERAND_EXP) => self.r.skip_elem(),
+                Elem(EId::OPERAND_EXP) => self.0.skip_elem(),
                 Elem(EId::TOKENFIELD) => tokenfield = Some(self.parse_tokenfield()),
-                Elem(EId::PLUS_EXP) => self.r.skip_elem(),
-                Elem(EId::LSHIFT_EXP) => self.r.skip_elem(),
-                Elem(EId::MINUS_EXP) => self.r.skip_elem(),
+                Elem(EId::PLUS_EXP) => self.0.skip_elem(),
+                Elem(EId::LSHIFT_EXP) => self.0.skip_elem(),
+                Elem(EId::MINUS_EXP) => self.0.skip_elem(),
                 Attr(AId::ID, Uint(x)) => id = x.try_into().unwrap(),
                 Attr(AId::OFF, Int(x)) => off = x.try_into().unwrap(),
                 // Attr(AId::MINLEN, Int(x)) => minlen = x.try_into().unwrap(),
@@ -262,7 +260,7 @@ impl SlaParser<'_> {
         let mut decision = None;
         let mut constructors = Vec::new();
 
-        while let Some(item) = self.r.next() {
+        while let Some(item) = self.0.next() {
             match item {
                 Elem(EId::CONSTRUCTOR) => constructors
                     .push(self.parse_constructor(constructors.len().try_into().unwrap())),
@@ -284,10 +282,10 @@ impl SlaParser<'_> {
     fn parse_varlist(&mut self, syms: &mut Vec<Sym>) {
         let mut id = 0;
 
-        while let Some(item) = self.r.next() {
+        while let Some(item) = self.0.next() {
             match item {
                 Attr(AId::ID, Uint(x)) => id = x,
-                Elem(_) => self.r.skip_elem(),
+                Elem(_) => self.0.skip_elem(),
                 Attr(_, _) => (),
             }
         }
@@ -300,10 +298,10 @@ impl SlaParser<'_> {
     fn parse_varnode(&mut self, syms: &mut Vec<Sym>) {
         let mut id = 0;
 
-        while let Some(item) = self.r.next() {
+        while let Some(item) = self.0.next() {
             match item {
                 Attr(AId::ID, Uint(x)) => id = x,
-                Elem(_) => self.r.skip_elem(),
+                Elem(_) => self.0.skip_elem(),
                 Attr(_, _) => (),
             }
         }
@@ -318,7 +316,7 @@ impl SlaParser<'_> {
     fn parse_head(&mut self, sym_names: &mut Vec<String>) {
         let mut name = None;
         let mut id = 0;
-        for item in self.r.by_ref() {
+        for item in self.0.by_ref() {
             match item {
                 Attr(AId::NAME, Str(aname)) => name = Some(aname),
                 Attr(AId::ID, Uint(x)) => id = x,
@@ -335,7 +333,7 @@ impl SlaParser<'_> {
         let mut syms = Vec::new();
         let mut sym_names = Vec::new();
 
-        while let Some(item) = self.r.next() {
+        while let Some(item) = self.0.next() {
             match item {
                 Elem(
                     EId::SUBTABLE_SYM_HEAD
@@ -352,7 +350,7 @@ impl SlaParser<'_> {
                 Elem(EId::OPERAND_SYM) => self.parse_operand(&mut syms),
                 Elem(EId::VARLIST_SYM) => self.parse_varlist(&mut syms),
                 Elem(EId::VARNODE_SYM) => self.parse_varnode(&mut syms),
-                Elem(_) => self.r.skip_elem(),
+                Elem(_) => self.0.skip_elem(),
                 Attr(_, _) => (),
             }
         }
@@ -363,13 +361,13 @@ impl SlaParser<'_> {
     fn parse_sleigh(&mut self) -> SymbolTable {
         let mut symtab = None;
 
-        let Elem(EId::SLEIGH) = self.r.next().unwrap() else {
+        let Elem(EId::SLEIGH) = self.0.next().unwrap() else {
             unreachable!("root element is not sleigh");
         };
 
-        while let Some(item) = self.r.next() {
+        while let Some(item) = self.0.next() {
             match item {
-                Elem(EId::SOURCEFILES | EId::SPACES) => self.r.skip_elem(),
+                Elem(EId::SOURCEFILES | EId::SPACES) => self.0.skip_elem(),
                 Elem(EId::SYMBOL_TABLE) => symtab = Some(self.parse_symbol_table()),
                 Attr(_, _) => (),
                 _ => unreachable!("unknown sleigh item: {:?}", item),
@@ -382,9 +380,7 @@ impl SlaParser<'_> {
 
 impl SlaBuf {
     pub(crate) fn parse_sleigh(&self) -> SymbolTable {
-        let mut parser = SlaParser {
-            r: self.into_iter(),
-        };
+        let mut parser = SlaParser(self.into_iter());
         parser.parse_sleigh()
     }
 }
