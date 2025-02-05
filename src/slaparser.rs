@@ -39,13 +39,22 @@ pub(crate) enum Decision {
 }
 
 #[derive(Debug)]
+pub(crate) struct TokenField {
+    startbit: u8,
+    endbit: u8,
+    startbyte: u8,
+    endbyte: u8,
+}
+
+#[derive(Debug)]
 pub(crate) enum Operand {
     Subsym {
         off: u8,
         // minlen: u8,
         subsym: u16,
     },
-    TokenField,
+    Tok(TokenField),
+    Unk, // TODO
 }
 
 #[derive(Debug)]
@@ -75,10 +84,11 @@ struct SlaParser<'a> {
 impl SlaParser<'_> {
     fn parse_element_id(&mut self) -> u16 {
         let mut id = 0;
-        for item in self.r.by_ref() {
+        while let Some(item) = self.r.next() {
             match item {
                 Attr(AId::ID, Uint(aid)) => id = aid.try_into().unwrap(),
                 Attr(AId::ID, Int(aid)) => id = aid.try_into().unwrap(),
+                Elem(_) => self.r.skip_elem(),
                 _ => (),
             }
         }
@@ -188,18 +198,40 @@ impl SlaParser<'_> {
 
     // OPERAND
 
+    fn parse_tokenfield(&mut self) -> TokenField {
+        let (mut startbit, mut endbit, mut startbyte, mut endbyte) = (0, 0, 0, 0);
+
+        while let Some(item) = self.r.next() {
+            match item {
+                Attr(AId::STARTBIT, Int(astartbit)) => startbit = astartbit.try_into().unwrap(),
+                Attr(AId::ENDBIT, Int(aendbit)) => startbit = aendbit.try_into().unwrap(),
+                Attr(AId::STARTBYTE, Int(astartbyte)) => startbit = astartbyte.try_into().unwrap(),
+                Attr(AId::ENDBYTE, Int(aendbyte)) => startbit = aendbyte.try_into().unwrap(),
+                _ => (),
+            }
+        }
+
+        TokenField {
+            startbit,
+            endbit,
+            startbyte,
+            endbyte,
+        }
+    }
+
     fn parse_operand(&mut self, syms: &mut Vec<Sym>) {
         let mut id = 0;
         let (mut off, mut _minlen) = (0, 0);
         let mut subsym = None;
+        let mut tokenfield = None;
+
         while let Some(item) = self.r.next() {
             match item {
                 Elem(EId::OPERAND_EXP) => self.r.skip_elem(),
-                Elem(EId::TOKENFIELD) => self.r.skip_elem(),
+                Elem(EId::TOKENFIELD) => tokenfield = Some(self.parse_tokenfield()),
                 Elem(EId::PLUS_EXP) => self.r.skip_elem(),
                 Elem(EId::LSHIFT_EXP) => self.r.skip_elem(),
                 Elem(EId::MINUS_EXP) => self.r.skip_elem(),
-                // Elem(_) => self.r.skip_elem(),
                 Attr(AId::ID, Uint(aid)) => id = aid.try_into().unwrap(),
                 Attr(AId::OFF, Int(aoff)) => off = aoff.try_into().unwrap(),
                 // Attr(AId::MINLEN, Int(aminlen)) => minlen = aminlen.try_into().unwrap(),
@@ -215,8 +247,10 @@ impl SlaParser<'_> {
                 off,
                 subsym: subsym.try_into().unwrap(),
             }
+        } else if let Some(tokenfield) = tokenfield {
+            Operand::Tok(tokenfield)
         } else {
-            Operand::TokenField
+            Operand::Unk
         };
 
         Self::push_sym_at(syms, id.try_into().unwrap(), Sym::Op(op));
@@ -277,6 +311,8 @@ impl SlaParser<'_> {
         let sym = Sym::Varnode;
         Self::push_sym_at(syms, id, sym);
     }
+
+    // SYMBOL TABLE
 
     fn parse_head(&mut self, sym_names: &mut Vec<String>) {
         let mut name = None;
