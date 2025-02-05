@@ -102,11 +102,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     };
                     match op {
                         Operand::TokenField => format!("{}:TokenField", sym_idx),
-                        Operand::Subsym { subsym, .. } => {
-                            format!(
-                                "{}=>{}:{:?}",
-                                sym_idx, subsym, sleigh.syms[*subsym as usize]
-                            )
+                        Operand::Subsym { subsym: subsym_idx, .. } => {
+                            match &sleigh.syms[*subsym_idx as usize] {
+                                Sym::Subtable { .. } => "Subtable".to_string(),
+                                Sym::Varnode => sleigh.sym_names[*subsym_idx as usize].clone(),
+                                other => format!("{}=>{}:{:?}", sym_idx, subsym_idx, other)
+                            }
                         }
                     }
                 }
