@@ -4,6 +4,7 @@ use crate::slareader::SlaItem::{Attr, Elem};
 use crate::slareader::{SlaBuf, SlaReader};
 
 // CONSTRUCTOR
+
 #[derive(Debug)]
 pub(crate) enum Print {
     OpPrint(u16),
@@ -86,8 +87,8 @@ impl SlaParser<'_> {
         let mut id = 0;
         while let Some(item) = self.r.next() {
             match item {
-                Attr(AId::ID, Uint(aid)) => id = aid.try_into().unwrap(),
-                Attr(AId::ID, Int(aid)) => id = aid.try_into().unwrap(),
+                Attr(AId::ID, Uint(x)) => id = x.try_into().unwrap(),
+                Attr(AId::ID, Int(x)) => id = x.try_into().unwrap(),
                 Elem(_) => self.r.skip_elem(),
                 _ => (),
             }
@@ -138,17 +139,17 @@ impl SlaParser<'_> {
         while let Some(item) = self.r.next() {
             match item {
                 // pair
-                Attr(AId::ID, Int(aid)) => id = aid, // TODO
+                Attr(AId::ID, Int(x)) => id = x, // TODO
                 // pair -> instruct pat
                 Elem(EId::INSTRUCT_PAT) => self.r.enter(),
                 // pair -> instruct pat -> pat block
                 Elem(EId::PAT_BLOCK) => self.r.enter(),
-                Attr(AId::OFF, Int(aoff)) => off = aoff,
-                Attr(AId::NONZERO, Int(anonzero)) => nonzero = anonzero,
+                Attr(AId::OFF, Int(x)) => off = x,
+                Attr(AId::NONZERO, Int(x)) => nonzero = x,
                 // pair -> instruct pat -> pat block -> mask word
                 Elem(EId::MASK_WORD) => self.r.enter(),
-                Attr(AId::MASK, Uint(amask)) => mask = amask,
-                Attr(AId::VAL, Uint(aval)) => val = aval,
+                Attr(AId::MASK, Uint(x)) => mask = x,
+                Attr(AId::VAL, Uint(x)) => val = x,
                 // end
                 Attr(_, _) => (),
                 _ => unreachable!("unknown pair item: {:?}", item),
@@ -175,8 +176,8 @@ impl SlaParser<'_> {
             match item {
                 Elem(EId::PAIR) => masks.push(self.parse_pair()),
                 Elem(EId::DECISION) => options.push(self.parse_decision()),
-                Attr(AId::STARTBIT, Int(astart)) => start = astart,
-                Attr(AId::SIZE, Int(asize)) => size = asize,
+                Attr(AId::STARTBIT, Int(x)) => start = x,
+                Attr(AId::SIZE, Int(x)) => size = x,
                 Attr(_, _) => (),
                 _ => unreachable!("unknown decision item: {:?}", item),
             }
@@ -203,10 +204,10 @@ impl SlaParser<'_> {
 
         while let Some(item) = self.r.next() {
             match item {
-                Attr(AId::STARTBIT, Int(astartbit)) => startbit = astartbit.try_into().unwrap(),
-                Attr(AId::ENDBIT, Int(aendbit)) => startbit = aendbit.try_into().unwrap(),
-                Attr(AId::STARTBYTE, Int(astartbyte)) => startbit = astartbyte.try_into().unwrap(),
-                Attr(AId::ENDBYTE, Int(aendbyte)) => startbit = aendbyte.try_into().unwrap(),
+                Attr(AId::STARTBIT, Int(x)) => startbit = x.try_into().unwrap(),
+                Attr(AId::ENDBIT, Int(x)) => startbit = x.try_into().unwrap(),
+                Attr(AId::STARTBYTE, Int(x)) => startbit = x.try_into().unwrap(),
+                Attr(AId::ENDBYTE, Int(x)) => startbit = x.try_into().unwrap(),
                 _ => (),
             }
         }
@@ -232,11 +233,11 @@ impl SlaParser<'_> {
                 Elem(EId::PLUS_EXP) => self.r.skip_elem(),
                 Elem(EId::LSHIFT_EXP) => self.r.skip_elem(),
                 Elem(EId::MINUS_EXP) => self.r.skip_elem(),
-                Attr(AId::ID, Uint(aid)) => id = aid.try_into().unwrap(),
-                Attr(AId::OFF, Int(aoff)) => off = aoff.try_into().unwrap(),
-                // Attr(AId::MINLEN, Int(aminlen)) => minlen = aminlen.try_into().unwrap(),
-                Attr(AId::SUBSYM, Uint(asubsym)) => subsym = Some(asubsym),
-                Attr(AId::BASE, Int(abase)) => assert_eq!(abase, -1),
+                Attr(AId::ID, Uint(x)) => id = x.try_into().unwrap(),
+                Attr(AId::OFF, Int(x)) => off = x.try_into().unwrap(),
+                // Attr(AId::MINLEN, Int(x)) => minlen = x.try_into().unwrap(),
+                Attr(AId::SUBSYM, Uint(x)) => subsym = Some(x),
+                Attr(AId::BASE, Int(x)) => assert_eq!(x, -1),
                 Attr(_, _) => (),
                 _ => unreachable!("unknown operand item: {:?}", item),
             }
@@ -266,7 +267,7 @@ impl SlaParser<'_> {
                 Elem(EId::CONSTRUCTOR) => constructors
                     .push(self.parse_constructor(constructors.len().try_into().unwrap())),
                 Elem(EId::DECISION) => decision = Some(self.parse_decision()),
-                Attr(AId::ID, Uint(aid)) => id = aid,
+                Attr(AId::ID, Uint(x)) => id = x,
                 Attr(_, _) => (),
                 _ => unreachable!("unknown subtable item: {:?}", item),
             }
@@ -285,7 +286,7 @@ impl SlaParser<'_> {
 
         while let Some(item) = self.r.next() {
             match item {
-                Attr(AId::ID, Uint(aid)) => id = aid,
+                Attr(AId::ID, Uint(x)) => id = x,
                 Elem(_) => self.r.skip_elem(),
                 Attr(_, _) => (),
             }
@@ -301,7 +302,7 @@ impl SlaParser<'_> {
 
         while let Some(item) = self.r.next() {
             match item {
-                Attr(AId::ID, Uint(aid)) => id = aid,
+                Attr(AId::ID, Uint(x)) => id = x,
                 Elem(_) => self.r.skip_elem(),
                 Attr(_, _) => (),
             }
@@ -320,7 +321,7 @@ impl SlaParser<'_> {
         for item in self.r.by_ref() {
             match item {
                 Attr(AId::NAME, Str(aname)) => name = Some(aname),
-                Attr(AId::ID, Uint(aid)) => id = aid,
+                Attr(AId::ID, Uint(x)) => id = x,
                 Attr(AId::SCOPE, Uint(_)) => (),
                 _ => unreachable!("unknown head item: {:?}", item),
             }
