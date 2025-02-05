@@ -3,18 +3,33 @@ use crate::slareader::Attribute::{Int, Str, Uint};
 use crate::slareader::SlaItem::{Attr, Elem};
 use crate::slareader::{SlaBuf, SlaReader};
 
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct SymIdx(u16);
+
+macro_rules! sym_idx {
+    ($x:expr) => {
+        SymIdx($x.try_into().unwrap())
+    };
+}
+
+impl quote::ToTokens for crate::slaparser::SymIdx {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        self.0.to_tokens(tokens)
+    }
+}
+
 // CONSTRUCTOR
 
 #[derive(Debug)]
 pub(crate) enum Print {
-    OpPrint(u16),
+    OpPrint(u8),
     Print(String),
 }
 
 #[derive(Debug)]
 pub(crate) struct Constructor {
-    pub(crate) id: u16,
-    pub(crate) operands: Vec<u16>,
+    pub(crate) id: SymIdx,
+    pub(crate) operands: Vec<SymIdx>,
     pub(crate) prints: Vec<Print>,
 }
 
@@ -22,7 +37,7 @@ pub(crate) struct Constructor {
 
 #[derive(Debug)]
 pub(crate) struct Mask {
-    pub(crate) id: u16,
+    pub(crate) id: SymIdx,
     pub(crate) off: u8,
     pub(crate) nonzero: u8,
     pub(crate) mask: u64,
@@ -52,7 +67,7 @@ pub(crate) enum Operand {
     Subsym {
         off: u8,
         // minlen: u8,
-        subsym: u16,
+        subsym: SymIdx,
     },
     Tok(TokenField),
     Unk, // TODO
@@ -72,8 +87,20 @@ pub(crate) enum Sym {
 
 #[derive(Debug)]
 pub(crate) struct SymbolTable {
-    pub(crate) syms: Vec<Sym>,
-    pub(crate) sym_names: Vec<String>,
+    syms: Vec<Sym>,
+    sym_names: Vec<String>,
+}
+
+impl SymbolTable {
+    pub(crate) fn get_sym(&self, idx: SymIdx) -> &Sym {
+        &self.syms[idx.0 as usize]
+    }
+    pub(crate) fn find_sym(&self, name: &str) -> Option<&Sym> {
+        Some(&self.syms[self.sym_names.iter().position(|n| n == name)?])
+    }
+    pub(crate) fn get_sym_name(&self, idx: SymIdx) -> &str {
+        &self.sym_names[idx.0 as usize]
+    }
 }
 
 // PARSER
@@ -81,11 +108,11 @@ pub(crate) struct SymbolTable {
 struct SlaParser<'a>(SlaReader<'a>);
 
 impl SlaParser<'_> {
-    fn parse_element_id(&mut self) -> u16 {
+    fn parse_element_id(&mut self) -> u64 {
         let mut id = 0;
         while let Some(item) = self.0.next() {
             match item {
-                Attr(AId::ID, Uint(x)) => id = x.try_into().unwrap(),
+                Attr(AId::ID, Uint(x)) => id = x,
                 Attr(AId::ID, Int(x)) => id = x.try_into().unwrap(),
                 Elem(_) => self.0.skip_elem(),
                 _ => (),
@@ -101,14 +128,16 @@ impl SlaParser<'_> {
 
     // CONSTRUCTOR
 
-    fn parse_constructor(&mut self, id: u16) -> Constructor {
+    fn parse_constructor(&mut self, id: SymIdx) -> Constructor {
         let mut operands = Vec::new();
         let mut prints = Vec::new();
 
         while let Some(item) = self.0.next() {
             match item {
-                Elem(EId::OPER) => operands.push(self.parse_element_id()),
-                Elem(EId::OPPRINT) => prints.push(Print::OpPrint(self.parse_element_id())),
+                Elem(EId::OPER) => operands.push(sym_idx!(self.parse_element_id())),
+                Elem(EId::OPPRINT) => {
+                    prints.push(Print::OpPrint(self.parse_element_id().try_into().unwrap()))
+                }
                 // opprint
                 Elem(EId::PRINT) => self.0.enter(),
                 // opprint -> piece
@@ -154,7 +183,7 @@ impl SlaParser<'_> {
             }
         }
 
-        let id = id.try_into().unwrap();
+        let id = sym_idx!(id);
         let off = off.try_into().unwrap();
         let nonzero = nonzero.try_into().unwrap();
         Mask {
@@ -203,9 +232,9 @@ impl SlaParser<'_> {
         while let Some(item) = self.0.next() {
             match item {
                 Attr(AId::STARTBIT, Int(x)) => startbit = x.try_into().unwrap(),
-                Attr(AId::ENDBIT, Int(x)) => startbit = x.try_into().unwrap(),
-                Attr(AId::STARTBYTE, Int(x)) => startbit = x.try_into().unwrap(),
-                Attr(AId::ENDBYTE, Int(x)) => startbit = x.try_into().unwrap(),
+                Attr(AId::ENDBIT, Int(x)) => endbit = x.try_into().unwrap(),
+                Attr(AId::STARTBYTE, Int(x)) => startbyte = x.try_into().unwrap(),
+                Attr(AId::ENDBYTE, Int(x)) => endbyte = x.try_into().unwrap(),
                 _ => (),
             }
         }
@@ -244,7 +273,7 @@ impl SlaParser<'_> {
         let op = if let Some(subsym) = subsym {
             Operand::Subsym {
                 off,
-                subsym: subsym.try_into().unwrap(),
+                subsym: sym_idx!(subsym),
             }
         } else if let Some(tokenfield) = tokenfield {
             Operand::Tok(tokenfield)
@@ -262,8 +291,9 @@ impl SlaParser<'_> {
 
         while let Some(item) = self.0.next() {
             match item {
-                Elem(EId::CONSTRUCTOR) => constructors
-                    .push(self.parse_constructor(constructors.len().try_into().unwrap())),
+                Elem(EId::CONSTRUCTOR) => {
+                    constructors.push(self.parse_constructor(sym_idx!(constructors.len())))
+                }
                 Elem(EId::DECISION) => decision = Some(self.parse_decision()),
                 Attr(AId::ID, Uint(x)) => id = x,
                 Attr(_, _) => (),

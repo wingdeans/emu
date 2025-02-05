@@ -72,16 +72,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut sleigh = buf.parse_sleigh();
 
     let Sym::Subtable {
-        decision,
-        constructors,
-    } = std::mem::replace(
-        &mut sleigh.syms[sleigh
-            .sym_names
-            .iter()
-            .position(|n| n == "instruction")
-            .unwrap()],
-        Sym::Unknown,
-    )
+        ref decision,
+        ref constructors,
+    } = sleigh.find_sym("instruction").unwrap()
     else {
         unreachable!();
     };
@@ -92,22 +85,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let id = constructor.id;
         let s = constructor
             .prints
-            .into_iter()
+            .iter()
             .map(|p| match p {
-                Print::Print(s) => s,
+                Print::Print(s) => s.clone(), // TODO
                 Print::OpPrint(op_idx) => {
-                    let sym_idx = constructor.operands[op_idx as usize];
-                    let Sym::Op(op) = &sleigh.syms[sym_idx as usize] else {
+                    let sym_idx = constructor.operands[*op_idx as usize];
+                    let Sym::Op(op) = sleigh.get_sym(sym_idx) else {
                         unreachable!()
                     };
                     match op {
-                        t @ Operand::Tok(_) => format!("{}:{:?}", sym_idx, t),
+                        t @ Operand::Tok(_) => format!("{:?}:{:?}", sym_idx, t),
                         Operand::Subsym {
                             subsym: subsym_idx, ..
-                        } => match &sleigh.syms[*subsym_idx as usize] {
+                        } => match sleigh.get_sym(*subsym_idx) {
                             Sym::Subtable { .. } => "Subtable".to_string(),
-                            Sym::Varnode => sleigh.sym_names[*subsym_idx as usize].clone(),
-                            other => format!("{}=>{}:{:?}", sym_idx, subsym_idx, other),
+                            Sym::Varnode => sleigh.get_sym_name(*subsym_idx).to_string(),
+                            other => format!("{:?}=>{:?}:{:?}", sym_idx, subsym_idx, other),
                         },
                         Operand::Unk => "<<UNKNOWN>>".to_string(),
                     }
@@ -118,6 +111,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         quote! {
             #id => #s,
+            0 => #s,
         }
     });
 
