@@ -7,7 +7,7 @@ use crate::slareader::{SlaBuf, SlaReader};
 #[derive(Debug)]
 pub(crate) enum Print {
     OpPrint(u16),
-    Print(String)
+    Print(String),
 }
 
 #[derive(Debug)]
@@ -39,52 +39,40 @@ pub(crate) enum Decision {
 }
 
 #[derive(Debug)]
-pub(crate) struct Operand {
-    id: u16,
-    name: String
-}
-
-#[derive(Debug)]
-pub(crate) struct Subtable {
-    id: u16,
-    name: String,
-    pub(crate) constructors: Vec<Constructor>,
-    pub(crate) decision: Decision,
+pub(crate) enum Sym {
+    Operand,
+    Subtable {
+        constructors: Vec<Constructor>,
+        decision: Decision,
+    },
 }
 
 #[derive(Debug)]
 pub(crate) struct SymbolTable {
-    subtables: Vec<Subtable>,
-    pub(crate) operands: Vec<Operand>
+    pub(crate) syms: Vec<Sym>,
+    pub(crate) sym_names: Vec<String>,
 }
 
 impl SymbolTable {
-    pub(crate) fn get_subtable_by_id(&self, id: u16) -> Option<&Subtable> {
-        let idx = self.subtables.binary_search_by_key(&id, |st| st.id).ok()?;
-        Some(&self.subtables[idx])
-    }
-
-    pub(crate) fn get_subtable_by_name(&self, name: &str) -> Option<&Subtable> {
-        self.subtables.iter().find(|st| st.name == name)
-    }
-
-    pub(crate) fn get_operand_by_id(&self, id: u16) -> Option<&Operand> {
-        let idx = self.operands.binary_search_by_key(&id, |st| st.id).ok()?;
-        Some(&self.operands[idx])
+    pub(crate) fn get_syms<'a>(
+        &'a self,
+        name: &'a str,
+    ) -> impl std::iter::Iterator<Item = &Sym> + 'a {
+        self.syms.iter().enumerate().filter_map(move |(i, sym)| {
+            if self.sym_names[i] == name {
+                Some(sym)
+            } else {
+                None
+            }
+        })
     }
 }
 
 struct SlaParser<'a> {
     r: SlaReader<'a>,
-    heads: Vec<(u16, String)>,
 }
 
 impl SlaParser<'_> {
-    fn get_name(&mut self, id: u16) -> String {
-        let idx = self.heads.binary_search_by_key(&id, |&(id, _)| id).unwrap();
-        self.heads[idx].1.clone()
-    }
-
     fn parse_element_id(&mut self) -> u16 {
         let mut id = 0;
         for item in self.r.by_ref() {
@@ -119,7 +107,7 @@ impl SlaParser<'_> {
         Constructor {
             id,
             prints,
-            operands
+            operands,
         }
     }
 
@@ -193,30 +181,35 @@ impl SlaParser<'_> {
 
     // OPERAND
 
-    fn parse_operand(&mut self) -> Operand {
+    fn parse_operand(&mut self) -> Sym {
         let mut id = 0;
         while let Some(item) = self.r.next() {
             match item {
-                Elem(_) => self.r.skip_elem(),
+                Elem(EId::OPERAND_EXP) => self.r.skip_elem(),
+                Elem(EId::TOKENFIELD) => self.r.skip_elem(),
+                Elem(EId::PLUS_EXP) => self.r.skip_elem(),
+                Elem(EId::LSHIFT_EXP) => self.r.skip_elem(),
+                Elem(EId::MINUS_EXP) => self.r.skip_elem(),
+                // Elem(_) => self.r.skip_elem(),
                 Attr(AId::ID, Uint(aid)) => id = aid,
                 Attr(_, _) => (),
+                _ => unreachable!("unknown operand item: {:?}", item),
             }
         }
 
         let id: u16 = id.try_into().unwrap();
-        Operand { id, name: self.get_name(id) }
+        Sym::Operand
     }
 
-    fn parse_subtable(&mut self) -> Subtable {
+    fn parse_subtable(&mut self) -> Sym {
         let mut id = 0;
         let mut decision = None;
         let mut constructors = Vec::new();
 
         while let Some(item) = self.r.next() {
             match item {
-                Elem(EId::CONSTRUCTOR) => constructors.push(
-                    self.parse_constructor(constructors.len().try_into().unwrap())
-                ),
+                Elem(EId::CONSTRUCTOR) => constructors
+                    .push(self.parse_constructor(constructors.len().try_into().unwrap())),
                 Elem(EId::DECISION) => decision = Some(self.parse_decision()),
                 Attr(AId::ID, Uint(aid)) => id = aid,
                 Attr(_, _) => (),
@@ -225,15 +218,13 @@ impl SlaParser<'_> {
         }
 
         let id: u16 = id.try_into().unwrap();
-        Subtable {
-            id,
-            name: self.get_name(id),
+        Sym::Subtable {
             constructors,
             decision: decision.unwrap(),
         }
     }
 
-    fn parse_head(&mut self) {
+    fn parse_head(&mut self, sym_names: &mut Vec<String>) {
         let mut name = None;
         let mut id = 0;
         for item in self.r.by_ref() {
@@ -244,28 +235,36 @@ impl SlaParser<'_> {
                 _ => unreachable!("unknown head item: {:?}", item),
             }
         }
-        self.heads.push((id.try_into().unwrap(), name.unwrap()))
+
+        assert_eq!(id, sym_names.len().try_into().unwrap());
+        sym_names.push(name.unwrap());
     }
 
     fn parse_symbol_table(&mut self) -> SymbolTable {
-        let mut subtables = Vec::new();
-        let mut operands = Vec::new();
+        let mut syms = Vec::new();
+        let mut sym_names = Vec::new();
 
         while let Some(item) = self.r.next() {
             match item {
-                Elem(EId::SUBTABLE_SYM_HEAD) => self.parse_head(),
-                Elem(EId::OPERAND_SYM_HEAD) => self.parse_head(),
-                Elem(EId::SUBTABLE_SYM) => subtables.push(self.parse_subtable()),
-                Elem(EId::OPERAND_SYM) => operands.push(self.parse_operand()),
+                Elem(
+                    EId::SUBTABLE_SYM_HEAD
+                    | EId::START_SYM_HEAD
+                    | EId::END_SYM_HEAD
+                    | EId::NEXT2_SYM_HEAD
+                    | EId::VARNODE_SYM_HEAD
+                    | EId::VALUE_SYM_HEAD
+                    | EId::VARLIST_SYM_HEAD
+                    | EId::OPERAND_SYM_HEAD
+                    | EId::USEROP_HEAD,
+                ) => self.parse_head(&mut sym_names),
+                Elem(EId::SUBTABLE_SYM) => syms.push(self.parse_subtable()),
+                Elem(EId::OPERAND_SYM) => syms.push(self.parse_operand()),
                 Elem(_) => self.r.skip_elem(),
                 Attr(_, _) => (),
             }
         }
 
-        // symbol table should be sorted
-        assert!(subtables.windows(2).all(|w| w[0].id <= w[1].id));
-
-        SymbolTable { subtables, operands }
+        SymbolTable { syms, sym_names }
     }
 
     fn parse_sleigh(&mut self) -> SymbolTable {
@@ -292,7 +291,6 @@ impl SlaBuf {
     pub(crate) fn parse_sleigh(&self) -> SymbolTable {
         let mut parser = SlaParser {
             r: self.into_iter(),
-            heads: Vec::new(),
         };
         parser.parse_sleigh()
     }
