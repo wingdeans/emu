@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::slaformat::{AId, EId};
 use crate::slareader::Attribute::{Int, Str, Uint};
 use crate::slareader::SlaItem::{Attr, Elem};
@@ -40,7 +42,11 @@ pub(crate) enum Decision {
 
 #[derive(Debug)]
 pub(crate) enum Sym {
-    Operand,
+    Unknown,
+    Operand {
+        off: u8,
+        minlen: u8,
+    },
     Subtable {
         constructors: Vec<Constructor>,
         decision: Decision,
@@ -50,23 +56,10 @@ pub(crate) enum Sym {
 #[derive(Debug)]
 pub(crate) struct SymbolTable {
     pub(crate) syms: Vec<Sym>,
-    pub(crate) sym_names: Vec<String>,
+    pub(crate) subtables: HashMap<String, usize>,
 }
 
-impl SymbolTable {
-    pub(crate) fn get_syms<'a>(
-        &'a self,
-        name: &'a str,
-    ) -> impl std::iter::Iterator<Item = &Sym> + 'a {
-        self.syms.iter().enumerate().filter_map(move |(i, sym)| {
-            if self.sym_names[i] == name {
-                Some(sym)
-            } else {
-                None
-            }
-        })
-    }
-}
+// PARSER
 
 struct SlaParser<'a> {
     r: SlaReader<'a>,
@@ -81,6 +74,11 @@ impl SlaParser<'_> {
             }
         }
         id.try_into().unwrap()
+    }
+
+    fn push_sym_at(vec: &mut Vec<Sym>, id: usize, val: Sym) {
+        vec.resize_with(id + 1, || Sym::Unknown);
+        vec[id] = val
     }
 
     // CONSTRUCTOR
@@ -181,8 +179,9 @@ impl SlaParser<'_> {
 
     // OPERAND
 
-    fn parse_operand(&mut self) -> Sym {
+    fn parse_operand(&mut self, syms: &mut Vec<Sym>) {
         let mut id = 0;
+        let (mut off, mut minlen, mut idx) = (0, 0, 0);
         while let Some(item) = self.r.next() {
             match item {
                 Elem(EId::OPERAND_EXP) => self.r.skip_elem(),
@@ -191,17 +190,19 @@ impl SlaParser<'_> {
                 Elem(EId::LSHIFT_EXP) => self.r.skip_elem(),
                 Elem(EId::MINUS_EXP) => self.r.skip_elem(),
                 // Elem(_) => self.r.skip_elem(),
-                Attr(AId::ID, Uint(aid)) => id = aid,
+                Attr(AId::ID, Uint(aid)) => id = aid.try_into().unwrap(),
+                Attr(AId::OFF, Int(aoff)) => off = aoff.try_into().unwrap(),
+                Attr(AId::BASE, Int(abase)) => assert_eq!(abase, -1),
+                Attr(AId::MINLEN, Int(aminlen)) => minlen = aminlen.try_into().unwrap(),
                 Attr(_, _) => (),
                 _ => unreachable!("unknown operand item: {:?}", item),
             }
         }
 
-        let id: u16 = id.try_into().unwrap();
-        Sym::Operand
+        Self::push_sym_at(syms, id.try_into().unwrap(), Sym::Operand { off, minlen });
     }
 
-    fn parse_subtable(&mut self) -> Sym {
+    fn parse_subtable(&mut self, syms: &mut Vec<Sym>) {
         let mut id = 0;
         let mut decision = None;
         let mut constructors = Vec::new();
@@ -217,14 +218,15 @@ impl SlaParser<'_> {
             }
         }
 
-        let id: u16 = id.try_into().unwrap();
-        Sym::Subtable {
+        let id = id.try_into().unwrap();
+        let sym = Sym::Subtable {
             constructors,
             decision: decision.unwrap(),
-        }
+        };
+        Self::push_sym_at(syms, id, sym);
     }
 
-    fn parse_head(&mut self, sym_names: &mut Vec<String>) {
+    fn parse_head(&mut self, subtables: &mut HashMap<String, usize>) {
         let mut name = None;
         let mut id = 0;
         for item in self.r.by_ref() {
@@ -236,35 +238,24 @@ impl SlaParser<'_> {
             }
         }
 
-        assert_eq!(id, sym_names.len().try_into().unwrap());
-        sym_names.push(name.unwrap());
+        subtables.insert(name.unwrap(), id.try_into().unwrap());
     }
 
     fn parse_symbol_table(&mut self) -> SymbolTable {
         let mut syms = Vec::new();
-        let mut sym_names = Vec::new();
+        let mut subtables = HashMap::new();
 
         while let Some(item) = self.r.next() {
             match item {
-                Elem(
-                    EId::SUBTABLE_SYM_HEAD
-                    | EId::START_SYM_HEAD
-                    | EId::END_SYM_HEAD
-                    | EId::NEXT2_SYM_HEAD
-                    | EId::VARNODE_SYM_HEAD
-                    | EId::VALUE_SYM_HEAD
-                    | EId::VARLIST_SYM_HEAD
-                    | EId::OPERAND_SYM_HEAD
-                    | EId::USEROP_HEAD,
-                ) => self.parse_head(&mut sym_names),
-                Elem(EId::SUBTABLE_SYM) => syms.push(self.parse_subtable()),
-                Elem(EId::OPERAND_SYM) => syms.push(self.parse_operand()),
+                Elem(EId::SUBTABLE_SYM_HEAD) => self.parse_head(&mut subtables),
+                Elem(EId::SUBTABLE_SYM) => self.parse_subtable(&mut syms),
+                Elem(EId::OPERAND_SYM) => self.parse_operand(&mut syms),
                 Elem(_) => self.r.skip_elem(),
                 Attr(_, _) => (),
             }
         }
 
-        SymbolTable { syms, sym_names }
+        SymbolTable { syms, subtables }
     }
 
     fn parse_sleigh(&mut self) -> SymbolTable {

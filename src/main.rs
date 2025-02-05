@@ -71,20 +71,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let buf = SlaBuf::new("sm83.sla")?;
     let sleigh = buf.parse_sleigh();
 
-    let (decision, constructors) = sleigh
-        .get_syms("instruction")
-        .find_map(|sym| {
-            if let Sym::Subtable {
-                ref decision,
-                ref constructors,
-            } = sym
-            {
-                Some((decision, constructors))
-            } else {
-                None
-            }
-        })
-        .unwrap();
+    let Sym::Subtable {
+        ref decision,
+        ref constructors,
+    } = sleigh.syms[sleigh.subtables["instruction"]]
+    else {
+        unreachable!();
+    };
 
     let decision_body = gen_decision(decision);
 
@@ -93,6 +86,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             unreachable!();
         };
         let id = constructor.id;
+
+        for operand in &constructor.operands {
+            println!("{:?}", sleigh.syms[*operand as usize]);
+        }
 
         quote! {
             #id => #s,
@@ -114,7 +111,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // println!("{:#?}", sleigh.operands);
-    println!("{}", prettyplease::unparse(&syn::parse2(tokens)?));
+    // println!("{}", prettyplease::unparse(&syn::parse2(tokens)?));
 
     Ok(())
 }
