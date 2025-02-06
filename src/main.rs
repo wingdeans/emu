@@ -7,6 +7,7 @@ use crate::slaparser::{
     Constructor, Decision, Mask, OpExpr, Operand, Print, Subtable, Sym, TokenField, Varlist,
 };
 use crate::slareader::SlaBuf;
+use crate::pcodeop::PcodeOp;
 
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
@@ -187,7 +188,7 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
 
             #[allow(unused_variables)]
             #[allow(dead_code)]
-            fn print(&self) {
+            fn pcode(&self, vec: &mut Vec<Pcode>) {
                 println!("    {}", match self {
                     #(#pcode_cases)*
                 })
@@ -370,6 +371,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut tokens = quote! {
         #[derive(Debug)]
+        pub(crate) struct Pcode();
+
+        #[derive(Debug)]
         pub(crate) struct Insn(Sym0);
 
         pub(crate) fn decode(buf: &[u8]) -> Option<Insn> {
@@ -377,8 +381,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         impl Insn {
-            pub(crate) fn print(&self) {
-                self.0.print()
+            pub(crate) fn pcode(&self, vec: &mut Vec<Pcode>) {
+                self.0.pcode(vec)
             }
         }
 
