@@ -109,6 +109,47 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
         }
     };
 
+    let fmt_cases = subtable.constructors.iter().map(|constructor| {
+        let variant = format_ident!("Variant{}", constructor.id);
+        let operand_vars = constructor
+            .operands
+            .iter()
+            .map(|op| format_ident!("op{}", op));
+
+        let fstring = constructor
+            .prints
+            .iter()
+            .map(|p| match p {
+                Print::Print(piece) => piece,
+                Print::OpPrint(_) => "<>",
+            })
+            .collect::<Vec<_>>()
+            .join("");
+
+        /* Print::OpPrint(op_idx) => {
+            let sym_idx = constructor.operands[*op_idx as usize];
+            let Sym::Op(op) = sleigh.get_sym(sym_idx) else {
+            unreachable!()
+        };
+            match op {
+            t @ Operand::Tok(_) => "Token".to_string(), //format!("{:?}:{:?}", sym_idx, t),
+            Operand::Subsym {
+            subsym: subsym_idx, ..
+        } => match sleigh.get_sym(*subsym_idx) {
+            Sym::Subtable { .. } => "Subtable".to_string(),
+            Sym::Varnode => sleigh.get_sym_name(*subsym_idx).to_string(),
+            Sym::Varlist { .. } => "VARLIST".to_string(),
+            other => format!("{:?}=>{:?}:{:?}", sym_idx, subsym_idx, other),
+        },
+            Operand::Unk => "<<UNKNOWN>>".to_string(),
+        }
+        } */
+
+        quote! {
+            Self::#variant(#(#operand_vars),*) => write!(f, #fstring),
+        }
+    });
+
     quote! {
         #[derive(Debug)]
         enum #name {
@@ -120,6 +161,14 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
             #[allow(unused_variables)]
             fn decode(buf: &[u8]) -> Option<Self> {
                 #decode_body
+            }
+        }
+
+        impl std::fmt::Display for #name {
+            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                match self {
+                    #(#fmt_cases)*
+                }
             }
         }
     }
@@ -151,6 +200,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         pub(crate) fn decode(buf: &[u8]) -> Option<Insn> {
             Subtable0::decode(buf).map(|st| Insn(st))
         }
+
+        impl std::fmt::Display for Insn {
+            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                self.0.fmt(f)
+            }
+        }
     };
 
     for (i, sym) in sleigh.syms.into_iter().enumerate() {
@@ -162,40 +217,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     /*
-    let print_cases = insn_constructors.into_iter().map(|constructor| {
-        let id = constructor.id;
-        let s = constructor
-            .prints
-            .iter()
-            .map(|p| match p {
-                Print::Print(s) => s.clone(), // TODO
-                Print::OpPrint(op_idx) => {
-                    let sym_idx = constructor.operands[*op_idx as usize];
-                    let Sym::Op(op) = sleigh.get_sym(sym_idx) else {
-                        unreachable!()
-                    };
-                    match op {
-                        t @ Operand::Tok(_) => "Token".to_string(), //format!("{:?}:{:?}", sym_idx, t),
-                        Operand::Subsym {
-                            subsym: subsym_idx, ..
-                        } => match sleigh.get_sym(*subsym_idx) {
-                            Sym::Subtable { .. } => "Subtable".to_string(),
-                            Sym::Varnode => sleigh.get_sym_name(*subsym_idx).to_string(),
-                            Sym::Varlist { .. } => "VARLIST".to_string(),
-                            other => format!("{:?}=>{:?}:{:?}", sym_idx, subsym_idx, other),
-                        },
-                        Operand::Unk => "<<UNKNOWN>>".to_string(),
-                    }
-                }
-            })
-            .collect::<Vec<_>>()
-            .join("");
-
-        quote! {
-            #id => #s,
-            0 => #s,
-        }
-    });
      */
 
     // println!("{}", tokens);
