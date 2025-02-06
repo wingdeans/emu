@@ -111,17 +111,19 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
 
     let fmt_cases = subtable.constructors.iter().map(|constructor| {
         let variant = format_ident!("Variant{}", constructor.id);
-        let operand_vars = constructor
-            .operands
-            .iter()
-            .map(|op| format_ident!("op{}", op));
+        let operand_bindings = (0..constructor.operands.len()).map(|i| format_ident!("op{}", i));
+
+        let operand_args = constructor.prints.iter().filter_map(|print| match print {
+            Print::Print(_) => None,
+            Print::OpPrint(idx) => Some(format_ident!("op{}", idx)),
+        });
 
         let fstring = constructor
             .prints
             .iter()
-            .map(|p| match p {
+            .map(|print| match print {
                 Print::Print(piece) => piece,
-                Print::OpPrint(_) => "<>",
+                Print::OpPrint(_) => "{}",
             })
             .collect::<Vec<_>>()
             .join("");
@@ -146,7 +148,8 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
         } */
 
         quote! {
-            Self::#variant(#(#operand_vars),*) => write!(f, #fstring),
+            Self::#variant(#(#operand_bindings),*) =>
+                write!(f, #fstring, #(#operand_args),*),
         }
     });
 
@@ -184,6 +187,12 @@ fn gen_operand(op: Operand, idx: usize) -> TokenStream {
             #[allow(unused_variables)]
             fn decode(buf: &[u8]) -> Self {
                 Self {}
+            }
+        }
+
+        impl std::fmt::Display for #name {
+            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                write!(f, "op")
             }
         }
     }
