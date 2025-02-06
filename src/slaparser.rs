@@ -78,14 +78,16 @@ pub(crate) struct TokenField {
 }
 
 #[derive(Debug)]
-pub(crate) enum Operand {
-    Subsym {
-        off: u8,
-        // minlen: u8,
-        subsym: SymIdx,
-    },
+pub(crate) enum OpExpr {
+    Subsym(SymIdx),
     Tok(TokenField),
     Unk, // TODO
+}
+
+#[derive(Debug)]
+pub(crate) struct Operand {
+    pub(crate) off: u8,
+    pub(crate) expr: OpExpr,
 }
 
 #[derive(Debug)]
@@ -298,18 +300,15 @@ impl SlaParser<'_> {
             }
         }
 
-        let op = if let Some(subsym) = subsym {
-            Operand::Subsym {
-                off,
-                subsym: sym_idx!(subsym),
-            }
+        let expr = if let Some(subsym) = subsym {
+            OpExpr::Subsym(sym_idx!(subsym))
         } else if let Some(tokenfield) = tokenfield {
-            Operand::Tok(tokenfield)
+            OpExpr::Tok(tokenfield)
         } else {
-            Operand::Unk
+            OpExpr::Unk
         };
 
-        Self::push_sym_at(syms, cast!(id), Sym::Op(op));
+        Self::push_sym_at(syms, cast!(id), Sym::Op(Operand { off, expr }));
     }
 
     fn parse_subtable(&mut self, syms: &mut Vec<Sym>) {

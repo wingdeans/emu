@@ -3,7 +3,7 @@ mod slaparser;
 mod slareader;
 
 use crate::slaparser::{
-    Constructor, Decision, Mask, Operand, Print, Subtable, Sym, TokenField, Varlist,
+    Constructor, Decision, Mask, OpExpr, Operand, Print, Subtable, Sym, TokenField, Varlist,
 };
 use crate::slareader::SlaBuf;
 
@@ -179,7 +179,8 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
     }
 }
 
-fn gen_tokenfield(tokenfield: TokenField) -> (Ident, TokenStream) {
+fn gen_tokenfield(tokenfield: TokenField, off: u8) -> (Ident, TokenStream) {
+    let offset = off as usize;
     let TokenField {
         startbit,
         endbit,
@@ -190,7 +191,7 @@ fn gen_tokenfield(tokenfield: TokenField) -> (Ident, TokenStream) {
     (
         format_ident!("u64"),
         quote! {
-            (buf[0] >> #shift).into()
+            (buf[#offset] >> #shift).into() // TODO
         },
     )
 }
@@ -198,17 +199,18 @@ fn gen_tokenfield(tokenfield: TokenField) -> (Ident, TokenStream) {
 fn gen_operand(op: Operand, idx: usize) -> TokenStream {
     let name = format_ident!("Op{}", idx);
 
-    let (struct_body, decode_arg, write) = match op {
-        Operand::Subsym { subsym, .. } => (
+    let (struct_body, decode_arg, write) = match op.expr {
+        OpExpr::Subsym(subsym) => (
             Some(format_ident!("Sym{}", subsym)),
             {
+                let offset = op.off as usize;
                 let subsym = format_ident!("Sym{}", subsym);
-                Some(quote! { #subsym::decode(buf)? })
+                Some(quote! { #subsym::decode(&buf[#offset..])? })
             },
             quote!("{}", self.0),
         ),
-        Operand::Tok(tokenfield) => {
-            let (body, arg) = gen_tokenfield(tokenfield);
+        OpExpr::Tok(tokenfield) => {
+            let (body, arg) = gen_tokenfield(tokenfield, op.off);
             (Some(body), Some(arg), quote!("0x{:X}", self.0))
         }
         _ => (None, None, quote!("UNK?")),
