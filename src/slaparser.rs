@@ -46,6 +46,7 @@ pub(crate) struct Constructor {
     pub(crate) id: SymIdx,
     pub(crate) operands: Vec<SymIdx>,
     pub(crate) prints: Vec<Print>,
+    pub(crate) construct_tpl: Vec<PcodeOp>,
 }
 
 // DECISION
@@ -171,21 +172,24 @@ impl SlaParser<'_> {
         code.into()
     }
 
-    fn parse_construct_tpl(&mut self) {
+    fn parse_construct_tpl(&mut self) -> Vec<PcodeOp> {
+        let mut ops = Vec::new();
         while let Some(item) = self.0.next() {
             match item {
                 Elem(EId::NULL) => self.0.skip_elem(),
-                Elem(EId::OP_TPL) => self.0.skip_elem(),
+                Elem(EId::OP_TPL) => ops.push(self.parse_op_tpl()),
                 Elem(EId::HANDLE_TPL) => self.0.skip_elem(),
                 Attr(_, _) => (),
                 _ => unreachable!("unknown construct_tpl item: {:?}", item),
             }
         }
+        ops
     }
 
     fn parse_constructor(&mut self, id: SymIdx) -> Constructor {
         let mut operands = Vec::new();
         let mut prints = Vec::new();
+        let mut construct_tpl = None;
 
         while let Some(item) = self.0.next() {
             match item {
@@ -196,7 +200,7 @@ impl SlaParser<'_> {
                 // opprint -> piece
                 Attr(AId::PIECE, Str(s)) => prints.push(Print::Print(s)),
                 // end
-                Elem(EId::CONSTRUCT_TPL) => self.parse_construct_tpl(),
+                Elem(EId::CONSTRUCT_TPL) => construct_tpl = Some(self.parse_construct_tpl()),
                 Attr(_, _) => (),
                 _ => unreachable!("unknown constructor item: {:?}", item),
             }
@@ -206,6 +210,7 @@ impl SlaParser<'_> {
             id,
             prints,
             operands,
+            construct_tpl: construct_tpl.unwrap(),
         }
     }
 

@@ -156,6 +156,22 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
         }
     });
 
+    let pcode_cases = subtable.constructors.iter().map(|constructor| {
+        let variant = format_ident!("Variant{}", constructor.id);
+        let operand_bindings = (0..constructor.operands.len()).map(|i| format_ident!("op{}", i));
+
+        let op = constructor
+            .construct_tpl
+            .iter()
+            .map(|op_tpl| format!("{:?}", op_tpl))
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        quote! {
+            Self::#variant(#(#operand_bindings),*) => #op,
+        }
+    });
+
     quote! {
         #[derive(Debug)]
         enum #name {
@@ -167,6 +183,12 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
             #[allow(unused_variables)]
             fn decode(buf: &[u8]) -> Option<Self> {
                 #decode_body
+            }
+
+            fn print(&self) {
+                println!("    {}", match self {
+                    #(#pcode_cases)*
+                })
             }
         }
 
@@ -347,6 +369,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         pub(crate) fn decode(buf: &[u8]) -> Option<Insn> {
             Sym0::decode(buf).map(|st| Insn(st))
+        }
+
+        impl Insn {
+            pub(crate) fn print(&self) {
+                self.0.print()
+            }
         }
 
         impl std::fmt::Display for Insn {
