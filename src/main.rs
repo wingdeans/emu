@@ -179,7 +179,7 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
     }
 }
 
-fn gen_tokenfield(tokenfield: TokenField, off: u8) -> (Ident, TokenStream) {
+fn gen_tokenfield(tokenfield: TokenField, off: u8) -> TokenStream {
     let offset = off as usize;
     let TokenField {
         startbit,
@@ -188,32 +188,39 @@ fn gen_tokenfield(tokenfield: TokenField, off: u8) -> (Ident, TokenStream) {
         endbyte,
         shift,
     } = tokenfield;
-    (
-        format_ident!("u64"),
-        quote! {
-            (buf[#offset] >> #shift).into() // TODO
-        },
-    )
+    let endbit = std::cmp::min(endbit + 1, 8); // TODO
+    let start = (1u32 << startbit) - 1;
+    let end = (1u32 << endbit) - 1;
+    let mask: u8 = ((end - start) >> shift).try_into().unwrap();
+    // println!("{} {} {} {:08b}", startbit, endbit, shift, mask);
+    quote! {
+        (buf[#offset] >> #shift & #mask).into() // TODO
+    }
 }
 
 fn gen_operand(op: Operand, idx: usize) -> TokenStream {
     let name = format_ident!("Op{}", idx);
 
-    let (struct_body, decode_arg, write) = match op.expr {
-        OpExpr::Subsym(subsym) => (
-            Some(format_ident!("Sym{}", subsym)),
-            {
-                let offset = op.off as usize;
-                let subsym = format_ident!("Sym{}", subsym);
-                Some(quote! { #subsym::decode(&buf[#offset..])? })
-            },
-            quote!("{}", self.0),
-        ),
-        OpExpr::Tok(tokenfield) => {
-            let (body, arg) = gen_tokenfield(tokenfield, op.off);
-            (Some(body), Some(arg), quote!("0x{:X}", self.0))
+    let struct_body = &match op.expr {
+        OpExpr::Subsym(subsym) => Some(format_ident!("Sym{}", subsym)),
+        OpExpr::Tok(_) => Some(format_ident!("u8")),
+        _ => None,
+    };
+
+    let write = match op.expr {
+        OpExpr::Subsym(_) => quote!("{}", self.0),
+        OpExpr::Tok(_) => quote!("0x{:X}", self.0),
+        _ => quote!("UNK?"),
+    };
+
+    let decode_arg = &match op.expr {
+        OpExpr::Subsym(subsym) => {
+            let offset = op.off as usize;
+            let subsym = format_ident!("Sym{}", subsym);
+            Some(quote! { #subsym::decode(&buf[#offset..])? })
         }
-        _ => (None, None, quote!("UNK?")),
+        OpExpr::Tok(tokenfield) => Some(gen_tokenfield(tokenfield, op.off)),
+        _ => None,
     };
 
     quote! {
@@ -257,13 +264,49 @@ fn gen_varnode(text: &str, idx: usize) -> TokenStream {
 
 fn gen_varlist(varlist: Varlist, idx: usize) -> TokenStream {
     let name = format_ident!("Sym{}", idx);
+    let enum_body = varlist
+        .vars
+        .iter()
+        .enumerate()
+        .filter_map(|(i, maybe_idx)| {
+            let variant_name = format_ident!("Variant{}", i);
+            maybe_idx.map(|idx| {
+                let variant_body = format_ident!("Sym{}", idx);
+                Some(quote! {
+                    #variant_name(#variant_body),
+                })
+            })
+        });
+
+    let decode_arms = varlist
+        .vars
+        .iter()
+        .enumerate()
+        .filter_map(|(i, maybe_idx)| {
+            maybe_idx.map(|idx| {
+                let variant_name = format_ident!("Variant{}", i);
+                let sym_name = format_ident!("Sym{}", idx);
+                let pat = i as u8;
+                Some(quote! {
+                    #pat => Some(Self::#variant_name(#sym_name::decode(buf)?)),
+                })
+            })
+        });
+
+    let tokenfield = gen_tokenfield(varlist.tokenfield, 0);
+
     quote! {
         #[derive(Debug)]
-        struct #name();
+        enum #name {
+            #(#enum_body)*
+        }
 
         impl #name {
-            fn decode(_: &[u8]) -> Option<Self> {
-                Some(Self())
+            fn decode(buf: &[u8]) -> Option<Self> {
+                match #tokenfield {
+                    #(#decode_arms)*
+                    _ => None
+                }
             }
         }
 

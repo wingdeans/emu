@@ -98,8 +98,8 @@ pub(crate) struct Subtable {
 
 #[derive(Debug)]
 pub(crate) struct Varlist {
-    tokenfield: TokenField,
-    vars: Vec<Option<SymIdx>>,
+    pub(crate) tokenfield: TokenField,
+    pub(crate) vars: Vec<Option<SymIdx>>,
 }
 
 #[derive(Debug)]
@@ -345,7 +345,10 @@ impl SlaParser<'_> {
                 Attr(AId::ID, Uint(x)) => id = x,
                 Elem(EId::TOKENFIELD) => tokenfield = Some(self.parse_tokenfield()),
                 Elem(EId::VAR) => vars.push(Some(sym_idx!(self.parse_element_id()))),
-                Elem(EId::NULL) => self.0.skip_elem(),
+                Elem(EId::NULL) => {
+                    vars.push(None);
+                    self.0.skip_elem()
+                }
                 Attr(_, _) => (),
                 _ => unreachable!("unknown varlist item: {:?}", item),
             }
