@@ -2,7 +2,7 @@ mod slaformat;
 mod slaparser;
 mod slareader;
 
-use crate::slaparser::{Constructor, Decision, Mask, Operand, Print, Subtable, Sym};
+use crate::slaparser::{Constructor, Decision, Mask, Operand, Print, Subtable, Sym, Varlist};
 use crate::slareader::SlaBuf;
 
 use proc_macro2::TokenStream;
@@ -55,7 +55,7 @@ fn gen_decision(decision: Decision, constructors: &Vec<Constructor>) -> TokenStr
                     let decode_ops = constructors[*id as usize].operands.iter().map(|op| {
                         let op_name = format_ident!("Op{}", op);
                         quote! {
-                            #op_name::decode(&buf)
+                            #op_name::decode(&buf)?
                         }
                     });
 
@@ -79,7 +79,7 @@ fn gen_decision(decision: Decision, constructors: &Vec<Constructor>) -> TokenStr
 }
 
 fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
-    let name = format_ident!("Subtable{}", idx);
+    let name = format_ident!("Sym{}", idx);
     let enum_body = subtable
         .constructors
         .iter()
@@ -101,7 +101,7 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
         let decode_ops = subtable.constructors[0].operands.iter().map(|op| {
             let op_name = format_ident!("Op{}", op);
             quote! {
-                #op_name::decode(&buf)
+                #op_name::decode(&buf)?
             }
         });
         quote! {
@@ -179,20 +179,80 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
 
 fn gen_operand(op: Operand, idx: usize) -> TokenStream {
     let name = format_ident!("Op{}", idx);
+
+    let struct_body = match op {
+        Operand::Subsym { subsym, .. } => Some(format_ident!("Sym{}", subsym)),
+        _ => None,
+    };
+
+    let decode_arg = match op {
+        Operand::Subsym { subsym, .. } => {
+            let subsym = format_ident!("Sym{}", subsym);
+            Some(quote! { #subsym::decode(buf)? })
+        }
+        _ => None,
+    };
+
+    let write = match op {
+        Operand::Subsym { .. } => quote!("{}", self.0),
+        Operand::Tok(_) => quote!("tok"),
+        _ => quote!("UNK?"),
+    };
+
     quote! {
         #[derive(Debug)]
-        struct #name {}
+        struct #name(#struct_body);
 
         impl #name {
             #[allow(unused_variables)]
-            fn decode(buf: &[u8]) -> Self {
-                Self {}
+            fn decode(buf: &[u8]) -> Option<Self> {
+                Some(Self(#decode_arg))
             }
         }
 
         impl std::fmt::Display for #name {
             fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                write!(f, "op")
+                write!(f, #write)
+            }
+        }
+    }
+}
+
+fn gen_varnode(text: &str, idx: usize) -> TokenStream {
+    let name = format_ident!("Sym{}", idx);
+    quote! {
+        #[derive(Debug)]
+        struct #name();
+
+        impl #name {
+            fn decode(_: &[u8]) -> Option<Self> {
+                Some(Self())
+            }
+        }
+
+        impl std::fmt::Display for #name {
+            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                write!(f, #text)
+            }
+        }
+    }
+}
+
+fn gen_varlist(varlist: Varlist, idx: usize) -> TokenStream {
+    let name = format_ident!("Sym{}", idx);
+    quote! {
+        #[derive(Debug)]
+        struct #name();
+
+        impl #name {
+            fn decode(_: &[u8]) -> Option<Self> {
+                Some(Self())
+            }
+        }
+
+        impl std::fmt::Display for #name {
+            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                write!(f, "varlist")
             }
         }
     }
@@ -200,14 +260,14 @@ fn gen_operand(op: Operand, idx: usize) -> TokenStream {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let buf = SlaBuf::new("sm83.sla")?;
-    let mut sleigh = buf.parse_sleigh();
+    let sleigh = buf.parse_sleigh();
 
     let mut tokens = quote! {
         #[derive(Debug)]
-        pub(crate) struct Insn(Subtable0);
+        pub(crate) struct Insn(Sym0);
 
         pub(crate) fn decode(buf: &[u8]) -> Option<Insn> {
-            Subtable0::decode(buf).map(|st| Insn(st))
+            Sym0::decode(buf).map(|st| Insn(st))
         }
 
         impl std::fmt::Display for Insn {
@@ -221,14 +281,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match sym {
             Sym::Subtable(subtable) => tokens.extend(gen_subtable(subtable, i)),
             Sym::Op(operand) => tokens.extend(gen_operand(operand, i)),
+            Sym::Varnode => tokens.extend(gen_varnode(&sleigh.sym_names[i], i)),
+            Sym::Varlist(varlist) => tokens.extend(gen_varlist(varlist, i)),
             _ => (),
         }
     }
 
-    /*
-     */
-
-    // println!("{}", tokens);
     println!("{}", prettyplease::unparse(&syn::parse2(tokens)?));
 
     Ok(())

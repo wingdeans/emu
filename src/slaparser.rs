@@ -94,24 +94,28 @@ pub(crate) struct Subtable {
 }
 
 #[derive(Debug)]
+pub(crate) struct Varlist {
+    tokenfield: TokenField,
+    vars: Vec<Option<SymIdx>>,
+}
+
+#[derive(Debug)]
 pub(crate) enum Sym {
     Unknown,
     Op(Operand),
     Subtable(Subtable),
-    Varlist {
-        tokenfield: TokenField,
-        vars: Vec<Option<SymIdx>>,
-    },
+    Varlist(Varlist),
     Varnode,
 }
 
 #[derive(Debug)]
 pub(crate) struct SymbolTable {
     pub(crate) syms: Vec<Sym>,
-    sym_names: Vec<String>,
+    pub(crate) sym_names: Vec<String>,
 }
 
 impl SymbolTable {
+    /*
     pub(crate) fn get_sym(&self, idx: SymIdx) -> &Sym {
         &self.syms[idx.0 as usize]
     }
@@ -123,6 +127,7 @@ impl SymbolTable {
     pub(crate) fn get_sym_name(&self, idx: SymIdx) -> &str {
         &self.sym_names[idx.0 as usize]
     }
+    */
 }
 
 // PARSER
@@ -250,7 +255,7 @@ impl SlaParser<'_> {
     fn parse_tokenfield(&mut self) -> TokenField {
         let (mut startbit, mut endbit, mut startbyte, mut endbyte) = (0, 0, 0, 0);
 
-        while let Some(item) = self.0.next() {
+        for item in self.0.by_ref() {
             match item {
                 Attr(AId::STARTBIT, Int(x)) => startbit = cast!(x),
                 Attr(AId::ENDBIT, Int(x)) => endbit = cast!(x),
@@ -344,10 +349,10 @@ impl SlaParser<'_> {
             }
         }
 
-        let sym = Sym::Varlist {
+        let sym = Sym::Varlist(Varlist {
             tokenfield: tokenfield.unwrap(),
             vars,
-        };
+        });
         Self::push_sym_at(syms, cast!(id), sym);
     }
 
