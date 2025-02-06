@@ -2,13 +2,13 @@ mod slaformat;
 mod slaparser;
 mod slareader;
 
-use crate::slaparser::{Decision, Mask, Operand, Print, Sym};
+use crate::slaparser::{Constructor, Decision, Mask, Operand, Print, Subtable, Sym};
 use crate::slareader::SlaBuf;
 
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 
-fn gen_decision(decision: &Decision) -> TokenStream {
+fn gen_decision(decision: Decision, constructors: &Vec<Constructor>) -> TokenStream {
     match decision {
         Decision::Bits {
             start,
@@ -20,8 +20,10 @@ fn gen_decision(decision: &Decision) -> TokenStream {
             let shift = 8 - (start + size);
             let mask = (1 << size) - 1u8;
 
-            let decisions = options.iter().map(gen_decision);
             let range = 0..(options.len() as u8);
+            let decisions = options
+                .into_iter()
+                .map(|decision| gen_decision(decision, constructors));
 
             quote! {
                 match (buf[#byte_start] >> #shift) & #mask {
@@ -50,9 +52,18 @@ fn gen_decision(decision: &Decision) -> TokenStream {
                         })
                         .unzip();
 
+                    let decode_ops = constructors[*id as usize].operands.iter().map(|op| {
+                        let op_name = format_ident!("Op{}", op);
+                        quote! {
+                            #op_name::decode(&buf)
+                        }
+                    });
+
+                    let variant = format_ident!("Variant{}", *id);
+
                     quote! {
                         if #((buf[#range] & #masks == #vals))&&* {
-                            Some(#id)
+                            Some(Self::#variant(#(#decode_ops),*))
                         }
                     }
                 },
@@ -67,21 +78,91 @@ fn gen_decision(decision: &Decision) -> TokenStream {
     }
 }
 
+fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
+    let name = format_ident!("Subtable{}", idx);
+    let enum_body = subtable
+        .constructors
+        .iter()
+        .enumerate()
+        .map(|(i, constructor)| {
+            let variant_name = format_ident!("Variant{}", i);
+            let operands = constructor
+                .operands
+                .iter()
+                .map(|op| format_ident!("Op{}", op));
+            quote! {
+                #variant_name(#(#operands),*),
+            }
+        });
+
+    let decode_body = if let Some(decision) = subtable.decision {
+        gen_decision(decision, &subtable.constructors)
+    } else {
+        let decode_ops = subtable.constructors[0].operands.iter().map(|op| {
+            let op_name = format_ident!("Op{}", op);
+            quote! {
+                #op_name::decode(&buf)
+            }
+        });
+        quote! {
+            Some(Self::Variant0(#(#decode_ops),*))
+        }
+    };
+
+    quote! {
+        #[derive(Debug)]
+        enum #name {
+            #(#enum_body)*
+        }
+
+        impl #name {
+            #[allow(unused_parens)] // TODO
+            #[allow(unused_variables)]
+            fn decode(buf: &[u8]) -> Option<Self> {
+                #decode_body
+            }
+        }
+    }
+}
+
+fn gen_operand(op: Operand, idx: usize) -> TokenStream {
+    let name = format_ident!("Op{}", idx);
+    quote! {
+        #[derive(Debug)]
+        struct #name {}
+
+        impl #name {
+            #[allow(unused_variables)]
+            fn decode(buf: &[u8]) -> Self {
+                Self {}
+            }
+        }
+    }
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let buf = SlaBuf::new("sm83.sla")?;
     let mut sleigh = buf.parse_sleigh();
 
-    let Sym::Subtable {
-        ref decision,
-        ref constructors,
-    } = sleigh.find_sym("instruction").unwrap()
-    else {
-        unreachable!();
+    let mut tokens = quote! {
+        #[derive(Debug)]
+        pub(crate) struct Insn(Subtable0);
+
+        pub(crate) fn decode(buf: &[u8]) -> Option<Insn> {
+            Subtable0::decode(buf).map(|st| Insn(st))
+        }
     };
 
-    let decision_body = gen_decision(&decision);
+    for (i, sym) in sleigh.syms.into_iter().enumerate() {
+        match sym {
+            Sym::Subtable(subtable) => tokens.extend(gen_subtable(subtable, i)),
+            Sym::Op(operand) => tokens.extend(gen_operand(operand, i)),
+            _ => (),
+        }
+    }
 
-    let print_cases = constructors.into_iter().map(|constructor| {
+    /*
+    let print_cases = insn_constructors.into_iter().map(|constructor| {
         let id = constructor.id;
         let s = constructor
             .prints
@@ -115,22 +196,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             0 => #s,
         }
     });
+     */
 
-    let tokens = quote! {
-        #[allow(unused_parens)]
-        pub(crate) fn decode(buf: &[u8]) -> Option<u16> {
-            #decision_body
-        }
-
-        pub(crate) fn print(op: u16) -> &'static str {
-            match op {
-                #(#print_cases)*
-                _ => unreachable!()
-            }
-        }
-    };
-
-    // println!("{:#?}", sleigh.operands);
+    // println!("{}", tokens);
     println!("{}", prettyplease::unparse(&syn::parse2(tokens)?));
 
     Ok(())

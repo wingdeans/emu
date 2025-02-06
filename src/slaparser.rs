@@ -6,15 +6,29 @@ use crate::slareader::{SlaBuf, SlaReader};
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct SymIdx(u16);
 
-macro_rules! sym_idx {
+macro_rules! cast {
     ($x:expr) => {
-        SymIdx($x.try_into().unwrap())
+        $x.try_into().unwrap()
     };
 }
 
+macro_rules! sym_idx {
+    ($x:expr) => {
+        SymIdx(cast!($x))
+    };
+}
+
+/*
 impl quote::ToTokens for crate::slaparser::SymIdx {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         self.0.to_tokens(tokens)
+    }
+}
+ */
+
+impl quote::IdentFragment for crate::slaparser::SymIdx {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
@@ -37,7 +51,7 @@ pub(crate) struct Constructor {
 
 #[derive(Debug)]
 pub(crate) struct Mask {
-    pub(crate) id: SymIdx,
+    pub(crate) id: u8,
     pub(crate) off: u8,
     pub(crate) nonzero: u8,
     pub(crate) mask: u64,
@@ -74,13 +88,16 @@ pub(crate) enum Operand {
 }
 
 #[derive(Debug)]
+pub(crate) struct Subtable {
+    pub(crate) constructors: Vec<Constructor>,
+    pub(crate) decision: Option<Decision>,
+}
+
+#[derive(Debug)]
 pub(crate) enum Sym {
     Unknown,
     Op(Operand),
-    Subtable {
-        constructors: Vec<Constructor>,
-        decision: Decision,
-    },
+    Subtable(Subtable),
     Varlist {
         tokenfield: TokenField,
         vars: Vec<Option<SymIdx>>,
@@ -90,7 +107,7 @@ pub(crate) enum Sym {
 
 #[derive(Debug)]
 pub(crate) struct SymbolTable {
-    syms: Vec<Sym>,
+    pub(crate) syms: Vec<Sym>,
     sym_names: Vec<String>,
 }
 
@@ -98,9 +115,11 @@ impl SymbolTable {
     pub(crate) fn get_sym(&self, idx: SymIdx) -> &Sym {
         &self.syms[idx.0 as usize]
     }
+    /*
     pub(crate) fn find_sym(&self, name: &str) -> Option<&Sym> {
         Some(&self.syms[self.sym_names.iter().position(|n| n == name)?])
     }
+    */
     pub(crate) fn get_sym_name(&self, idx: SymIdx) -> &str {
         &self.sym_names[idx.0 as usize]
     }
@@ -116,7 +135,7 @@ impl SlaParser<'_> {
         while let Some(item) = self.0.next() {
             match item {
                 Attr(AId::ID, Uint(x)) => id = x,
-                Attr(AId::ID, Int(x)) => id = x.try_into().unwrap(),
+                Attr(AId::ID, Int(x)) => id = cast!(x),
                 Elem(_) => self.0.skip_elem(),
                 _ => (),
             }
@@ -138,9 +157,7 @@ impl SlaParser<'_> {
         while let Some(item) = self.0.next() {
             match item {
                 Elem(EId::OPER) => operands.push(sym_idx!(self.parse_element_id())),
-                Elem(EId::OPPRINT) => {
-                    prints.push(Print::OpPrint(self.parse_element_id().try_into().unwrap()))
-                }
+                Elem(EId::OPPRINT) => prints.push(Print::OpPrint(cast!(self.parse_element_id()))),
                 // opprint
                 Elem(EId::PRINT) => self.0.enter(),
                 // opprint -> piece
@@ -186,26 +203,26 @@ impl SlaParser<'_> {
             }
         }
 
-        let id = sym_idx!(id);
-        let off = off.try_into().unwrap();
-        let nonzero = nonzero.try_into().unwrap();
         Mask {
-            id,
-            off,
-            nonzero,
+            id: cast!(id),
+            off: cast!(off),
+            nonzero: cast!(nonzero),
             mask,
             val,
         }
     }
 
-    fn parse_decision(&mut self) -> Decision {
+    fn parse_decision(&mut self) -> Option<Decision> {
         let (mut start, mut size) = (0, 0);
         let mut masks = Vec::new();
         let mut options = Vec::new();
         while let Some(item) = self.0.next() {
             match item {
                 Elem(EId::PAIR) => masks.push(self.parse_pair()),
-                Elem(EId::DECISION) => options.push(self.parse_decision()),
+                Elem(EId::DECISION) => options.push(
+                    self.parse_decision()
+                        .expect("non-root decisions must have mask"),
+                ),
                 Attr(AId::STARTBIT, Int(x)) => start = x,
                 Attr(AId::SIZE, Int(x)) => size = x,
                 Attr(_, _) => (),
@@ -215,15 +232,16 @@ impl SlaParser<'_> {
 
         if size != 0 {
             assert_eq!(options.len(), 1 << size);
-            let start = start.try_into().unwrap();
-            let size = size.try_into().unwrap();
-            Decision::Bits {
-                start,
-                size,
+            Some(Decision::Bits {
+                start: cast!(start),
+                size: cast!(size),
                 options,
-            }
+            })
+        } else if masks.iter().any(|m| m.mask == 0) {
+            assert_eq!(masks.len(), 1);
+            None
         } else {
-            Decision::Masks(masks)
+            Some(Decision::Masks(masks))
         }
     }
 
@@ -234,10 +252,10 @@ impl SlaParser<'_> {
 
         while let Some(item) = self.0.next() {
             match item {
-                Attr(AId::STARTBIT, Int(x)) => startbit = x.try_into().unwrap(),
-                Attr(AId::ENDBIT, Int(x)) => endbit = x.try_into().unwrap(),
-                Attr(AId::STARTBYTE, Int(x)) => startbyte = x.try_into().unwrap(),
-                Attr(AId::ENDBYTE, Int(x)) => endbyte = x.try_into().unwrap(),
+                Attr(AId::STARTBIT, Int(x)) => startbit = cast!(x),
+                Attr(AId::ENDBIT, Int(x)) => endbit = cast!(x),
+                Attr(AId::STARTBYTE, Int(x)) => startbyte = cast!(x),
+                Attr(AId::ENDBYTE, Int(x)) => endbyte = cast!(x),
                 _ => (),
             }
         }
@@ -263,9 +281,8 @@ impl SlaParser<'_> {
                 Elem(EId::PLUS_EXP) => self.0.skip_elem(),
                 Elem(EId::LSHIFT_EXP) => self.0.skip_elem(),
                 Elem(EId::MINUS_EXP) => self.0.skip_elem(),
-                Attr(AId::ID, Uint(x)) => id = x.try_into().unwrap(),
-                Attr(AId::OFF, Int(x)) => off = x.try_into().unwrap(),
-                // Attr(AId::MINLEN, Int(x)) => minlen = x.try_into().unwrap(),
+                Attr(AId::ID, Uint(x)) => id = cast!(x),
+                Attr(AId::OFF, Int(x)) => off = cast!(x),
                 Attr(AId::SUBSYM, Uint(x)) => subsym = Some(x),
                 Attr(AId::BASE, Int(x)) => assert_eq!(x, -1),
                 Attr(_, _) => (),
@@ -284,7 +301,7 @@ impl SlaParser<'_> {
             Operand::Unk
         };
 
-        Self::push_sym_at(syms, id.try_into().unwrap(), Sym::Op(op));
+        Self::push_sym_at(syms, cast!(id), Sym::Op(op));
     }
 
     fn parse_subtable(&mut self, syms: &mut Vec<Sym>) {
@@ -304,12 +321,11 @@ impl SlaParser<'_> {
             }
         }
 
-        let id = id.try_into().unwrap();
-        let sym = Sym::Subtable {
+        let sym = Sym::Subtable(Subtable {
             constructors,
             decision: decision.unwrap(),
-        };
-        Self::push_sym_at(syms, id, sym);
+        });
+        Self::push_sym_at(syms, cast!(id), sym);
     }
 
     fn parse_varlist(&mut self, syms: &mut Vec<Sym>) {
@@ -328,12 +344,11 @@ impl SlaParser<'_> {
             }
         }
 
-        let id = id.try_into().unwrap();
         let sym = Sym::Varlist {
             tokenfield: tokenfield.unwrap(),
             vars,
         };
-        Self::push_sym_at(syms, id, sym);
+        Self::push_sym_at(syms, cast!(id), sym);
     }
 
     fn parse_varnode(&mut self, syms: &mut Vec<Sym>) {
@@ -347,9 +362,8 @@ impl SlaParser<'_> {
             }
         }
 
-        let id = id.try_into().unwrap();
         let sym = Sym::Varnode;
-        Self::push_sym_at(syms, id, sym);
+        Self::push_sym_at(syms, cast!(id), sym);
     }
 
     // SYMBOL TABLE
@@ -366,7 +380,7 @@ impl SlaParser<'_> {
             }
         }
 
-        assert_eq!(id, sym_names.len().try_into().unwrap());
+        assert_eq!(sym_names.len(), cast!(id));
         sym_names.push(name.unwrap());
     }
 
