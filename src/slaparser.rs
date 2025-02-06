@@ -81,7 +81,7 @@ pub(crate) struct TokenField {
 pub(crate) enum OpExpr {
     Subsym(SymIdx),
     Tok(TokenField),
-    Unk, // TODO
+    Unk(u8), // TODO
 }
 
 #[derive(Debug)]
@@ -305,7 +305,7 @@ impl SlaParser<'_> {
         } else if let Some(tokenfield) = tokenfield {
             OpExpr::Tok(tokenfield)
         } else {
-            OpExpr::Unk
+            OpExpr::Unk(cast!(id))
         };
 
         Self::push_sym_at(syms, cast!(id), Sym::Op(Operand { off, expr }));

@@ -210,7 +210,10 @@ fn gen_operand(op: Operand, idx: usize) -> TokenStream {
     let write = match op.expr {
         OpExpr::Subsym(_) => quote!("{}", self.0),
         OpExpr::Tok(_) => quote!("0x{:X}", self.0),
-        _ => quote!("UNK?"),
+        OpExpr::Unk(id) => {
+            let id = format!("UNK{}", id);
+            quote!(#id)
+        }
     };
 
     let decode_arg = &match op.expr {
