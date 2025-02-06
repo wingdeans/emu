@@ -185,6 +185,8 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
                 #decode_body
             }
 
+            #[allow(unused_variables)]
+            #[allow(dead_code)]
             fn print(&self) {
                 println!("    {}", match self {
                     #(#pcode_cases)*
@@ -193,6 +195,7 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
         }
 
         impl std::fmt::Display for #name {
+            #[allow(unused_variables)]
             fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
                 match self {
                     #(#fmt_cases)*
@@ -272,8 +275,10 @@ fn gen_varnode(text: &str, idx: usize) -> TokenStream {
     let name = format_ident!("Sym{}", idx);
     quote! {
         #[derive(Debug)]
+        #[allow(dead_code)]
         struct #name();
 
+        #[allow(dead_code)]
         impl #name {
             fn decode(_: &[u8]) -> Option<Self> {
                 Some(Self())
