@@ -7,7 +7,7 @@ use crate::slaparser::{
 };
 use crate::slareader::SlaBuf;
 
-use proc_macro2::{Ident, TokenStream};
+use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
 fn gen_decision(decision: Decision, constructors: &Vec<Constructor>) -> TokenStream {
@@ -293,6 +293,19 @@ fn gen_varlist(varlist: Varlist, idx: usize) -> TokenStream {
             })
         });
 
+    let write_arms = varlist
+        .vars
+        .iter()
+        .enumerate()
+        .filter_map(|(i, maybe_idx)| {
+            maybe_idx.map(|_| {
+                let variant_name = format_ident!("Variant{}", i);
+                Some(quote! {
+                    Self::#variant_name(x) => x.fmt(f),
+                })
+            })
+        });
+
     let tokenfield = gen_tokenfield(varlist.tokenfield, 0);
 
     quote! {
@@ -312,7 +325,9 @@ fn gen_varlist(varlist: Varlist, idx: usize) -> TokenStream {
 
         impl std::fmt::Display for #name {
             fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                write!(f, "varlist")
+                match self {
+                    #(#write_arms)*
+                }
             }
         }
     }
