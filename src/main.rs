@@ -1,3 +1,4 @@
+mod pcodeop;
 mod slaformat;
 mod slaparser;
 mod slareader;

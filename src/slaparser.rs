@@ -1,3 +1,4 @@
+use crate::pcodeop::PcodeOp;
 use crate::slaformat::{AId, EId};
 use crate::slareader::Attribute::{Int, Str, Uint};
 use crate::slareader::SlaItem::{Attr, Elem};
@@ -158,6 +159,30 @@ impl SlaParser<'_> {
 
     // CONSTRUCTOR
 
+    fn parse_op_tpl(&mut self) -> PcodeOp {
+        let mut code = 0;
+        while let Some(item) = self.0.next() {
+            match item {
+                Elem(_) => self.0.skip_elem(),
+                Attr(AId::CODE, Int(x)) => code = x,
+                Attr(_, _) => (),
+            }
+        }
+        code.into()
+    }
+
+    fn parse_construct_tpl(&mut self) {
+        while let Some(item) = self.0.next() {
+            match item {
+                Elem(EId::NULL) => self.0.skip_elem(),
+                Elem(EId::OP_TPL) => self.0.skip_elem(),
+                Elem(EId::HANDLE_TPL) => self.0.skip_elem(),
+                Attr(_, _) => (),
+                _ => unreachable!("unknown construct_tpl item: {:?}", item),
+            }
+        }
+    }
+
     fn parse_constructor(&mut self, id: SymIdx) -> Constructor {
         let mut operands = Vec::new();
         let mut prints = Vec::new();
@@ -171,7 +196,7 @@ impl SlaParser<'_> {
                 // opprint -> piece
                 Attr(AId::PIECE, Str(s)) => prints.push(Print::Print(s)),
                 // end
-                Elem(EId::CONSTRUCT_TPL) => self.0.skip_elem(),
+                Elem(EId::CONSTRUCT_TPL) => self.parse_construct_tpl(),
                 Attr(_, _) => (),
                 _ => unreachable!("unknown constructor item: {:?}", item),
             }
