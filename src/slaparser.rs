@@ -70,10 +70,11 @@ pub(crate) enum Decision {
 
 #[derive(Debug)]
 pub(crate) struct TokenField {
-    startbit: u8,
-    endbit: u8,
-    startbyte: u8,
-    endbyte: u8,
+    pub(crate) startbit: u8,
+    pub(crate) endbit: u8,
+    pub(crate) startbyte: u8,
+    pub(crate) endbyte: u8,
+    pub(crate) shift: u8,
 }
 
 #[derive(Debug)]
@@ -253,7 +254,7 @@ impl SlaParser<'_> {
     // OPERAND
 
     fn parse_tokenfield(&mut self) -> TokenField {
-        let (mut startbit, mut endbit, mut startbyte, mut endbyte) = (0, 0, 0, 0);
+        let (mut startbit, mut endbit, mut startbyte, mut endbyte, mut shift) = (0, 0, 0, 0, 0);
 
         for item in self.0.by_ref() {
             match item {
@@ -261,6 +262,7 @@ impl SlaParser<'_> {
                 Attr(AId::ENDBIT, Int(x)) => endbit = cast!(x),
                 Attr(AId::STARTBYTE, Int(x)) => startbyte = cast!(x),
                 Attr(AId::ENDBYTE, Int(x)) => endbyte = cast!(x),
+                Attr(AId::SHIFT, Int(x)) => shift = cast!(x),
                 _ => (),
             }
         }
@@ -270,6 +272,7 @@ impl SlaParser<'_> {
             endbit,
             startbyte,
             endbyte,
+            shift,
         }
     }
 

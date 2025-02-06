@@ -2,10 +2,12 @@ mod slaformat;
 mod slaparser;
 mod slareader;
 
-use crate::slaparser::{Constructor, Decision, Mask, Operand, Print, Subtable, Sym, Varlist};
+use crate::slaparser::{
+    Constructor, Decision, Mask, Operand, Print, Subtable, Sym, TokenField, Varlist,
+};
 use crate::slareader::SlaBuf;
 
-use proc_macro2::TokenStream;
+use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 
 fn gen_decision(decision: Decision, constructors: &Vec<Constructor>) -> TokenStream {
@@ -177,26 +179,39 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
     }
 }
 
+fn gen_tokenfield(tokenfield: TokenField) -> (Ident, TokenStream) {
+    let TokenField {
+        startbit,
+        endbit,
+        startbyte,
+        endbyte,
+        shift,
+    } = tokenfield;
+    (
+        format_ident!("u64"),
+        quote! {
+            (buf[0] >> #shift).into()
+        },
+    )
+}
+
 fn gen_operand(op: Operand, idx: usize) -> TokenStream {
     let name = format_ident!("Op{}", idx);
 
-    let struct_body = match op {
-        Operand::Subsym { subsym, .. } => Some(format_ident!("Sym{}", subsym)),
-        _ => None,
-    };
-
-    let decode_arg = match op {
-        Operand::Subsym { subsym, .. } => {
-            let subsym = format_ident!("Sym{}", subsym);
-            Some(quote! { #subsym::decode(buf)? })
+    let (struct_body, decode_arg, write) = match op {
+        Operand::Subsym { subsym, .. } => (
+            Some(format_ident!("Sym{}", subsym)),
+            {
+                let subsym = format_ident!("Sym{}", subsym);
+                Some(quote! { #subsym::decode(buf)? })
+            },
+            quote!("{}", self.0),
+        ),
+        Operand::Tok(tokenfield) => {
+            let (body, arg) = gen_tokenfield(tokenfield);
+            (Some(body), Some(arg), quote!("0x{:X}", self.0))
         }
-        _ => None,
-    };
-
-    let write = match op {
-        Operand::Subsym { .. } => quote!("{}", self.0),
-        Operand::Tok(_) => quote!("tok"),
-        _ => quote!("UNK?"),
+        _ => (None, None, quote!("UNK?")),
     };
 
     quote! {
