@@ -77,7 +77,7 @@ fn gen_decision(decision: Decision, constructors: &Vec<Constructor>) -> TokenStr
     }
 }
 
-fn gen_tokenfield(tokenfield: TokenField, off: u8) -> TokenStream {
+fn gen_tokenfield(tokenfield: &TokenField, off: u8) -> TokenStream {
     let offset = off as usize;
     let TokenField {
         startbit,
@@ -206,22 +206,22 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
 fn gen_operand(op: Operand, idx: usize) -> TokenStream {
     let name = format_ident!("Op{}", idx);
 
-    let struct_body = &match op.expr {
+    let struct_body = match &op.expr {
         OpExpr::Subsym(subsym) => Some(format_ident!("Sym{}", subsym)),
         OpExpr::Tok(_) => Some(format_ident!("u8")),
         _ => None,
     };
 
-    let write = match op.expr {
+    let write = match &op.expr {
         OpExpr::Subsym(_) => quote!("{}", self.0),
         OpExpr::Tok(_) => quote!("0x{:X}", self.0),
-        OpExpr::Unk(id) => {
-            let id = format!("UNK{}", id);
-            quote!(#id)
+        OpExpr::Expr(expr) => {
+            let exp = format!("{:?}", expr);
+            quote!(#exp)
         }
     };
 
-    let decode_arg = &match op.expr {
+    let decode_arg = match &op.expr {
         OpExpr::Subsym(subsym) => {
             let offset = op.off as usize;
             let subsym = format_ident!("Sym{}", subsym);
@@ -317,7 +317,7 @@ fn gen_varlist(varlist: Varlist, idx: usize) -> TokenStream {
             })
         });
 
-    let tokenfield = gen_tokenfield(varlist.tokenfield, 0);
+    let tokenfield = gen_tokenfield(&varlist.tokenfield, 0);
 
     quote! {
         #[derive(Debug)]

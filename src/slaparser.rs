@@ -72,10 +72,20 @@ pub(crate) struct TokenField {
 }
 
 #[derive(Debug)]
+pub(crate) enum Expr {
+    Lshift(Box<Expr>, Box<Expr>),
+    Plus(Box<Expr>, Box<Expr>),
+    Minus(Box<Expr>),
+    Const(u64),
+    InsnEnd,
+    Operand, // TODO
+}
+
+#[derive(Debug)]
 pub(crate) enum OpExpr {
     Subsym(SymIdx),
     Tok(TokenField),
-    Unk(u8), // TODO
+    Expr(Expr),
 }
 
 #[derive(Debug)]
@@ -284,19 +294,57 @@ impl SlaParser<'_> {
         }
     }
 
+    fn parse_exprs<const C: usize>(&mut self) -> [Box<Expr>; C] {
+        let mut exprs = Vec::new();
+        while let Some(item) = self.0.next() {
+            match item {
+                Elem(EId::OPERAND_EXP) => {
+                    self.0.skip_elem();
+                    exprs.push(Box::new(Expr::Operand))
+                }
+                Elem(EId::INTB) => {
+                    let mut val = None;
+                    for item in self.0.by_ref() {
+                        match item {
+                            Attr(AId::VAL, Int(x)) => val = Some(x.try_into().unwrap()),
+                            _ => unreachable!("unknown intb item: {:?}", item),
+                        }
+                    }
+                    exprs.push(Box::new(Expr::Const(val.unwrap())))
+                }
+                Elem(EId::END_EXP) => {
+                    self.0.skip_elem();
+                    exprs.push(Box::new(Expr::InsnEnd))
+                }
+                _ => unreachable!("unknown decision item: {:?}", item),
+            }
+        }
+        exprs.try_into().unwrap()
+    }
+
     fn parse_operand(&mut self, syms: &mut Vec<Sym>) {
         let mut id = 0;
         let (mut off, mut _minlen) = (0, 0);
         let mut subsym = None;
         let mut tokenfield = None;
+        let mut expr = None;
 
         while let Some(item) = self.0.next() {
             match item {
                 Elem(EId::OPERAND_EXP) => self.0.skip_elem(),
                 Elem(EId::TOKENFIELD) => tokenfield = Some(self.parse_tokenfield()),
-                Elem(EId::PLUS_EXP) => self.0.skip_elem(),
-                Elem(EId::LSHIFT_EXP) => self.0.skip_elem(),
-                Elem(EId::MINUS_EXP) => self.0.skip_elem(),
+                Elem(EId::PLUS_EXP) => {
+                    let [a, b] = self.parse_exprs::<2>();
+                    expr = Some(Expr::Plus(a, b))
+                }
+                Elem(EId::LSHIFT_EXP) => {
+                    let [a, b] = self.parse_exprs::<2>();
+                    expr = Some(Expr::Lshift(a, b))
+                }
+                Elem(EId::MINUS_EXP) => {
+                    let [a] = self.parse_exprs::<1>();
+                    expr = Some(Expr::Minus(a))
+                }
                 Attr(AId::ID, Uint(x)) => id = cast!(x),
                 Attr(AId::OFF, Int(x)) => off = cast!(x),
                 Attr(AId::SUBSYM, Uint(x)) => subsym = Some(x),
@@ -310,8 +358,10 @@ impl SlaParser<'_> {
             OpExpr::Subsym(sym_idx!(subsym))
         } else if let Some(tokenfield) = tokenfield {
             OpExpr::Tok(tokenfield)
+        } else if let Some(expr) = expr {
+            OpExpr::Expr(expr)
         } else {
-            OpExpr::Unk(cast!(id))
+            unreachable!("operand is not any known variant")
         };
 
         push_sym_at(syms, cast!(id), Sym::Op(Operand { off, expr }));
