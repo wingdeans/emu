@@ -77,16 +77,14 @@ fn write(addr: u16, value: u8) -> Result<()> {
 }
 
 #[no_mangle]
-pub extern "C" fn init(memory_size: CSsizeT, memory: *const u8) {
-    unsafe {
-        GLOBAL.write(Global {
-            cpu: Cpu::new(read, write),
-            memory_size: memory_size as usize,
-            memory,
-            num_mem_access: 0,
-            mem_accesses: Vec::new(),
-        });
-    }
+pub unsafe extern "C" fn init(memory_size: CSsizeT, memory: *const u8) {
+    GLOBAL.write(Global {
+        cpu: Cpu::new(read, write),
+        memory_size: memory_size as usize,
+        memory,
+        num_mem_access: 0,
+        mem_accesses: Vec::new(),
+    });
 }
 
 #[no_mangle]
@@ -106,14 +104,14 @@ pub unsafe extern "C" fn set_state(state: *const State) {
     } else {
         StateEnum::Running
     };
+    g.num_mem_access = 0;
+    g.mem_accesses.clear();
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn get_state(state: *mut State) {
     let g = GLOBAL.assume_init_ref();
     let s = &mut *state;
-
-    println!("State: {:?}", g);
 
     s.registers.af = g.cpu.af;
     s.registers.bc = g.cpu.bc;
@@ -122,16 +120,18 @@ pub unsafe extern "C" fn get_state(state: *mut State) {
     s.sp = g.cpu.sp;
     s.pc = g.cpu.pc;
     s.ime = g.cpu.ime;
-    s.halted = !(g.cpu.state != StateEnum::Running);
+    s.halted = g.cpu.state != StateEnum::Running;
     s.num_mem_access = g.num_mem_access as c_int;
     s.mem_accesses[..g.mem_accesses.len()].copy_from_slice(&g.mem_accesses);
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn step() -> c_int {
-    GLOBAL
-        .assume_init_mut()
-        .cpu
-        .execute()
-        .expect("Execute failure") as c_int
+    match GLOBAL.assume_init_mut().cpu.execute() {
+        Ok(x) => x as c_int,
+        Err(e) => {
+            eprintln!("{}", e);
+            -1
+        }
+    }
 }

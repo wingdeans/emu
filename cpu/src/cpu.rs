@@ -221,22 +221,22 @@ impl Cpu {
 
     fn imm8(&mut self) -> Result<u8> {
         let value = self.read(self.pc)?;
-        self.pc += 1;
+        self.pc = self.pc.wrapping_add(1);
         Ok(value)
     }
 
     fn imm16(&mut self) -> Result<u16> {
-        let lo = self.read(self.pc + 0)?;
-        let hi = self.read(self.pc + 1)?;
+        let lo = self.read(self.pc)?;
+        let hi = self.read(self.pc.wrapping_add(1))?;
 
-        self.pc += 2;
+        self.pc = self.pc.wrapping_add(2);
         Ok(((hi as u16) << 8) | (lo as u16))
     }
 
     fn stack_push(&mut self, value: u16) -> Result<()> {
-        self.write(self.sp - 1, (value >> 8) as u8)?;
-        self.write(self.sp - 2, (value & 0xff) as u8)?;
-        self.sp -= 2;
+        self.write(self.sp.wrapping_sub(1), (value >> 8) as u8)?;
+        self.write(self.sp.wrapping_sub(2), (value & 0xff) as u8)?;
+        self.sp = self.sp.wrapping_sub(2);
 
         Ok(())
     }
@@ -264,12 +264,12 @@ impl Cpu {
             0 => self.bc,
             1 => self.de,
             2 => {
-                self.hl += 1;
-                self.hl - 1
+                self.hl = self.hl.wrapping_add(1);
+                self.hl.wrapping_sub(1)
             }
             3 => {
-                self.hl -= 1;
-                self.hl + 1
+                self.hl = self.hl.wrapping_sub(1);
+                self.hl.wrapping_add(1)
             }
             _ => unreachable!(),
         };
@@ -283,12 +283,12 @@ impl Cpu {
             0 => self.bc,
             1 => self.de,
             2 => {
-                self.hl += 1;
-                self.hl - 1
+                self.hl = self.hl.wrapping_add(1);
+                self.hl.wrapping_sub(1)
             }
             3 => {
-                self.hl -= 1;
-                self.hl + 1
+                self.hl = self.hl.wrapping_sub(1);
+                self.hl.wrapping_add(1)
             }
             _ => unreachable!(),
         };
@@ -529,6 +529,23 @@ impl Cpu {
         self.set_r8(dest, value)?;
 
         Ok(1)
+    }
+
+    fn ld_r8_hl(&mut self, ins: u8) -> Result<u32> {
+        let dest = ins!(ins, r8);
+        let value = self.read(self.hl)?;
+
+        self.set_r8(dest, value)?;
+        Ok(2)
+    }
+
+    fn ld_hl_r8(&mut self, ins: u8) -> Result<u32> {
+        let src = ins!(ins, r8l);
+
+        let value = self.r8(src)?;
+        self.write(self.hl, value)?;
+
+        Ok(2)
     }
 
     fn add_a_r8(&mut self, ins: u8) -> Result<u32> {
@@ -1316,6 +1333,10 @@ impl Cpu {
             1 => {
                 if ins == 0b01110110 {
                     Ok(Self::halt)
+                } else if ins!(ins, r8) == 6 {
+                    Ok(Self::ld_hl_r8)
+                } else if ins!(ins, r8l) == 6 {
+                    Ok(Self::ld_r8_hl)
                 } else {
                     Ok(Self::ld_r8_r8)
                 }
