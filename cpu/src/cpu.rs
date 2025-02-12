@@ -76,7 +76,7 @@ fn sub8(a: u8, b: u8, c: bool) -> (u8, bool, bool) {
     let val = if c { 1 } else { 0 };
     let result = a.wrapping_sub(b).wrapping_sub(val);
 
-    let half = (a & 0x0f) < ((b & 0x0f) + val);
+    let half = (((a & 0x0f).wrapping_sub(b & 0x0f).wrapping_sub(val)) & 0xf0) != 0;
     let carry = (b as u16 + val as u16) > a as u16;
 
     (result, carry, half)
@@ -185,7 +185,7 @@ impl Cpu {
             0 => self.bc,
             1 => self.de,
             2 => self.hl,
-            3 => self.af,
+            3 => self.sp,
             _ => unreachable!(),
         }
     }
@@ -316,7 +316,7 @@ impl Cpu {
     }
 
     fn add_hl_r16(&mut self, ins: u8) -> Result<u32> {
-        let (value, c, hc) = add16(self.hl, self.r16(ins), self.carry());
+        let (value, c, hc) = add16(self.hl, self.r16(ins), false);
 
         self.set_sub(false);
         self.set_carry(c);
@@ -330,7 +330,7 @@ impl Cpu {
         let value = self.r8(ins!(ins, r8))?;
         let (result, _c, hc) = add8(value, 1, false);
 
-        self.set_zero(value == 0);
+        self.set_zero(result == 0);
         self.set_sub(false);
         self.set_half_carry(hc);
 
@@ -342,7 +342,7 @@ impl Cpu {
         let value = self.read(self.hl)?;
         let (result, _c, hc) = add8(value, 1, false);
 
-        self.set_zero(value == 0);
+        self.set_zero(result == 0);
         self.set_sub(false);
         self.set_half_carry(hc);
 
@@ -354,7 +354,7 @@ impl Cpu {
         let value = self.r8(ins!(ins, r8))?;
         let (result, _c, hc) = sub8(value, 1, false);
 
-        self.set_zero(value == 0);
+        self.set_zero(result == 0);
         self.set_sub(true);
         self.set_half_carry(hc);
 
@@ -366,7 +366,7 @@ impl Cpu {
         let value = self.read(self.hl)?;
         let (result, _c, hc) = sub8(value, 1, false);
 
-        self.set_zero(value == 0);
+        self.set_zero(result == 0);
         self.set_sub(true);
         self.set_half_carry(hc);
 
@@ -394,17 +394,19 @@ impl Cpu {
         self.set_sub(false);
         self.set_half_carry(false);
 
+        self.set_a(value);
         Ok(1)
     }
 
     fn rrca(&mut self, _ins: u8) -> Result<u32> {
         let value = self.a().rotate_right(1);
 
-        self.set_carry((value & 1) != 0);
+        self.set_carry((value & 0x80) != 0);
         self.set_zero(false);
         self.set_sub(false);
         self.set_half_carry(false);
 
+        self.set_a(value);
         Ok(1)
     }
 
@@ -458,11 +460,10 @@ impl Cpu {
 
             if self.carry() || (self.a() > 0x99) {
                 adjustment += 0x60;
+                self.set_carry(true);
             }
 
-            let carry: bool;
-            (value, carry) = self.a().overflowing_add(adjustment);
-            self.set_carry(carry);
+            value = self.a().wrapping_add(adjustment);
         }
 
         self.set_a(value);
@@ -495,7 +496,7 @@ impl Cpu {
 
     fn jr(&mut self, _ins: u8) -> Result<u32> {
         let value = self.imm8()?;
-        self.pc = self.pc.wrapping_add_signed(value as i16);
+        self.pc = self.pc.wrapping_add_signed(value as i8 as i16);
         Ok(3)
     }
 
@@ -504,7 +505,7 @@ impl Cpu {
         let value = self.imm8()?;
 
         if cond {
-            self.pc = self.pc.wrapping_add_signed(value as i16);
+            self.pc = self.pc.wrapping_add_signed(value as i8 as i16);
             Ok(3)
         } else {
             Ok(2)
@@ -512,7 +513,7 @@ impl Cpu {
     }
 
     fn stop(&mut self, _ins: u8) -> Result<u32> {
-        self.pc = self.pc.wrapping_add(1);
+        //self.pc = self.pc.wrapping_add(1); // WARN Possible gbit bug
         self.state = State::Stopped;
         Ok(0)
     }
@@ -597,7 +598,7 @@ impl Cpu {
     }
 
     fn sub_a_r8(&mut self, ins: u8) -> Result<u32> {
-        let value = self.r8(ins!(ins, r8))?;
+        let value = self.r8(ins!(ins, r8l))?;
         let (result, c, hc) = sub8(self.a(), value, false);
 
         self.set_zero(result == 0);
@@ -618,12 +619,12 @@ impl Cpu {
         self.set_half_carry(hc);
         self.set_carry(c);
 
-        self.write(self.hl, result)?;
+        self.set_a(result);
         Ok(2)
     }
 
     fn sbc_a_r8(&mut self, ins: u8) -> Result<u32> {
-        let value = self.r8(ins!(ins, r8))?;
+        let value = self.r8(ins!(ins, r8l))?;
         let (result, c, hc) = sub8(self.a(), value, self.carry());
 
         self.set_zero(result == 0);
@@ -644,7 +645,7 @@ impl Cpu {
         self.set_half_carry(hc);
         self.set_carry(c);
 
-        self.write(self.hl, result)?;
+        self.set_a(result);
         Ok(2)
     }
 
@@ -775,7 +776,7 @@ impl Cpu {
         let (result, c, hc) = sub8(self.a(), value, false);
 
         self.set_zero(result == 0);
-        self.set_sub(false);
+        self.set_sub(true);
         self.set_half_carry(hc);
         self.set_carry(c);
 
@@ -788,7 +789,7 @@ impl Cpu {
         let (result, c, hc) = sub8(self.a(), value, self.carry());
 
         self.set_zero(result == 0);
-        self.set_sub(false);
+        self.set_sub(true);
         self.set_half_carry(hc);
         self.set_carry(c);
 
