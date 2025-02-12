@@ -1,0 +1,4 @@
+[submodule "cpu/gbit"]
+	path = cpu/gbit
+	url = https://github.com/Tetrago/gbit-lib.git
+	ignore = dirty

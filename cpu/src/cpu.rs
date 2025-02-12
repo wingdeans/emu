@@ -1,14 +1,25 @@
-use crate::error::{Error, Result};
-use library::bus::Bus;
-use std::{cell::RefCell, rc::Rc};
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("attempted to decode invalid operation `0b{0:08b}`")]
+    InvalidOperation(u8),
+    #[error("attempted to index {0}-bit field with value `{1}`")]
+    InvalidIndexWidth(u8, u8),
+    #[error("bus fault accessing address `0x{0:04x}`")]
+    BusFault(u16),
+}
 
-#[derive(Clone, PartialEq, Debug)]
+pub type Result<T> = std::result::Result<T, Error>;
+pub type ReadFunction = fn(addr: u16) -> Result<u8>;
+pub type WriteFunction = fn(addr: u16, value: u8) -> Result<()>;
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum State {
     Running,
     Halted,
     Stopped,
 }
 
+#[derive(Debug)]
 pub struct Cpu {
     pub af: u16,
     pub bc: u16,
@@ -16,9 +27,10 @@ pub struct Cpu {
     pub hl: u16,
     pub sp: u16,
     pub pc: u16,
-    ime: bool,
-    state: State,
-    bus: Rc<RefCell<dyn Bus>>,
+    pub ime: bool,
+    pub state: State,
+    read_function: ReadFunction,
+    write_function: WriteFunction,
 }
 
 macro_rules! ins {
@@ -74,7 +86,7 @@ fn sub8(a: u8, b: u8, c: bool) -> (u8, bool, bool) {
 }
 
 impl Cpu {
-    pub fn new(bus: Rc<RefCell<dyn Bus>>) -> Self {
+    pub fn new(read_function: ReadFunction, write_function: WriteFunction) -> Self {
         Self {
             af: 0,
             bc: 0,
@@ -84,7 +96,8 @@ impl Cpu {
             pc: 0x100,
             ime: true,
             state: State::Running,
-            bus,
+            read_function,
+            write_function,
         }
     }
 
@@ -150,7 +163,6 @@ impl Cpu {
             3 => (self.de & 0xff) as u8,
             4 => (self.hl >> 8) as u8,
             5 => (self.hl & 0xff) as u8,
-            6 => return Err(Error::NotImplemented), // ERROR
             7 => (self.af >> 8) as u8,
             _ => return Err(Error::InvalidIndexWidth(3, index)),
         })
@@ -164,7 +176,6 @@ impl Cpu {
             3 => self.de = (self.de & 0xff00) | (value as u16),
             4 => self.hl = ((value as u16) << 8) | (self.hl & 0xff),
             5 => self.hl = (self.hl & 0xff00) | (value as u16),
-            6 => return Err(Error::NotImplemented), // ERROR
             7 => self.af = ((value as u16) << 8) | (self.af & 0xff),
             _ => return Err(Error::InvalidIndexWidth(3, index)),
         }
@@ -201,17 +212,11 @@ impl Cpu {
     }
 
     fn read(&mut self, addr: u16) -> Result<u8> {
-        self.bus
-            .borrow_mut()
-            .read(addr)
-            .map_err(|_| Error::BusFault(addr))
+        (self.read_function)(addr)
     }
 
     fn write(&mut self, addr: u16, value: u8) -> Result<()> {
-        self.bus
-            .borrow_mut()
-            .write(addr, value)
-            .map_err(|_| Error::BusFault(addr))
+        (self.write_function)(addr, value)
     }
 
     fn imm8(&mut self) -> Result<u8> {

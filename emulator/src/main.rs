@@ -1,5 +1,3 @@
-mod cpu;
-mod error;
 mod memory;
 
 use cpu::Cpu;
