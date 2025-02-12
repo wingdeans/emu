@@ -73,12 +73,13 @@ fn add16(a: u16, b: u16, c: bool) -> (u16, bool, bool) {
 }
 
 fn sub8(a: u8, b: u8, c: bool) -> (u8, bool, bool) {
-    let (value, c1) = a.overflowing_sub(b);
-    let (result, c2) = value.overflowing_sub(if c { 1 } else { 0 });
+    let val = if c { 1 } else { 0 };
+    let result = a.wrapping_sub(b).wrapping_sub(val);
 
-    let half = (a & 0xf0).wrapping_sub(b & 0xf0); // WARN Not sure about this one
+    let half = (a & 0x0f) < ((b & 0x0f) + val);
+    let carry = (b as u16 + val as u16) > a as u16;
 
-    (result, c1 || c2, (half & 0x0f) != 0)
+    (result, carry, half)
 }
 
 impl Cpu {
@@ -448,7 +449,6 @@ impl Cpu {
             }
 
             value = self.a().wrapping_sub(adjustment);
-            self.set_carry(value > adjustment);
         } else {
             let mut adjustment = 0;
 
@@ -456,7 +456,7 @@ impl Cpu {
                 adjustment += 6;
             }
 
-            if self.carry() || (self.a() > 0x9f) {
+            if self.carry() || (self.a() > 0x99) {
                 adjustment += 0x60;
             }
 
@@ -914,13 +914,7 @@ impl Cpu {
             0 => self.bc = value,
             1 => self.de = value,
             2 => self.hl = value,
-            3 => {
-                self.af = value;
-                self.set_zero((value & (1 << 7)) != 0);
-                self.set_sub((value & (1 << 6)) != 0);
-                self.set_half_carry((value & (1 << 5)) != 0);
-                self.set_carry((value & (1 << 4)) != 0);
-            }
+            3 => self.af = value & 0xfff0,
             _ => unreachable!(),
         }
 
@@ -928,7 +922,7 @@ impl Cpu {
     }
 
     fn push(&mut self, ins: u8) -> Result<u32> {
-        let value = match ins!(ins, cond) {
+        let value = match ins!(ins, r16) {
             0 => self.bc,
             1 => self.de,
             2 => self.hl,
@@ -998,7 +992,9 @@ impl Cpu {
 
     fn ld_hl_sp_imm8(&mut self, _ins: u8) -> Result<u32> {
         let value = self.imm8()?;
-        let (result, c, hc) = add16(self.sp, value as i8 as i16 as u16, false);
+        let result = self.sp.wrapping_add(value as i8 as i16 as u16);
+
+        let (_, c, hc) = add8(self.sp as u8, value, false);
 
         self.set_zero(false);
         self.set_sub(false);
