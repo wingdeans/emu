@@ -6,80 +6,99 @@ use crate::slaparser::{
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
-struct Codegen(TokenStream);
+fn gen_decision(decision: Decision, constructors: &Vec<Constructor>) -> TokenStream {
+    match decision {
+        Decision::Bits {
+            start,
+            size,
+            options,
+        } => {
+            // TODO: multi-byte
+            let byte_start = (start / 8) as usize;
+            let start = start % 8;
+            let shift = 8 - (start + size);
+            let mask = (1 << size) - 1u8;
 
-impl Codegen {
-    fn gen_decision(decision: Decision, constructors: &Vec<Constructor>) -> TokenStream {
-        match decision {
-            Decision::Bits {
-                start,
-                size,
-                options,
-            } => {
-                // TODO: multi-byte
-                let byte_start = (start / 8) as usize;
-                let start = start % 8;
-                let shift = 8 - (start + size);
-                let mask = (1 << size) - 1u8;
+            let range = 0..(options.len() as u8);
+            let decisions = options
+                .into_iter()
+                .map(|decision| gen_decision(decision, constructors));
 
-                let range = 0..(options.len() as u8);
-                let decisions = options
-                    .into_iter()
-                    .map(|decision| Self::gen_decision(decision, constructors));
-
-                quote! {
-                    match (buf[#byte_start] >> #shift) & #mask {
-                        #(#range => #decisions,)*
-                        _ => unreachable!()
-                    }
+            quote! {
+                match (buf[#byte_start] >> #shift) & #mask {
+                    #(#range => #decisions,)*
+                    _ => unreachable!()
                 }
             }
-            Decision::Masks(masks) => {
-                let branches = masks.iter().map(
-                    |Mask {
-                         id,
-                         off,
-                         nonzero,
-                         mask,
-                         val,
-                     }| {
-                        assert_eq!(*off, 0);
+        }
+        Decision::Masks(masks) => {
+            let branches = masks.iter().map(
+                |Mask {
+                     id,
+                     off,
+                     nonzero,
+                     mask,
+                     val,
+                 }| {
+                    assert_eq!(*off, 0);
 
-                        let range = 0..(*nonzero as usize);
-                        let (masks, vals): (Vec<u8>, Vec<u8>) = range
-                            .clone()
-                            .map(|i| {
-                                let shift = 32 - 8 * (i + 1);
-                                ((mask >> shift) as u8, (val >> shift) as u8)
-                            })
-                            .unzip();
+                    let range = 0..(*nonzero as usize);
+                    let (masks, vals): (Vec<u8>, Vec<u8>) = range
+                        .clone()
+                        .map(|i| {
+                            let shift = 32 - 8 * (i + 1);
+                            ((mask >> shift) as u8, (val >> shift) as u8)
+                        })
+                        .unzip();
 
-                        let decode_ops = constructors[*id as usize].operands.iter().map(|op| {
-                            let op_name = format_ident!("Op{}", op);
-                            quote! {
-                                #op_name::decode(&buf)?
-                            }
-                        });
-
-                        let variant = format_ident!("Variant{}", *id);
-
+                    let decode_ops = constructors[*id as usize].operands.iter().map(|op| {
+                        let op_name = format_ident!("Op{}", op);
                         quote! {
-                            if #((buf[#range] & #masks == #vals))&&* {
-                                Some(Self::#variant(#(#decode_ops),*))
-                            }
+                            #op_name::decode(&buf)?
                         }
-                    },
-                );
+                    });
 
-                quote! {
-                    #(#branches)else* else {
-                        None
+                    let variant = format_ident!("Variant{}", *id);
+
+                    quote! {
+                        if #((buf[#range] & #masks == #vals))&&* {
+                            Some(Self::#variant(#(#decode_ops),*))
+                        }
                     }
+                },
+            );
+
+            quote! {
+                #(#branches)else* else {
+                    None
                 }
             }
         }
     }
+}
 
+fn gen_tokenfield(tokenfield: TokenField, off: u8) -> TokenStream {
+    let offset = off as usize;
+    let TokenField {
+        startbit,
+        endbit,
+        startbyte,
+        endbyte,
+        shift,
+    } = tokenfield;
+    let endbit = std::cmp::min(endbit + 1, 8); // TODO
+    let start = (1u32 << startbit) - 1;
+    let end = (1u32 << endbit) - 1;
+    let mask: u8 = ((end - start) >> shift).try_into().unwrap();
+    // println!("{} {} {} {:08b}", startbit, endbit, shift, mask);
+    quote! {
+        (buf[#offset] >> #shift & #mask).into() // TODO
+    }
+}
+
+struct Codegen(TokenStream);
+
+impl Codegen {
     fn emit_subtable(&mut self, subtable: Subtable, idx: usize) {
         let name = format_ident!("Sym{}", idx);
         let enum_variants = subtable
@@ -98,7 +117,7 @@ impl Codegen {
             });
 
         let decode_body = if let Some(decision) = subtable.decision {
-            Self::gen_decision(decision, &subtable.constructors)
+            gen_decision(decision, &subtable.constructors)
         } else {
             let decode_ops = subtable.constructors[0].operands.iter().map(|op| {
                 let op_name = format_ident!("Op{}", op);
@@ -187,25 +206,6 @@ impl Codegen {
         })
     }
 
-    fn gen_tokenfield(tokenfield: TokenField, off: u8) -> TokenStream {
-        let offset = off as usize;
-        let TokenField {
-            startbit,
-            endbit,
-            startbyte,
-            endbyte,
-            shift,
-        } = tokenfield;
-        let endbit = std::cmp::min(endbit + 1, 8); // TODO
-        let start = (1u32 << startbit) - 1;
-        let end = (1u32 << endbit) - 1;
-        let mask: u8 = ((end - start) >> shift).try_into().unwrap();
-        // println!("{} {} {} {:08b}", startbit, endbit, shift, mask);
-        quote! {
-            (buf[#offset] >> #shift & #mask).into() // TODO
-        }
-    }
-
     fn emit_operand(&mut self, op: Operand, idx: usize) {
         let name = format_ident!("Op{}", idx);
 
@@ -230,7 +230,7 @@ impl Codegen {
                 let subsym = format_ident!("Sym{}", subsym);
                 Some(quote! { #subsym::decode(&buf[#offset..])? })
             }
-            OpExpr::Tok(tokenfield) => Some(Self::gen_tokenfield(tokenfield, op.off)),
+            OpExpr::Tok(tokenfield) => Some(gen_tokenfield(tokenfield, op.off)),
             _ => None,
         };
 
@@ -320,7 +320,7 @@ impl Codegen {
                 })
             });
 
-        let tokenfield = Self::gen_tokenfield(varlist.tokenfield, 0);
+        let tokenfield = gen_tokenfield(varlist.tokenfield, 0);
 
         self.0.extend(quote! {
             #[derive(Debug)]

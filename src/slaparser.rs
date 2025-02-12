@@ -19,14 +19,6 @@ macro_rules! sym_idx {
     };
 }
 
-/*
-impl quote::ToTokens for crate::slaparser::SymIdx {
-    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        self.0.to_tokens(tokens)
-    }
-}
- */
-
 impl quote::IdentFragment for crate::slaparser::SymIdx {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
@@ -119,23 +111,12 @@ pub(crate) struct SymbolTable {
     pub(crate) sym_names: Vec<String>,
 }
 
-impl SymbolTable {
-    /*
-    pub(crate) fn get_sym(&self, idx: SymIdx) -> &Sym {
-        &self.syms[idx.0 as usize]
-    }
-    /*
-    pub(crate) fn find_sym(&self, name: &str) -> Option<&Sym> {
-        Some(&self.syms[self.sym_names.iter().position(|n| n == name)?])
-    }
-    */
-    pub(crate) fn get_sym_name(&self, idx: SymIdx) -> &str {
-        &self.sym_names[idx.0 as usize]
-    }
-    */
-}
-
 // PARSER
+
+fn push_sym_at(vec: &mut Vec<Sym>, id: usize, val: Sym) {
+    vec.resize_with(id + 1, || Sym::Unknown);
+    vec[id] = val
+}
 
 struct SlaParser<'a>(SlaReader<'a>);
 
@@ -151,11 +132,6 @@ impl SlaParser<'_> {
             }
         }
         id
-    }
-
-    fn push_sym_at(vec: &mut Vec<Sym>, id: usize, val: Sym) {
-        vec.resize_with(id + 1, || Sym::Unknown);
-        vec[id] = val
     }
 
     // CONSTRUCTOR
@@ -338,7 +314,7 @@ impl SlaParser<'_> {
             OpExpr::Unk(cast!(id))
         };
 
-        Self::push_sym_at(syms, cast!(id), Sym::Op(Operand { off, expr }));
+        push_sym_at(syms, cast!(id), Sym::Op(Operand { off, expr }));
     }
 
     fn parse_subtable(&mut self, syms: &mut Vec<Sym>) {
@@ -362,7 +338,7 @@ impl SlaParser<'_> {
             constructors,
             decision: decision.unwrap(),
         });
-        Self::push_sym_at(syms, cast!(id), sym);
+        push_sym_at(syms, cast!(id), sym);
     }
 
     fn parse_varlist(&mut self, syms: &mut Vec<Sym>) {
@@ -388,7 +364,7 @@ impl SlaParser<'_> {
             tokenfield: tokenfield.unwrap(),
             vars,
         });
-        Self::push_sym_at(syms, cast!(id), sym);
+        push_sym_at(syms, cast!(id), sym);
     }
 
     fn parse_varnode(&mut self, syms: &mut Vec<Sym>) {
@@ -403,7 +379,7 @@ impl SlaParser<'_> {
         }
 
         let sym = Sym::Varnode;
-        Self::push_sym_at(syms, cast!(id), sym);
+        push_sym_at(syms, cast!(id), sym);
     }
 
     // SYMBOL TABLE
@@ -453,7 +429,7 @@ impl SlaParser<'_> {
         SymbolTable { syms, sym_names }
     }
 
-    fn parse_sleigh(&mut self) -> SymbolTable {
+    fn parse(&mut self) -> SymbolTable {
         let mut symtab = None;
 
         let Elem(EId::SLEIGH) = self.0.next().unwrap() else {
@@ -474,8 +450,8 @@ impl SlaParser<'_> {
 }
 
 impl SlaBuf {
-    pub(crate) fn parse_sleigh(&self) -> SymbolTable {
+    pub(crate) fn parse(&self) -> SymbolTable {
         let mut parser = SlaParser(self.into_iter());
-        parser.parse_sleigh()
+        parser.parse()
     }
 }
