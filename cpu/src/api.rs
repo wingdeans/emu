@@ -2,7 +2,7 @@ use crate::cpu::{Cpu, Error, Result, State as StateEnum};
 use std::{mem::MaybeUninit, os::raw::c_int};
 
 type CBool = bool;
-type CSsizeT = isize;
+type CSizeT = usize;
 
 const MEMORY_ACCESS_MODE_WRITE: c_int = 1;
 
@@ -24,7 +24,7 @@ struct Registers {
 }
 
 #[repr(C)]
-pub struct State {
+struct State {
     registers: Registers,
     sp: u16,
     pc: u16,
@@ -50,7 +50,7 @@ fn read(addr: u16) -> Result<u8> {
         let g = GLOBAL.assume_init_ref();
 
         if addr as usize >= g.memory_size {
-            Err(Error::BusFault(addr))
+            Ok(0xaa)
         } else {
             Ok(*g.memory.offset(addr as isize))
         }
@@ -61,8 +61,11 @@ fn write(addr: u16, value: u8) -> Result<()> {
     unsafe {
         let g = GLOBAL.assume_init_mut();
 
-        if addr as usize >= g.memory_size {
-            Err(Error::BusFault(addr))
+        if g.num_mem_access == 16 {
+            Err(Error::BusFault {
+                address: addr,
+                message: "Read failed (out of space)".to_string(),
+            })
         } else {
             g.mem_accesses.push(MemoryAccess {
                 mode: MEMORY_ACCESS_MODE_WRITE,
@@ -77,7 +80,7 @@ fn write(addr: u16, value: u8) -> Result<()> {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn init(memory_size: CSsizeT, memory: *const u8) {
+unsafe extern "C" fn init(memory_size: CSizeT, memory: *const u8) {
     GLOBAL.write(Global {
         cpu: Cpu::new(read, write),
         memory_size: memory_size as usize,
@@ -88,7 +91,7 @@ pub unsafe extern "C" fn init(memory_size: CSsizeT, memory: *const u8) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn set_state(state: *const State) {
+unsafe extern "C" fn set_state(state: *const State) {
     let g = GLOBAL.assume_init_mut();
     let s = &*state;
 
@@ -109,7 +112,7 @@ pub unsafe extern "C" fn set_state(state: *const State) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn get_state(state: *mut State) {
+unsafe extern "C" fn get_state(state: *mut State) {
     let g = GLOBAL.assume_init_ref();
     let s = &mut *state;
 
@@ -126,9 +129,9 @@ pub unsafe extern "C" fn get_state(state: *mut State) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn step() -> c_int {
+unsafe extern "C" fn step() -> c_int {
     match GLOBAL.assume_init_mut().cpu.execute() {
-        Ok(x) => x as c_int,
+        Ok(x) => (x * 4) as c_int,
         Err(e) => {
             eprintln!("{}", e);
             -1

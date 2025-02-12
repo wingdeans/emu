@@ -4,8 +4,8 @@ pub enum Error {
     InvalidOperation(u8),
     #[error("attempted to index {0}-bit field with value `{1}`")]
     InvalidIndexWidth(u8, u8),
-    #[error("bus fault accessing address `0x{0:04x}`")]
-    BusFault(u16),
+    #[error("bus fault accessing address `0x{address:04x}`: {message}")]
+    BusFault { address: u16, message: String },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -242,9 +242,9 @@ impl Cpu {
     }
 
     fn stack_pop(&mut self) -> Result<u16> {
-        let lo = self.read(self.sp + 0)?;
-        let hi = self.read(self.sp + 1)?;
-        self.sp += 2;
+        let lo = self.read(self.sp)?;
+        let hi = self.read(self.sp.wrapping_add(1))?;
+        self.sp = self.sp.wrapping_add(2);
 
         Ok(((hi as u16) << 8) | (lo as u16))
     }
@@ -301,8 +301,8 @@ impl Cpu {
 
     fn ld_imm16_sp(&mut self, _ins: u8) -> Result<u32> {
         let addr = self.imm16()?;
-        self.write(addr + 0, self.sp as u8)?;
-        self.write(addr + 1, (self.sp >> 8) as u8)?;
+        self.write(addr, self.sp as u8)?;
+        self.write(addr.wrapping_add(1), (self.sp >> 8) as u8)?;
         Ok(5)
     }
 
@@ -451,7 +451,7 @@ impl Cpu {
                 adjustment += 0x60;
             }
 
-            value = self.a() - adjustment;
+            value = self.a().wrapping_sub(adjustment);
             self.set_carry(value > adjustment);
         } else {
             let mut adjustment = 0;
@@ -516,7 +516,7 @@ impl Cpu {
     }
 
     fn stop(&mut self, _ins: u8) -> Result<u32> {
-        self.pc += 1;
+        self.pc = self.pc.wrapping_add(1);
         self.state = State::Stopped;
         Ok(0)
     }
@@ -889,7 +889,7 @@ impl Cpu {
 
     fn call_cond(&mut self, ins: u8) -> Result<u32> {
         if self.cond(ins!(ins, cond))? {
-            self.stack_push(self.pc + 2)?;
+            self.stack_push(self.pc.wrapping_add(2))?;
             self.pc = self.imm16()?;
             Ok(6)
         } else {
@@ -898,13 +898,13 @@ impl Cpu {
     }
 
     fn call(&mut self, _ins: u8) -> Result<u32> {
-        self.stack_push(self.pc + 2)?;
+        self.stack_push(self.pc.wrapping_add(2))?;
         self.pc = self.imm16()?;
         Ok(6)
     }
 
     fn rst(&mut self, ins: u8) -> Result<u32> {
-        self.stack_push(self.pc + 2)?;
+        self.stack_push(self.pc.wrapping_add(2))?;
         self.pc = (ins!(ins, tgt3) as u16) * 8;
         Ok(4)
     }
@@ -1131,7 +1131,7 @@ impl Cpu {
     fn sla(&mut self, ins: u8) -> Result<u32> {
         let value = self.r8(ins!(ins, r8l))?;
 
-        self.set_zero((value << 1) != 0);
+        self.set_zero((value << 1) == 0);
         self.set_sub(false);
         self.set_half_carry(false);
         self.set_carry((value & 0x80) != 0);
@@ -1143,7 +1143,7 @@ impl Cpu {
     fn sla_hl(&mut self, _ins: u8) -> Result<u32> {
         let value = self.read(self.hl)?;
 
-        self.set_zero((value << 1) != 0);
+        self.set_zero((value << 1) == 0);
         self.set_sub(false);
         self.set_half_carry(false);
         self.set_carry((value & 0x80) != 0);
@@ -1156,7 +1156,7 @@ impl Cpu {
         let value = self.r8(ins!(ins, r8l))?;
         let result = (value & 0x80) | (value >> 1);
 
-        self.set_zero(result != 0);
+        self.set_zero(result == 0);
         self.set_sub(false);
         self.set_half_carry(false);
         self.set_carry((value & 1) != 0);
@@ -1169,7 +1169,7 @@ impl Cpu {
         let value = self.read(self.hl)?;
         let result = (value & 0x80) | (value >> 1);
 
-        self.set_zero(result != 0);
+        self.set_zero(result == 0);
         self.set_sub(false);
         self.set_half_carry(false);
         self.set_carry((value & 1) != 0);
@@ -1207,7 +1207,7 @@ impl Cpu {
     fn srl(&mut self, ins: u8) -> Result<u32> {
         let value = self.r8(ins!(ins, r8l))?;
 
-        self.set_zero((value >> 1) != 0);
+        self.set_zero((value >> 1) == 0);
         self.set_sub(false);
         self.set_half_carry(false);
         self.set_carry((value & 1) != 0);
@@ -1219,7 +1219,7 @@ impl Cpu {
     fn srl_hl(&mut self, _ins: u8) -> Result<u32> {
         let value = self.read(self.hl)?;
 
-        self.set_zero((value >> 1) != 0);
+        self.set_zero((value >> 1) == 0);
         self.set_sub(false);
         self.set_half_carry(false);
         self.set_carry((value & 1) != 0);
@@ -1232,7 +1232,7 @@ impl Cpu {
         let value = self.r8(ins!(ins, r8l))?;
         let bit = ins!(ins, b3);
 
-        self.set_zero((value & (1 << bit)) != 0);
+        self.set_zero((value & (1 << bit)) == 0);
         self.set_sub(false);
         self.set_half_carry(true);
 
@@ -1243,7 +1243,7 @@ impl Cpu {
         let value = self.read(self.hl)?;
         let bit = ins!(ins, b3);
 
-        self.set_zero((value & (1 << bit)) != 0);
+        self.set_zero((value & (1 << bit)) == 0);
         self.set_sub(false);
         self.set_half_carry(true);
 
@@ -1455,11 +1455,11 @@ impl Cpu {
         }
 
         let mut ins = self.read(self.pc)?;
-        self.pc += 1;
+        self.pc = self.pc.wrapping_add(1);
 
         let func = if ins == 0xcb {
             ins = self.read(self.pc)?;
-            self.pc += 1;
+            self.pc = self.pc.wrapping_add(1);
 
             Self::decode_cb(ins)?
         } else {
