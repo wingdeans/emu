@@ -58,9 +58,7 @@ fn add8(a: u8, b: u8, c: bool) -> (u8, bool, bool) {
     let (sum, c1) = a.overflowing_add(b);
     let (result, c2) = sum.overflowing_add(if c { 1 } else { 0 });
 
-    let half = (a & 0x0f)
-        .wrapping_add(b & 0x0f)
-        .wrapping_add(if c { 1 } else { 0 });
+    let half = (a & 0x0f) + (b & 0x0f) + if c { 1 } else { 0 };
 
     (result, c1 || c2, (half & 0xf0) != 0)
 }
@@ -69,9 +67,7 @@ fn add16(a: u16, b: u16, c: bool) -> (u16, bool, bool) {
     let (value, c1) = a.overflowing_add(b);
     let (result, c2) = value.overflowing_add(if c { 1 } else { 0 });
 
-    let half = (a & 0x0fff)
-        .wrapping_add(b & 0x0fff)
-        .wrapping_add(if c { 1 } else { 0 });
+    let half = (a & 0x0fff) + (b & 0x0fff) + (if c { 1 } else { 0 });
 
     (result, c1 || c2, (half & 0xf000) != 0)
 }
@@ -659,7 +655,7 @@ impl Cpu {
         self.set_zero(self.a() == 0);
         self.set_sub(false);
         self.set_half_carry(true);
-        self.set_carry(true);
+        self.set_carry(false);
 
         Ok(1)
     }
@@ -671,7 +667,7 @@ impl Cpu {
         self.set_zero(self.a() == 0);
         self.set_sub(false);
         self.set_half_carry(true);
-        self.set_carry(true);
+        self.set_carry(false);
 
         Ok(2)
     }
@@ -807,7 +803,7 @@ impl Cpu {
         self.set_zero(self.a() == 0);
         self.set_sub(false);
         self.set_half_carry(true);
-        self.set_carry(true);
+        self.set_carry(false);
 
         Ok(2)
     }
@@ -873,6 +869,7 @@ impl Cpu {
             self.pc = self.imm16()?;
             Ok(4)
         } else {
+            self.imm16()?;
             Ok(3)
         }
     }
@@ -893,6 +890,7 @@ impl Cpu {
             self.pc = self.imm16()?;
             Ok(6)
         } else {
+            self.imm16()?;
             Ok(3)
         }
     }
@@ -904,7 +902,7 @@ impl Cpu {
     }
 
     fn rst(&mut self, ins: u8) -> Result<u32> {
-        self.stack_push(self.pc.wrapping_add(2))?;
+        self.stack_push(self.pc)?;
         self.pc = (ins!(ins, tgt3) as u16) * 8;
         Ok(4)
     }
@@ -985,7 +983,9 @@ impl Cpu {
 
     fn add_sp_imm8(&mut self, _ins: u8) -> Result<u32> {
         let value = self.imm8()?;
-        let (result, c, hc) = add16(self.sp, value as i8 as i16 as u16, false);
+        let result = self.sp.wrapping_add(value as i8 as i16 as u16);
+
+        let (_, c, hc) = add8(self.sp as u8, value, false);
 
         self.set_zero(false);
         self.set_sub(false);
@@ -1106,7 +1106,7 @@ impl Cpu {
         let result = (bit << 7) | (value >> 1);
 
         self.set_zero(result == 0);
-        self.set_carry((value & 0x80) != 0);
+        self.set_carry((value & 1) != 0);
         self.set_sub(false);
         self.set_half_carry(false);
 
@@ -1120,7 +1120,7 @@ impl Cpu {
         let result = (bit << 7) | (value >> 1);
 
         self.set_zero(result == 0);
-        self.set_carry((value & 0x80) != 0);
+        self.set_carry((value & 1) != 0);
         self.set_sub(false);
         self.set_half_carry(false);
 
