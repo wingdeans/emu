@@ -1,3 +1,4 @@
+mod cartridge;
 mod memory;
 
 use cpu::Cpu;
