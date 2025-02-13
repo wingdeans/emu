@@ -1,3 +1,4 @@
+use crate::pcodeop::PcodeOp;
 use crate::slaformat::{AId, EId};
 
 use std::collections::HashMap;
@@ -12,6 +13,7 @@ pub(crate) enum Attribute {
     BasicAddr(u64),
     SpecialAddr(u8),
     Str(String),
+    Pcode(PcodeOp), // unofficial
 }
 
 #[derive(Debug)]
@@ -121,7 +123,12 @@ impl SlaReader {
         loop {
             match self.read_tag() {
                 Tag::ElStart(eid) => els.push(self.parse(eid)),
-                Tag::Attr(aid, attr) => {
+                Tag::Attr(aid, mut attr) => {
+                    if aid == AId::CODE {
+                        if let Attribute::Int(x) = attr {
+                            attr = Attribute::Pcode(TryInto::<u8>::try_into(x).unwrap().into());
+                        }
+                    }
                     if let Some(old) = attrs.insert(aid, attr) {
                         unreachable!("duplicate attribute: {:?}", aid)
                     }
