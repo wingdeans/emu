@@ -1,5 +1,6 @@
-use crate::cpu::{Cpu, Error, Result, State as StateEnum};
-use std::{mem::MaybeUninit, os::raw::c_int};
+use crate::cpu::{Cpu, State as StateEnum};
+use library::{bus::Bus, error::Error as LibError, error::Result as LibResult};
+use std::{cell::RefCell, mem::MaybeUninit, os::raw::c_int, rc::Rc};
 
 type CBool = bool;
 type CSizeT = usize;
@@ -7,7 +8,7 @@ type CSizeT = usize;
 const MEMORY_ACCESS_MODE_WRITE: c_int = 1;
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 struct MemoryAccess {
     mode: c_int,
     address: u16,
@@ -15,7 +16,6 @@ struct MemoryAccess {
 }
 
 #[repr(C)]
-#[derive(Debug)]
 struct Registers {
     af: u16,
     bc: u16,
@@ -34,7 +34,6 @@ struct State {
     mem_accesses: [MemoryAccess; 16],
 }
 
-#[derive(Debug)]
 struct Global {
     cpu: Cpu,
     memory_size: usize,
@@ -43,46 +42,51 @@ struct Global {
     mem_accesses: Vec<MemoryAccess>,
 }
 
+#[derive(Default)]
+struct GlobalBus {}
+
+impl Bus for GlobalBus {
+    fn read(&mut self, addr: u16) -> LibResult<u8> {
+        unsafe {
+            let g = GLOBAL.assume_init_ref();
+
+            if addr as usize >= g.memory_size {
+                Ok(0xaa)
+            } else {
+                Ok(*g.memory.offset(addr as isize))
+            }
+        }
+    }
+
+    fn write(&mut self, addr: u16, value: u8) -> LibResult<()> {
+        unsafe {
+            let g = GLOBAL.assume_init_mut();
+
+            if g.num_mem_access == 16 {
+                Err(LibError::BusFault {
+                    addr,
+                    msg: "write failed (out of space)".to_string(),
+                })
+            } else {
+                g.mem_accesses.push(MemoryAccess {
+                    mode: MEMORY_ACCESS_MODE_WRITE,
+                    address: addr,
+                    value,
+                });
+
+                g.num_mem_access += 1;
+                Ok(())
+            }
+        }
+    }
+}
+
 static mut GLOBAL: MaybeUninit<Global> = MaybeUninit::uninit();
-
-fn read(addr: u16) -> Result<u8> {
-    unsafe {
-        let g = GLOBAL.assume_init_ref();
-
-        if addr as usize >= g.memory_size {
-            Ok(0xaa)
-        } else {
-            Ok(*g.memory.offset(addr as isize))
-        }
-    }
-}
-
-fn write(addr: u16, value: u8) -> Result<()> {
-    unsafe {
-        let g = GLOBAL.assume_init_mut();
-
-        if g.num_mem_access == 16 {
-            Err(Error::BusFault {
-                address: addr,
-                message: "Read failed (out of space)".to_string(),
-            })
-        } else {
-            g.mem_accesses.push(MemoryAccess {
-                mode: MEMORY_ACCESS_MODE_WRITE,
-                address: addr,
-                value,
-            });
-
-            g.num_mem_access += 1;
-            Ok(())
-        }
-    }
-}
 
 #[no_mangle]
 unsafe extern "C" fn init(memory_size: CSizeT, memory: *const u8) {
     GLOBAL.write(Global {
-        cpu: Cpu::new(read, write),
+        cpu: Cpu::new(Rc::new(RefCell::<GlobalBus>::new(Default::default()))),
         memory_size: memory_size as usize,
         memory,
         num_mem_access: 0,

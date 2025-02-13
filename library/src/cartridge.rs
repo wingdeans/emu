@@ -1,4 +1,4 @@
-use error::{Error, Result};
+use crate::error::{Error, Result};
 
 pub enum Mapper {
     MBC1,
@@ -7,7 +7,7 @@ pub enum Mapper {
 
 #[repr(packed)]
 pub struct Header {
-    p0: [u8; 0x100],                // 0x000..=0x099
+    _0: [u8; 0x100],                // 0x000..=0x099
     pub entrypoint: [u8; 4],        // 0x100,.=0x103
     pub nintendo_logo: [u8; 48],    // 0x104,.=0x133
     pub title: [u8; 10],            // 0x134,.=0x13e

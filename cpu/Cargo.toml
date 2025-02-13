@@ -4,11 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
-crate-type = ["staticlib"]
+crate-type = ["staticlib", "lib"]
 
 [features]
-default = ["api"]
+default = []
 api = []
 
 [dependencies]
+library = { path = "../library" }
 thiserror = "2.0.11"

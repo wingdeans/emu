@@ -1,25 +1,27 @@
+use library::bus::Bus;
+use std::{cell::RefCell, rc::Rc};
+
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("attempted to decode invalid operation `0b{0:08b}`")]
     InvalidOperation(u8),
     #[error("attempted to index {0}-bit field with value `{1}`")]
     InvalidIndexWidth(u8, u8),
-    #[error("bus fault accessing address `0x{address:04x}`: {message}")]
-    BusFault { address: u16, message: String },
+    #[error("bus fault accessing address `0x{addr:04x}`: {msg}")]
+    BusFault { addr: u16, msg: String },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
 pub type ReadFunction = fn(addr: u16) -> Result<u8>;
 pub type WriteFunction = fn(addr: u16, value: u8) -> Result<()>;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum State {
     Running,
     Halted,
     Stopped,
 }
 
-#[derive(Debug)]
 pub struct Cpu {
     pub af: u16,
     pub bc: u16,
@@ -29,8 +31,7 @@ pub struct Cpu {
     pub pc: u16,
     pub ime: bool,
     pub state: State,
-    read_function: ReadFunction,
-    write_function: WriteFunction,
+    bus: Rc<RefCell<dyn Bus>>,
 }
 
 macro_rules! ins {
@@ -83,7 +84,7 @@ fn sub8(a: u8, b: u8, c: bool) -> (u8, bool, bool) {
 }
 
 impl Cpu {
-    pub fn new(read_function: ReadFunction, write_function: WriteFunction) -> Self {
+    pub fn new(bus: Rc<RefCell<dyn Bus>>) -> Self {
         Self {
             af: 0,
             bc: 0,
@@ -93,8 +94,7 @@ impl Cpu {
             pc: 0x100,
             ime: true,
             state: State::Running,
-            read_function,
-            write_function,
+            bus,
         }
     }
 
@@ -209,11 +209,23 @@ impl Cpu {
     }
 
     fn read(&mut self, addr: u16) -> Result<u8> {
-        (self.read_function)(addr)
+        self.bus
+            .borrow_mut()
+            .read(addr)
+            .map_err(|e| Error::BusFault {
+                addr,
+                msg: format!("{:?}", e),
+            })
     }
 
     fn write(&mut self, addr: u16, value: u8) -> Result<()> {
-        (self.write_function)(addr, value)
+        self.bus
+            .borrow_mut()
+            .write(addr, value)
+            .map_err(|e| Error::BusFault {
+                addr,
+                msg: format!("{:?}", e),
+            })
     }
 
     fn imm8(&mut self) -> Result<u8> {

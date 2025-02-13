@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 library = { path = "../library" }
+cpu = { path = "../cpu" }
 thiserror = "2.0.11"
 eframe = "0.30.0"
 egui_memory_editor = "0.2.11"

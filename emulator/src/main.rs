@@ -1,7 +1,6 @@
-mod cartridge;
 mod memory;
 
-use cpu::Cpu;
+use cpu::cpu::{Cpu, Result as CpuResult};
 use eframe::{
     egui::{self, Button, Label, Layout, RichText, Window},
     epaint::Color32,
@@ -32,7 +31,7 @@ struct App {
     cpu: Cpu,
     memory_editor: MemoryEditor,
     state: State,
-    last_execute: Option<error::Result<u32>>,
+    last_execute: Option<CpuResult<u32>>,
 }
 
 impl App {
@@ -41,7 +40,7 @@ impl App {
 
         Self {
             bus: Rc::clone(&bus),
-            cpu: Cpu::new(Rc::clone(&bus)),
+            cpu: Cpu::new(bus),
             memory_editor: MemoryEditor::new().with_address_range("All", 0..0xffff),
             state: State {
                 control_open: true,
@@ -55,7 +54,7 @@ impl App {
 
 impl App {
     fn draw_control(&mut self, ctx: &egui::Context) {
-        use cpu::State::*;
+        use cpu::cpu::State::*;
 
         let color = match self.cpu.state() {
             Stopped => Color32::from_rgb(255, 0, 0),
