@@ -1,35 +1,30 @@
 use crate::{
     bus::Bus,
     error::{Error, Result},
-    mbc::mbc1::Mbc1,
+    mbc::{mbc1::Mbc1, mbc_none::MbcNone},
     rom::Rom,
 };
-use std::{
-    cell::RefCell,
-    fs::File,
-    io::{prelude::*, SeekFrom},
-    path::Path,
-    ptr,
-    rc::Rc,
-};
+use std::{cell::RefCell, fs::File, io::prelude::*, path::Path, ptr, rc::Rc};
 
 pub const ENTRYPOINT_ADDRESS: usize = 0x100;
-pub const HEADER_BEGIN: usize = 0x100;
+pub const HEADER_BEGIN: usize = 0x000;
 pub const HEADER_END: usize = 0x150;
 pub const HEADER_SIZE: usize = HEADER_END - HEADER_BEGIN;
 pub const CHECKSUM_BEGIN: usize = 0x134;
 pub const CHECKSUM_END: usize = 0x14d;
 
 pub enum Mapper {
+    None,
     MBC1,
 }
 
 #[repr(packed)]
 #[derive(Copy, Clone)]
 pub struct Header {
+    _p0: [u8; 0x100],                // 0x000..=0x099
     pub entrypoint: [u8; 4],         // 0x100..=0x103
     pub nintendo_logo: [u8; 48],     // 0x104..=0x133
-    pub title: [u8; 10],             // 0x134..=0x13e
+    pub title: [u8; 11],             // 0x134..=0x13e
     pub manufacturer_code: [u8; 4],  // 0x13f..=0x142
     pub cgb_flag: u8,                // 0x143
     pub new_licensee_code: [u8; 2],  // 0x144..=0x145
@@ -52,12 +47,10 @@ pub struct Cartridge {
 
 impl Header {
     pub fn from(bytes: &[u8]) -> Result<Self> {
-        let header: Header = unsafe {
-            ptr::read_unaligned(bytes.as_ptr().offset(HEADER_BEGIN as isize) as *const _)
-        };
+        let header: Header = unsafe { ptr::read_unaligned(bytes.as_ptr() as *const _) };
 
         let mut checksum: u8 = 0;
-        for i in 0..HEADER_SIZE {
+        for i in CHECKSUM_BEGIN..CHECKSUM_END {
             checksum = checksum.wrapping_sub(bytes[i]).wrapping_sub(1);
         }
 
@@ -120,8 +113,11 @@ impl Header {
     }
 
     pub fn mapper(&self) -> Result<Mapper> {
+        use Mapper::*;
+
         match self.cartridge_type {
-            0x01..=0x03 => Ok(Mapper::MBC1),
+            0 => Ok(None),
+            0x01..=0x03 => Ok(MBC1),
             _ => Err(Error::UnrecognizedCartridgeHeaderField(format!(
                 "unrecognized cartridge type: 0x{:02x}",
                 self.cartridge_type
@@ -132,21 +128,22 @@ impl Header {
 
 impl Cartridge {
     pub fn load_from_file(path: &Path) -> Result<Self> {
-        let err_into = |e| Error::CartridgeLoadFailure(format!("{:?}", e));
-
-        let mut file = File::open(path).map_err(err_into)?;
-        file.seek(SeekFrom::Start(HEADER_BEGIN as u64))
-            .map_err(err_into)?;
+        let mut file = File::open(path).map_err(|e| Error::CartridgeLoadFailure(e.to_string()))?;
 
         let mut buffer = [0u8; HEADER_SIZE];
-        file.read_exact(&mut buffer).map_err(err_into)?;
+        file.read_exact(&mut buffer)
+            .map_err(|e| Error::CartridgeLoadFailure(e.to_string()))?;
         let header = Header::from(&buffer)?;
 
         let rom = Rc::new(Rom::from_file(&header, &mut file)?);
 
-        let mapper = Rc::new(RefCell::new(match header.mapper()? {
-            Mapper::MBC1 => Mbc1::new(&header, Rc::clone(&rom))?,
-        }));
+        let mapper = match header.mapper()? {
+            Mapper::None => Rc::new(RefCell::new(MbcNone::new(&header, Rc::clone(&rom))?))
+                as Rc<RefCell<dyn Bus>>,
+            Mapper::MBC1 => {
+                Rc::new(RefCell::new(Mbc1::new(&header, Rc::clone(&rom))?)) as Rc<RefCell<dyn Bus>>
+            }
+        };
 
         Ok(Self {
             header,

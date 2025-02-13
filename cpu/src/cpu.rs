@@ -214,7 +214,7 @@ impl Cpu {
             .read(addr)
             .map_err(|e| Error::BusFault {
                 addr,
-                msg: format!("{:?}", e),
+                msg: e.to_string(),
             })
     }
 
@@ -224,7 +224,7 @@ impl Cpu {
             .write(addr, value)
             .map_err(|e| Error::BusFault {
                 addr,
-                msg: format!("{:?}", e),
+                msg: e.to_string(),
             })
     }
 
