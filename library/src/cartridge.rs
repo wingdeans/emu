@@ -1,9 +1,16 @@
-use crate::error::{Error, Result};
+use crate::{
+    bus::Bus,
+    error::{Error, Result},
+    mbc::mbc1::Mbc1,
+    rom::Rom,
+};
 use std::{
+    cell::RefCell,
     fs::File,
     io::{prelude::*, SeekFrom},
     path::Path,
     ptr,
+    rc::Rc,
 };
 
 pub const ENTRYPOINT_ADDRESS: usize = 0x100;
@@ -15,7 +22,6 @@ pub const CHECKSUM_END: usize = 0x14d;
 
 pub enum Mapper {
     MBC1,
-    MBC5,
 }
 
 #[repr(packed)]
@@ -38,9 +44,10 @@ pub struct Header {
     pub global_checksum: [u8; 2],    // 0x14e..=0x14f
 }
 
-#[derive(Copy, Clone)]
 pub struct Cartridge {
     header: Header,
+    rom: Rc<Rom>,
+    mapper: Rc<RefCell<dyn Bus>>,
 }
 
 impl Header {
@@ -50,7 +57,7 @@ impl Header {
         };
 
         let mut checksum: u8 = 0;
-        for i in CHECKSUM_BEGIN..CHECKSUM_END {
+        for i in 0..HEADER_SIZE {
             checksum = checksum.wrapping_sub(bytes[i]).wrapping_sub(1);
         }
 
@@ -115,7 +122,6 @@ impl Header {
     pub fn mapper(&self) -> Result<Mapper> {
         match self.cartridge_type {
             0x01..=0x03 => Ok(Mapper::MBC1),
-            0x19..=0x1e => Ok(Mapper::MBC5),
             _ => Err(Error::UnrecognizedCartridgeHeaderField(format!(
                 "unrecognized cartridge type: 0x{:02x}",
                 self.cartridge_type
@@ -129,23 +135,33 @@ impl Cartridge {
         let err_into = |e| Error::CartridgeLoadFailure(format!("{:?}", e));
 
         let mut file = File::open(path).map_err(err_into)?;
-
         file.seek(SeekFrom::Start(HEADER_BEGIN as u64))
             .map_err(err_into)?;
 
         let mut buffer = [0u8; HEADER_SIZE];
         file.read_exact(&mut buffer).map_err(err_into)?;
-
         let header = Header::from(&buffer)?;
 
-        Ok(Self { header })
+        let rom = Rc::new(Rom::from_file(&header, &mut file)?);
+
+        let mapper = Rc::new(RefCell::new(match header.mapper()? {
+            Mapper::MBC1 => Mbc1::new(&header, Rc::clone(&rom))?,
+        }));
+
+        Ok(Self {
+            header,
+            rom,
+            mapper,
+        })
+    }
+}
+
+impl Bus for Cartridge {
+    fn read(&mut self, addr: u16) -> Result<u8> {
+        self.mapper.borrow_mut().read(addr)
     }
 
-    pub fn rom_bank(&self, bank: u32) -> Result<&[u8]> {
-        panic!("");
-    }
-
-    pub fn header(&self) -> &Header {
-        return &self.header;
+    fn write(&mut self, addr: u16, value: u8) -> Result<()> {
+        self.mapper.borrow_mut().write(addr, value)
     }
 }

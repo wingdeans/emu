@@ -1,8 +1,11 @@
 use crate::{
     bus::Bus,
-    cartridge::Cartridge,
+    cartridge::Header,
     error::{Error, Result},
+    rom::Rom,
 };
+
+use std::rc::Rc;
 
 mod locations {
     pub const ROM_BANK_X0_BEGIN: u16 = 0x0000;
@@ -22,25 +25,27 @@ mod locations {
 }
 
 pub struct Mbc1 {
-    cartridge: Cartridge,
+    header: Header,
     rom_bank: u32,
     ram_enable: bool,
     ram_bank: u32,
     ram_banks: Vec<Vec<u8>>,
+    rom: Rc<Rom>,
     advanced_banking: bool,
 }
 
 impl Mbc1 {
-    pub fn new(cartridge: Cartridge) -> Result<Self> {
-        let ram_bank_count = cartridge.header().ram_bank_count()?;
-        let ram_bank_size = cartridge.header().ram_bank_size()?;
+    pub fn new(header: &Header, rom: Rc<Rom>) -> Result<Self> {
+        let ram_bank_count = header.ram_bank_count()?;
+        let ram_bank_size = header.ram_bank_size()?;
 
         Ok(Self {
-            cartridge,
+            header: *header,
             rom_bank: 1,
             ram_enable: false,
             ram_bank: 0,
-            ram_banks: vec![vec![0; ram_bank_size as usize]; ram_bank_count as usize],
+            ram_banks: vec![vec![0u8; ram_bank_size as usize]; ram_bank_count as usize],
+            rom,
             advanced_banking: false,
         })
     }
@@ -58,10 +63,10 @@ impl Bus for Mbc1 {
                     0
                 };
 
-                Ok(self.cartridge.rom_bank(bank)?[(addr & 0x1fff) as usize])
+                Ok(self.rom.bank(bank)?[(addr & 0x1fff) as usize])
             }
             ROM_BANK_01_7F_BEGIN..ROM_BANK_01_7F_END => {
-                Ok(self.cartridge.rom_bank(self.rom_bank)?[(addr & 0x1fff) as usize])
+                Ok(self.rom.bank(self.rom_bank)?[(addr & 0x1fff) as usize])
             }
             RAM_BANK_00_03_BEGIN..RAM_BANK_00_03_END => {
                 if self.ram_enable {
@@ -87,7 +92,7 @@ impl Bus for Mbc1 {
                 self.rom_bank = if mask == 0 {
                     1
                 } else {
-                    (mask as u32).clamp(1, self.cartridge.header().rom_bank_count()?)
+                    (mask as u32).clamp(1, self.header.rom_bank_count()?)
                 };
 
                 Ok(())

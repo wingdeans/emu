@@ -1,5 +1,3 @@
-mod memory;
-
 use cpu::cpu::{Cpu, Result as CpuResult};
 use eframe::{
     egui::{self, Button, Label, Layout, RichText, Window},
@@ -7,9 +5,8 @@ use eframe::{
 };
 use egui_extras::{Column, TableBuilder};
 use egui_memory_editor::MemoryEditor;
-use library::bus::Bus;
-use memory::Memory;
-use std::{cell::RefCell, rc::Rc};
+use library::{bus::Bus, cartridge::Cartridge, system::System};
+use std::{cell::RefCell, env, path::Path, rc::Rc};
 
 fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
@@ -27,20 +24,24 @@ struct State {
 }
 
 struct App {
-    bus: Rc<RefCell<dyn Bus>>,
     cpu: Cpu,
     memory_editor: MemoryEditor,
     state: State,
     last_execute: Option<CpuResult<u32>>,
+    system: Rc<RefCell<System>>,
 }
 
 impl App {
     pub fn new() -> Self {
-        let bus: Rc<RefCell<dyn Bus>> = Memory::new();
+        let args: Vec<_> = env::args().collect();
+        let path = &args[1];
+
+        let cartridge =
+            Cartridge::load_from_file(Path::new(path)).expect("Failed to load cartridge");
+        let system = Rc::new(RefCell::new(System::new(cartridge)));
 
         Self {
-            bus: Rc::clone(&bus),
-            cpu: Cpu::new(bus),
+            cpu: Cpu::new(Rc::clone(&system) as Rc<RefCell<dyn Bus>>),
             memory_editor: MemoryEditor::new().with_address_range("All", 0..0xffff),
             state: State {
                 control_open: true,
@@ -48,6 +49,7 @@ impl App {
                 registers_open: true,
             },
             last_execute: None,
+            system,
         }
     }
 }
@@ -76,7 +78,7 @@ impl App {
                     }
 
                     if ui.add_sized([25.0, 25.0], Button::new("↺")).clicked() {
-                        self.cpu = Cpu::new(Rc::clone(&self.bus));
+                        self.cpu = Cpu::new(Rc::clone(&self.system) as Rc<RefCell<dyn Bus>>);
                         self.last_execute = None;
                     }
 
@@ -91,7 +93,7 @@ impl App {
         self.memory_editor.window_ui(
             ctx,
             &mut self.state.memory_editor_open,
-            &mut self.bus,
+            &mut self.system,
             |bus, addr| bus.borrow_mut().read(addr as u16).ok(),
             |bus, addr, value| _ = bus.borrow_mut().write(addr as u16, value),
         );
