@@ -1,6 +1,5 @@
 use crate::slamodel::{
-    Constructor, Decision, Mask, OpExpr, Operand, Print, Sleigh, Subtable, Sym, SymbolTable,
-    TokenField, Varlist,
+    Constructor, Decision, Mask, OpExpr, Operand, Print, Sleigh, Subtable, Sym, TokenField, Varlist,
 };
 
 use proc_macro2::TokenStream;

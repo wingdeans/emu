@@ -51,7 +51,7 @@ impl SlaBuf {
     pub(crate) fn parse(self) -> Sla {
         let mut reader = SlaReader(self.0.into_iter());
         let Tag::ElStart(EId::SLEIGH) = reader.read_tag() else {
-            unreachable!();
+            unreachable!("sla must start with sleigh tag");
         };
         reader.parse(EId::SLEIGH)
     }
@@ -123,7 +123,7 @@ impl SlaReader {
                 Tag::ElStart(eid) => els.push(self.parse(eid)),
                 Tag::Attr(aid, attr) => {
                     if let Some(old) = attrs.insert(aid, attr) {
-                        unreachable!() // TODO: error handling
+                        unreachable!("duplicate attribute: {:?}", aid)
                     }
                 }
                 Tag::ElEnd => break,
@@ -177,18 +177,8 @@ impl Sla {
         };
         s.clone()
     }
-}
 
-impl std::fmt::Display for Sla {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        self.write(f, 0)
-    }
-}
-
-impl std::ops::Index<EId> for Sla {
-    type Output = Sla;
-
-    fn index(&self, eid: EId) -> &Self::Output {
+    pub(crate) fn get_el(&self, eid: EId) -> &Sla {
         let mut matches = self.els.iter().filter(|e| e.eid == eid);
         let Some(first) = matches.next() else {
             unreachable!("No occurrences of {:?} in Sla: {}", eid, self);
@@ -197,5 +187,11 @@ impl std::ops::Index<EId> for Sla {
             unreachable!("Item {:?} is not unique in Sla: {}", eid, self);
         }
         first
+    }
+}
+
+impl std::fmt::Display for Sla {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        self.write(f, 0)
     }
 }

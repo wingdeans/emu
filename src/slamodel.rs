@@ -117,18 +117,6 @@ fn model_op_tpl(tpl: &Sla) -> PcodeOp {
     tpl.get_int::<u8>(AId::CODE).into()
 }
 
-fn model_construct_tpl(tpl: &Sla) -> Vec<PcodeOp> {
-    tpl.els
-        .iter()
-        .filter_map(|e| match e.eid {
-            EId::NULL => None,
-            EId::OP_TPL => Some(model_op_tpl(e)),
-            EId::HANDLE_TPL => None,
-            _ => unreachable!(),
-        })
-        .collect()
-}
-
 fn model_constructor(constructor: &Sla) -> Constructor {
     let operands = constructor
         .els
@@ -136,6 +124,7 @@ fn model_constructor(constructor: &Sla) -> Constructor {
         .filter(|e| e.eid == EId::OPER)
         .map(|e| SymIdx(e.get_id()))
         .collect();
+
     let prints = constructor
         .els
         .iter()
@@ -148,25 +137,37 @@ fn model_constructor(constructor: &Sla) -> Constructor {
         })
         .collect();
 
+    let construct_tpl = constructor
+        .get_el(EId::CONSTRUCT_TPL)
+        .els
+        .iter()
+        .filter_map(|e| match e.eid {
+            EId::NULL => None,
+            EId::OP_TPL => Some(model_op_tpl(e)),
+            EId::HANDLE_TPL => None,
+            _ => unreachable!(),
+        })
+        .collect();
+
     Constructor {
         operands,
         prints,
-        construct_tpl: Vec::new(), /* TODO */
+        construct_tpl,
     }
 }
 
 // DECISION
 
 fn model_pair(pair: &Sla) -> Option<Mask> {
-    let insn_pat = &pair[EId::INSTRUCT_PAT];
-    let pat_block = &insn_pat[EId::PAT_BLOCK];
+    let insn_pat = pair.get_el(EId::INSTRUCT_PAT);
+    let pat_block = insn_pat.get_el(EId::PAT_BLOCK);
 
     let nonzero = pat_block.get_int(AId::NONZERO);
     if nonzero == 0 {
         return None;
     }
 
-    let mask_word = &pat_block[EId::MASK_WORD];
+    let mask_word = pat_block.get_el(EId::MASK_WORD);
 
     Some(Mask {
         id: pair.get_id(),
@@ -178,32 +179,27 @@ fn model_pair(pair: &Sla) -> Option<Mask> {
 }
 
 fn model_decision(decision: &Sla) -> Option<Decision> {
-    let mut masks = Vec::new();
-    let mut options = Vec::new();
-
-    for e in &decision.els {
-        match e.eid {
-            EId::PAIR => {
-                if let Some(mask) = model_pair(e) {
-                    masks.push(mask)
-                } else {
-                    return None;
-                }
-            }
-            EId::DECISION => {
-                options.push(model_decision(e).expect("non-root decisions must have mask"))
-            }
-            _ => (),
-        }
-    }
+    let masks = decision
+        .els
+        .iter()
+        .filter(|e| e.eid == EId::PAIR)
+        .map(model_pair)
+        .collect::<Option<Vec<_>>>()?;
 
     let size: u8 = decision.get_int(AId::SIZE);
 
     if size != 0 {
+        let options: Vec<_> = decision
+            .els
+            .iter()
+            .filter(|e| e.eid == EId::DECISION)
+            .map(|e| model_decision(e).expect("non-root decisions must have mask"))
+            .collect();
+
         assert_eq!(options.len(), 1 << size);
         Some(Decision::Bits {
             start: decision.get_int(AId::STARTBIT),
-            size: decision.get_int(AId::SIZE),
+            size,
             options,
         })
     } else {
@@ -264,7 +260,7 @@ fn model_operand(op: &Sla) -> Sym {
     } else if let Some(expr) = expr {
         OpExpr::Expr(expr)
     } else {
-        OpExpr::Tok(model_tokenfield(&op[EId::TOKENFIELD]))
+        OpExpr::Tok(model_tokenfield(op.get_el(EId::TOKENFIELD)))
     };
 
     Sym::Op(Operand {
@@ -274,7 +270,7 @@ fn model_operand(op: &Sla) -> Sym {
 }
 
 fn model_subtable(subtable: &Sla) -> Sym {
-    let decision = model_decision(&subtable[EId::DECISION]);
+    let decision = model_decision(subtable.get_el(EId::DECISION));
     let constructors = subtable
         .els
         .iter()
@@ -289,8 +285,8 @@ fn model_subtable(subtable: &Sla) -> Sym {
 }
 
 fn model_varlist(varlist: &Sla) -> Sym {
-    let mut tokenfield = model_tokenfield(&varlist[EId::TOKENFIELD]);
-    let mut vars = varlist
+    let tokenfield = model_tokenfield(varlist.get_el(EId::TOKENFIELD));
+    let vars = varlist
         .els
         .iter()
         .filter_map(|e| {
@@ -311,7 +307,7 @@ fn model_symtab(symtab: &Sla) -> SymbolTable {
     let mut syms = Vec::new();
     let mut sym_names = Vec::new();
 
-    for (i, el) in symtab.els.iter().enumerate() {
+    for el in &symtab.els {
         let id: usize = el.get_id();
         let sym = match el.eid {
             EId::SUBTABLE_SYM_HEAD
@@ -343,7 +339,7 @@ fn model_symtab(symtab: &Sla) -> SymbolTable {
 
 impl Sleigh {
     pub(crate) fn new(sleigh: Sla) -> Self {
-        let symtab = model_symtab(&sleigh[EId::SYMBOL_TABLE]);
+        let symtab = model_symtab(sleigh.get_el(EId::SYMBOL_TABLE));
         Sleigh { symtab }
     }
 }
