@@ -76,7 +76,7 @@ impl Header {
 
     pub fn rom_bank_size(&self) -> Result<u32> {
         match self.rom_size {
-            0..=8 => Ok(1024 * 16),
+            0..=4 => Ok(1024 * 16),
             _ => Err(Error::UnrecognizedCartridgeHeaderField(format!(
                 "unrecognized rom size: 0x{:02x}",
                 self.rom_size
@@ -86,7 +86,7 @@ impl Header {
 
     pub fn rom_bank_count(&self) -> Result<u32> {
         match self.rom_size {
-            0..=8 => Ok(2_u32.pow(self.rom_size as u32)),
+            0..=4 => Ok(2_u32.pow(self.rom_size as u32)),
             _ => Err(Error::UnrecognizedCartridgeHeaderField(format!(
                 "unrecognized rom size: 0x{:02x}",
                 self.rom_size
@@ -139,5 +139,13 @@ impl Cartridge {
         let header = Header::from(&buffer)?;
 
         Ok(Self { header })
+    }
+
+    pub fn rom_bank(&self, bank: u32) -> Result<&[u8]> {
+        panic!("");
+    }
+
+    pub fn header(&self) -> &Header {
+        return &self.header;
     }
 }
