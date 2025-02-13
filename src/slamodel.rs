@@ -63,7 +63,7 @@ pub(crate) enum Expr {
     Minus(Box<Expr>),
     Const(u64),
     InsnEnd,
-    Operand, // TODO
+    Operand(u8), // TODO
 }
 
 #[derive(Debug)]
@@ -77,6 +77,7 @@ pub(crate) enum OpExpr {
 pub(crate) struct Operand {
     pub(crate) off: u8,
     pub(crate) expr: OpExpr,
+    pub(crate) args: Vec<(u8, u8, u8)>,
 }
 
 #[derive(Debug)]
@@ -219,11 +220,19 @@ fn model_tokenfield(tokenfield: &Sla) -> TokenField {
     }
 }
 
-fn parse_exprs<const C: usize>(expr: &Sla) -> [Box<Expr>; C] {
+fn parse_exprs<const C: usize>(expr: &Sla, args: &mut Vec<(u8, u8, u8)>) -> [Box<Expr>; C] {
     expr.els
         .iter()
         .map(|e| match e.eid {
-            EId::OPERAND_EXP => Box::new(Expr::Operand),
+            EId::OPERAND_EXP => {
+                let idx = args.len().try_into().unwrap();
+                args.push((
+                    e.get_int(AId::TABLE),
+                    e.get_int(AId::CT),
+                    e.get_int(AId::INDEX),
+                ));
+                Box::new(Expr::Operand(idx))
+            }
             EId::INTB => Box::new(Expr::Const(e.get_int(AId::VAL))),
             EId::END_EXP => Box::new(Expr::InsnEnd),
             _ => unreachable!(),
@@ -234,38 +243,35 @@ fn parse_exprs<const C: usize>(expr: &Sla) -> [Box<Expr>; C] {
 }
 
 fn model_operand(op: &Sla) -> Sym {
-    let mut expr = None;
-    for e in &op.els {
+    let mut args = Vec::new();
+    let expr = if op.attrs.contains_key(&AId::SUBSYM) {
+        assert_eq!(op.els.len(), 1);
+        OpExpr::Subsym(SymIdx(op.get_int(AId::SUBSYM)))
+    } else {
+        assert_eq!(op.els.len(), 2);
+        let e = &op.els[1];
         match e.eid {
-            EId::OPERAND_EXP => (),
-            EId::TOKENFIELD => (),
+            EId::TOKENFIELD => OpExpr::Tok(model_tokenfield(e)),
             EId::PLUS_EXP => {
-                let [a, b] = parse_exprs::<2>(e);
-                expr = Some(Expr::Plus(a, b))
+                let [a, b] = parse_exprs::<2>(e, &mut args);
+                OpExpr::Expr(Expr::Plus(a, b))
             }
             EId::LSHIFT_EXP => {
-                let [a, b] = parse_exprs::<2>(e);
-                expr = Some(Expr::Lshift(a, b))
+                let [a, b] = parse_exprs::<2>(e, &mut args);
+                OpExpr::Expr(Expr::Lshift(a, b))
             }
             EId::MINUS_EXP => {
-                let [a] = parse_exprs::<1>(e);
-                expr = Some(Expr::Minus(a))
+                let [a] = parse_exprs::<1>(e, &mut args);
+                OpExpr::Expr(Expr::Minus(a))
             }
             _ => unreachable!(),
         }
-    }
-
-    let expr = if op.attrs.contains_key(&AId::SUBSYM) {
-        OpExpr::Subsym(SymIdx(op.get_int(AId::SUBSYM)))
-    } else if let Some(expr) = expr {
-        OpExpr::Expr(expr)
-    } else {
-        OpExpr::Tok(model_tokenfield(op.get_el(EId::TOKENFIELD)))
     };
 
     Sym::Op(Operand {
         off: op.get_int(AId::OFF),
         expr,
+        args,
     })
 }
 
@@ -334,7 +340,14 @@ fn model_symtab(symtab: &Sla) -> SymbolTable {
         syms.resize_with(id + 1, || Sym::Unknown);
         syms[id] = sym;
     }
+
     SymbolTable { syms, sym_names }
+}
+
+impl SymbolTable {
+    pub(crate) fn get_sym(&self, idx: SymIdx) -> &Sym {
+        &self.syms[idx.0 as usize]
+    }
 }
 
 impl Sleigh {

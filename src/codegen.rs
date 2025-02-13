@@ -1,11 +1,12 @@
 use crate::slamodel::{
-    Constructor, Decision, Mask, OpExpr, Operand, Print, Sleigh, Subtable, Sym, TokenField, Varlist,
+    Constructor, Decision, Expr, Mask, OpExpr, Operand, Print, Sleigh, Subtable, Sym, SymbolTable,
+    TokenField, Varlist,
 };
 
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
-fn gen_decision(decision: Decision, constructors: &Vec<Constructor>) -> TokenStream {
+fn gen_decision(decision: &Decision, constructors: &Vec<Constructor>) -> TokenStream {
     match decision {
         Decision::Bits {
             start,
@@ -97,7 +98,7 @@ fn gen_tokenfield(tokenfield: &TokenField, off: u8) -> TokenStream {
 
 // TOPLEVEL
 
-fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
+fn gen_subtable(subtable: &Subtable, symtab: &SymbolTable, idx: usize) -> TokenStream {
     let name = format_ident!("Sym{}", idx);
     let enum_variants = subtable
         .constructors
@@ -114,7 +115,7 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
             }
         });
 
-    let decode_body = if let Some(decision) = subtable.decision {
+    let decode_body = if let Some(decision) = &subtable.decision {
         gen_decision(decision, &subtable.constructors)
     } else {
         let decode_ops = subtable.constructors[0].operands.iter().map(|op| {
@@ -142,19 +143,36 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
                 Print::OpPrint(idx) => Some(format_ident!("op{}", idx)),
             });
 
-            let fstring = constructor
-                .prints
-                .iter()
-                .map(|print| match print {
-                    Print::Print(piece) => piece,
-                    Print::OpPrint(_) => "{}",
-                })
-                .collect::<Vec<_>>()
-                .join("");
+            let writes = constructor.prints.iter().map(|print| {
+                match print {
+                    Print::Print(piece) => quote! {
+                        write!(f, #piece)?;
+                    },
+                    Print::OpPrint(idx) => {
+                        let op_ident = format_ident!("op{}", idx);
+                        let op_idx = constructor.operands[*idx as usize];
+                        if let Sym::Op(op) = symtab.get_sym(op_idx) {
+                            let args = op.args.iter().map(|(_, _, idx)| {
+                                let arg_ident = format_ident!("op{}", idx);
+                                quote!(#arg_ident.0 as u64) // TODO
+                            });
+                            quote! {
+                                #op_ident.write(f, #(#args),*)?;
+                            }
+                        } else {
+                            quote! {
+                                #op_ident.write(f)?;
+                            }
+                        }
+                    }
+                }
+            });
 
             quote! {
-                Self::#variant(#(#operand_bindings),*) =>
-                    write!(f, #fstring, #(#operand_args),*),
+                Self::#variant(#(#operand_bindings),*) => {
+                    #(#writes)*
+                    Ok(())
+                }
             }
         });
 
@@ -212,7 +230,38 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
     }
 }
 
-fn gen_operand(op: Operand, idx: usize) -> TokenStream {
+fn gen_expr(expr: &Expr) -> TokenStream {
+    match expr {
+        Expr::Lshift(a, b) => {
+            let a = gen_expr(a);
+            let b = gen_expr(b);
+            quote! {
+                (#a << #b)
+            }
+        }
+        Expr::Plus(a, b) => {
+            let a = gen_expr(a);
+            let b = gen_expr(b);
+            quote! {
+                (#a + #b)
+            }
+        }
+        Expr::Minus(a) => {
+            let a = gen_expr(a);
+            quote! {
+                (-(#a as i64))
+            }
+        }
+        Expr::Const(a) => quote!(#a),
+        Expr::InsnEnd => quote!(0), // TODO
+        Expr::Operand(i) => {
+            let ident = format_ident!("arg{}", i);
+            quote!(#ident)
+        }
+    }
+}
+
+fn gen_operand(op: &Operand, idx: usize) -> TokenStream {
     let name = format_ident!("Op{}", idx);
 
     let struct_body = match &op.expr {
@@ -221,12 +270,19 @@ fn gen_operand(op: Operand, idx: usize) -> TokenStream {
         _ => None,
     };
 
+    let write_args = (0..op.args.len()).map(|i| {
+        let name = format_ident!("arg{}", i);
+        quote! {
+            #name: u64
+        }
+    });
+
     let write = match &op.expr {
         OpExpr::Subsym(_) => quote!("{}", self.0),
         OpExpr::Tok(_) => quote!("0x{:X}", self.0),
         OpExpr::Expr(expr) => {
-            let exp = format!("{:?}", expr);
-            quote!(#exp)
+            let expr = gen_expr(expr);
+            quote!("{}", #expr)
         }
     };
 
@@ -249,10 +305,8 @@ fn gen_operand(op: Operand, idx: usize) -> TokenStream {
             fn decode(buf: &[u8]) -> Option<Self> {
                 Some(Self(#decode_arg))
             }
-        }
 
-        impl std::fmt::Display for #name {
-            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            fn write(&self, f: &mut std::fmt::Formatter, #(#write_args),*) -> std::fmt::Result {
                 write!(f, #write)
             }
         }
@@ -282,7 +336,7 @@ fn gen_varnode(text: &str, idx: usize) -> TokenStream {
     }
 }
 
-fn gen_varlist(varlist: Varlist, idx: usize) -> TokenStream {
+fn gen_varlist(varlist: &Varlist, idx: usize) -> TokenStream {
     let name = format_ident!("Sym{}", idx);
     let enum_body = varlist
         .vars
@@ -379,9 +433,9 @@ pub(crate) fn emit(sleigh: Sleigh) -> Result<(), Box<dyn std::error::Error>> {
     };
     println!("{}", prettyplease::unparse(&syn::parse2(tokens)?));
 
-    for (i, sym) in sleigh.symtab.syms.into_iter().enumerate() {
+    for (i, sym) in sleigh.symtab.syms.iter().enumerate() {
         let tokens = match sym {
-            Sym::Subtable(subtable) => gen_subtable(subtable, i),
+            Sym::Subtable(subtable) => gen_subtable(subtable, &sleigh.symtab, i),
             Sym::Op(operand) => gen_operand(operand, i),
             Sym::Varnode => gen_varnode(&sleigh.symtab.sym_names[i], i),
             Sym::Varlist(varlist) => gen_varlist(varlist, i),
