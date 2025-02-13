@@ -1,4 +1,17 @@
 use crate::error::{Error, Result};
+use std::{
+    fs::File,
+    io::{prelude::*, SeekFrom},
+    path::Path,
+    ptr,
+};
+
+pub const ENTRYPOINT_ADDRESS: usize = 0x100;
+pub const HEADER_BEGIN: usize = 0x100;
+pub const HEADER_END: usize = 0x150;
+pub const HEADER_SIZE: usize = HEADER_END - HEADER_BEGIN;
+pub const CHECKSUM_BEGIN: usize = 0x134;
+pub const CHECKSUM_END: usize = 0x14d;
 
 pub enum Mapper {
     MBC1,
@@ -6,31 +19,125 @@ pub enum Mapper {
 }
 
 #[repr(packed)]
+#[derive(Copy, Clone)]
 pub struct Header {
-    _0: [u8; 0x100],                // 0x000..=0x099
-    pub entrypoint: [u8; 4],        // 0x100,.=0x103
-    pub nintendo_logo: [u8; 48],    // 0x104,.=0x133
-    pub title: [u8; 10],            // 0x134,.=0x13e
-    pub manufacturer_code: [u8; 4], // 0x13f..=0x142
-    pub cgb_flag: u8,               // 0x143
-    pub new_licensee_code: [u8; 2], // 0x144..=0x145
-    pub sgb_flag: u8,               // 0x146
-    pub cartridge_type: u8,         // 0x147
-    pub rom_size: u8,               // 0x148
+    pub entrypoint: [u8; 4],         // 0x100..=0x103
+    pub nintendo_logo: [u8; 48],     // 0x104..=0x133
+    pub title: [u8; 10],             // 0x134..=0x13e
+    pub manufacturer_code: [u8; 4],  // 0x13f..=0x142
+    pub cgb_flag: u8,                // 0x143
+    pub new_licensee_code: [u8; 2],  // 0x144..=0x145
+    pub sgb_flag: u8,                // 0x146
+    pub cartridge_type: u8,          // 0x147
+    pub rom_size: u8,                // 0x148
+    pub ram_size: u8,                // 0x149
+    pub destination_code: u8,        // 0x14a
+    pub old_licensee_code: u8,       // 0x14b
+    pub mask_rom_version_number: u8, // 0x14c
+    pub header_checksum: u8,         // 0x14d
+    pub global_checksum: [u8; 2],    // 0x14e..=0x14f
+}
+
+#[derive(Copy, Clone)]
+pub struct Cartridge {
+    header: Header,
 }
 
 impl Header {
-    pub fn rom_byte_size(&self) -> Result<usize> {
-        match self.rom_size {
-            0..=8 => Ok(32 * 1024 * (1 << self.rom_size)),
-            _ => Err(Error::UnsupportedRomSize(self.rom_size)),
+    pub fn from(bytes: &[u8]) -> Result<Self> {
+        let header: Header = unsafe {
+            ptr::read_unaligned(bytes.as_ptr().offset(HEADER_BEGIN as isize) as *const _)
+        };
+
+        let mut checksum: u8 = 0;
+        for i in CHECKSUM_BEGIN..CHECKSUM_END {
+            checksum = checksum.wrapping_sub(bytes[i]).wrapping_sub(1);
+        }
+
+        if checksum != header.header_checksum {
+            Err(Error::InvalidCartridgeHeaderChecksum {
+                header: header.header_checksum,
+                calculated: checksum,
+            })
+        } else {
+            Ok(header)
         }
     }
 
-    pub fn rom_banks(&self) -> Result<u32> {
+    pub fn rom_byte_size(&self) -> Result<usize> {
+        match self.rom_size {
+            0..=8 => Ok(32 * 1024 * (1 << self.rom_size)),
+            _ => Err(Error::UnrecognizedCartridgeHeaderField(format!(
+                "unrecognized rom size: 0x{:02x}",
+                self.rom_size
+            ))),
+        }
+    }
+
+    pub fn rom_bank_size(&self) -> Result<u32> {
+        match self.rom_size {
+            0..=8 => Ok(1024 * 16),
+            _ => Err(Error::UnrecognizedCartridgeHeaderField(format!(
+                "unrecognized rom size: 0x{:02x}",
+                self.rom_size
+            ))),
+        }
+    }
+
+    pub fn rom_bank_count(&self) -> Result<u32> {
         match self.rom_size {
             0..=8 => Ok(2_u32.pow(self.rom_size as u32)),
-            _ => Err(Error::UnsupportedRomSize(self.rom_size)),
+            _ => Err(Error::UnrecognizedCartridgeHeaderField(format!(
+                "unrecognized rom size: 0x{:02x}",
+                self.rom_size
+            ))),
         }
+    }
+
+    pub fn ram_bank_size(&self) -> Result<u32> {
+        Ok(1024 * 8)
+    }
+
+    pub fn ram_bank_count(&self) -> Result<u32> {
+        match self.ram_size {
+            0 => Ok(0),
+            2 => Ok(1),
+            3 => Ok(4),
+            4 => Ok(16),
+            5 => Ok(8),
+            _ => Err(Error::UnrecognizedCartridgeHeaderField(format!(
+                "unrecognized ram size: 0x{:02x}",
+                self.ram_size
+            ))),
+        }
+    }
+
+    pub fn mapper(&self) -> Result<Mapper> {
+        match self.cartridge_type {
+            0x01..=0x03 => Ok(Mapper::MBC1),
+            0x19..=0x1e => Ok(Mapper::MBC5),
+            _ => Err(Error::UnrecognizedCartridgeHeaderField(format!(
+                "unrecognized cartridge type: 0x{:02x}",
+                self.cartridge_type
+            ))),
+        }
+    }
+}
+
+impl Cartridge {
+    pub fn load_from_file(path: &Path) -> Result<Self> {
+        let err_into = |e| Error::CartridgeLoadFailure(format!("{:?}", e));
+
+        let mut file = File::open(path).map_err(err_into)?;
+
+        file.seek(SeekFrom::Start(HEADER_BEGIN as u64))
+            .map_err(err_into)?;
+
+        let mut buffer = [0u8; HEADER_SIZE];
+        file.read_exact(&mut buffer).map_err(err_into)?;
+
+        let header = Header::from(&buffer)?;
+
+        Ok(Self { header })
     }
 }
