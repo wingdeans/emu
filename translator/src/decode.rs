@@ -1,11 +1,13 @@
 #[derive(Debug)]
+pub(crate) struct Pcode();
+#[derive(Debug)]
 pub(crate) struct Insn(Sym0);
 pub(crate) fn decode(buf: &[u8]) -> Option<Insn> {
     Sym0::decode(buf).map(|st| Insn(st))
 }
 impl Insn {
-    pub(crate) fn print(&self) {
-        self.0.print()
+    pub(crate) fn pcode(&self, vec: &mut Vec<Pcode>) {
+        self.0.pcode(vec)
     }
 }
 impl std::fmt::Display for Insn {
@@ -13,6 +15,7 @@ impl std::fmt::Display for Insn {
         self.0.fmt(f)
     }
 }
+
 #[derive(Debug)]
 enum Sym0 {
     Variant0(Op60, Op61),
@@ -945,7 +948,9 @@ impl Sym0 {
             _ => unreachable!(),
         }
     }
-    fn print(&self) {
+    #[allow(unused_variables)]
+    #[allow(dead_code)]
+    fn pcode(&self, vec: &mut Vec<Pcode>) {
         println!(
             "    {}", match self { Self::Variant0(op0, op1) => "COPY",
             Self::Variant1(op0, op1) => "COPY", Self::Variant2(op0, op1) => "LOAD",
@@ -1099,119 +1104,772 @@ impl Sym0 {
     }
 }
 impl std::fmt::Display for Sym0 {
+    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::Variant0(op0, op1) => write!(f, "LD {}, {}", op0, op1),
-            Self::Variant1(op0, op1) => write!(f, "LD {}, {}", op0, op1),
-            Self::Variant2(op0, op1) => write!(f, "LD {}, ({})", op0, op1),
-            Self::Variant3(op0, op1) => write!(f, "LD ({}), {}", op1, op0),
-            Self::Variant4(op0, op1) => write!(f, "LD ({}), {}", op0, op1),
-            Self::Variant5(op0, op1) => write!(f, "LD {}, ({})", op0, op1),
-            Self::Variant6(op0, op1) => write!(f, "LD {}, ({})", op0, op1),
-            Self::Variant7(op0, op1) => write!(f, "LDH {}, {}", op0, op1),
-            Self::Variant8(op0, op1) => write!(f, "LDH {}, {}", op1, op0),
-            Self::Variant9(op0, op1) => write!(f, "LDH {}, {}", op0, op1),
-            Self::Variant10(op0, op1) => write!(f, "LDH {}, {}", op1, op0),
-            Self::Variant11(op0, op1) => write!(f, "LD {}, {}", op0, op1),
-            Self::Variant12(op0, op1) => write!(f, "LD {}, {}", op1, op0),
-            Self::Variant13(op0, op1) => write!(f, "LD {}, {}", op0, op1),
-            Self::Variant14(op0, op1) => write!(f, "LD {}, {}", op0, op1),
-            Self::Variant15(op0, op1) => write!(f, "LD ({}), {}", op1, op0),
-            Self::Variant16(op0, op1) => write!(f, "LD ({}), {}", op1, op0),
-            Self::Variant17(op0, op1) => write!(f, "LD {}, {}", op1, op0),
-            Self::Variant18(op0, op1) => write!(f, "LD {}, {}", op1, op0),
-            Self::Variant19(op0) => write!(f, "ADD {}", op0),
-            Self::Variant20(op0) => write!(f, "ADD {}", op0),
-            Self::Variant21(op0) => write!(f, "ADD ({})", op0),
-            Self::Variant22(op0) => write!(f, "ADC {}", op0),
-            Self::Variant23(op0) => write!(f, "ADC {}", op0),
-            Self::Variant24(op0) => write!(f, "ADC ({})", op0),
-            Self::Variant25(op0) => write!(f, "SUB {}", op0),
-            Self::Variant26(op0) => write!(f, "SUB {}", op0),
-            Self::Variant27(op0) => write!(f, "SUB ({})", op0),
-            Self::Variant28(op0) => write!(f, "SBC {}", op0),
-            Self::Variant29(op0) => write!(f, "SBC {}", op0),
-            Self::Variant30(op0) => write!(f, "SBC ({})", op0),
-            Self::Variant31(op0) => write!(f, "AND {}", op0),
-            Self::Variant32(op0) => write!(f, "AND {}", op0),
-            Self::Variant33(op0) => write!(f, "AND ({})", op0),
-            Self::Variant34(op0) => write!(f, "XOR {}", op0),
-            Self::Variant35(op0) => write!(f, "XOR {}", op0),
-            Self::Variant36(op0) => write!(f, "XOR ({})", op0),
-            Self::Variant37(op0) => write!(f, "OR {}", op0),
-            Self::Variant38(op0) => write!(f, "OR {}", op0),
-            Self::Variant39(op0) => write!(f, "OR ({})", op0),
-            Self::Variant40(op0) => write!(f, "CP {}", op0),
-            Self::Variant41(op0) => write!(f, "CP {}", op0),
-            Self::Variant42(op0) => write!(f, "CP ({})", op0),
-            Self::Variant43(op0) => write!(f, "INC {}", op0),
-            Self::Variant44(op0) => write!(f, "INC ({})", op0),
-            Self::Variant45(op0) => write!(f, "DEC {}", op0),
-            Self::Variant46(op0) => write!(f, "DEC ({})", op0),
-            Self::Variant47() => write!(f, "RLCA",),
-            Self::Variant48() => write!(f, "RLA",),
-            Self::Variant49() => write!(f, "RRCA",),
-            Self::Variant50() => write!(f, "RRA",),
-            Self::Variant51(op0) => write!(f, "RLC {}", op0),
-            Self::Variant52(op0) => write!(f, "RLC ({})", op0),
-            Self::Variant53(op0) => write!(f, "RRC {}", op0),
-            Self::Variant54(op0) => write!(f, "RRC ({})", op0),
-            Self::Variant55(op0) => write!(f, "RL {}", op0),
-            Self::Variant56(op0) => write!(f, "RL ({})", op0),
-            Self::Variant57(op0) => write!(f, "RR {}", op0),
-            Self::Variant58(op0) => write!(f, "RR ({})", op0),
-            Self::Variant59(op0) => write!(f, "SLA {}", op0),
-            Self::Variant60(op0) => write!(f, "SLA ({})", op0),
-            Self::Variant61(op0) => write!(f, "SRA {}", op0),
-            Self::Variant62(op0) => write!(f, "SRA ({})", op0),
-            Self::Variant63(op0) => write!(f, "SWAP {}", op0),
-            Self::Variant64(op0) => write!(f, "SWAP ({})", op0),
-            Self::Variant65(op0) => write!(f, "SRL {}", op0),
-            Self::Variant66(op0) => write!(f, "SRL ({})", op0),
-            Self::Variant67(op0, op1) => write!(f, "BIT {}, {}", op0, op1),
-            Self::Variant68(op0, op1) => write!(f, "BIT {}, ({})", op1, op0),
-            Self::Variant69(op0, op1) => write!(f, "RES {}, {}", op0, op1),
-            Self::Variant70(op0, op1) => write!(f, "RES {}, ({})", op1, op0),
-            Self::Variant71(op0, op1) => write!(f, "SET {}, {}", op0, op1),
-            Self::Variant72(op0, op1) => write!(f, "SET {}, ({})", op1, op0),
-            Self::Variant73(op0) => write!(f, "JP {}", op0),
-            Self::Variant74(op0) => write!(f, "JP {}", op0),
-            Self::Variant75(op0) => write!(f, "JR {}", op0),
-            Self::Variant76(op0) => write!(f, "CALL {}", op0),
-            Self::Variant77() => write!(f, "RET",),
-            Self::Variant78() => write!(f, "RETI",),
-            Self::Variant79(op0, op1) => write!(f, "JP {}, {}", op0, op1),
-            Self::Variant80(op0, op1) => write!(f, "JR {}, {}", op0, op1),
-            Self::Variant81(op0, op1) => write!(f, "CALL {}, {}", op0, op1),
-            Self::Variant82(op0) => write!(f, "RET {}", op0),
-            Self::Variant83(op0) => write!(f, "RST {}", op0),
-            Self::Variant84() => write!(f, "HALT",),
-            Self::Variant85() => write!(f, "STOP",),
-            Self::Variant86() => write!(f, "DI",),
-            Self::Variant87() => write!(f, "EI",),
-            Self::Variant88() => write!(f, "CCF",),
-            Self::Variant89() => write!(f, "SCF",),
-            Self::Variant90() => write!(f, "NOP",),
-            Self::Variant91() => write!(f, "DAA",),
-            Self::Variant92() => write!(f, "CPL",),
-            Self::Variant93(op0, op1) => write!(f, "LD {}, {}", op0, op1),
-            Self::Variant94(op0, op1) => write!(f, "LD {}, {}", op1, op0),
-            Self::Variant95(op0, op1) => write!(f, "LD {}, {}", op0, op1),
-            Self::Variant96(op0, op1, op2) => write!(f, "LD {}, {}+{}", op0, op1, op2),
-            Self::Variant97(op0, op1, op2, op3) => {
-                write!(f, "LD {}, {}-{}", op0, op1, op3)
+            Self::Variant0(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                Ok(())
             }
-            Self::Variant98(op0) => write!(f, "PUSH {}", op0),
-            Self::Variant99(op0) => write!(f, "POP {}", op0),
-            Self::Variant100(op0, op1) => write!(f, "ADD {}, {}", op1, op0),
-            Self::Variant101(op0, op1) => write!(f, "ADD {}, {}", op0, op1),
-            Self::Variant102(op0) => write!(f, "INC {}", op0),
-            Self::Variant103(op0) => write!(f, "DEC {}", op0),
+            Self::Variant1(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                Ok(())
+            }
+            Self::Variant2(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op1.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant3(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op1.write(f)?;
+                write!(f, "),")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant4(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, "),")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                Ok(())
+            }
+            Self::Variant5(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op1.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant6(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op1.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant7(op0, op1) => {
+                write!(f, "LDH")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                Ok(())
+            }
+            Self::Variant8(op0, op1) => {
+                write!(f, "LDH")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant9(op0, op1) => {
+                write!(f, "LDH")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                Ok(())
+            }
+            Self::Variant10(op0, op1) => {
+                write!(f, "LDH")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant11(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                Ok(())
+            }
+            Self::Variant12(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant13(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                Ok(())
+            }
+            Self::Variant14(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                Ok(())
+            }
+            Self::Variant15(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op1.write(f)?;
+                write!(f, "),")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant16(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op1.write(f)?;
+                write!(f, "),")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant17(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant18(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant19(op0) => {
+                write!(f, "ADD")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant20(op0) => {
+                write!(f, "ADD")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant21(op0) => {
+                write!(f, "ADD")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant22(op0) => {
+                write!(f, "ADC")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant23(op0) => {
+                write!(f, "ADC")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant24(op0) => {
+                write!(f, "ADC")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant25(op0) => {
+                write!(f, "SUB")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant26(op0) => {
+                write!(f, "SUB")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant27(op0) => {
+                write!(f, "SUB")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant28(op0) => {
+                write!(f, "SBC")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant29(op0) => {
+                write!(f, "SBC")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant30(op0) => {
+                write!(f, "SBC")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant31(op0) => {
+                write!(f, "AND")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant32(op0) => {
+                write!(f, "AND")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant33(op0) => {
+                write!(f, "AND")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant34(op0) => {
+                write!(f, "XOR")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant35(op0) => {
+                write!(f, "XOR")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant36(op0) => {
+                write!(f, "XOR")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant37(op0) => {
+                write!(f, "OR")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant38(op0) => {
+                write!(f, "OR")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant39(op0) => {
+                write!(f, "OR")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant40(op0) => {
+                write!(f, "CP")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant41(op0) => {
+                write!(f, "CP")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant42(op0) => {
+                write!(f, "CP")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant43(op0) => {
+                write!(f, "INC")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant44(op0) => {
+                write!(f, "INC")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant45(op0) => {
+                write!(f, "DEC")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant46(op0) => {
+                write!(f, "DEC")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant47() => {
+                write!(f, "RLCA")?;
+                Ok(())
+            }
+            Self::Variant48() => {
+                write!(f, "RLA")?;
+                Ok(())
+            }
+            Self::Variant49() => {
+                write!(f, "RRCA")?;
+                Ok(())
+            }
+            Self::Variant50() => {
+                write!(f, "RRA")?;
+                Ok(())
+            }
+            Self::Variant51(op0) => {
+                write!(f, "RLC")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant52(op0) => {
+                write!(f, "RLC")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant53(op0) => {
+                write!(f, "RRC")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant54(op0) => {
+                write!(f, "RRC")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant55(op0) => {
+                write!(f, "RL")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant56(op0) => {
+                write!(f, "RL")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant57(op0) => {
+                write!(f, "RR")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant58(op0) => {
+                write!(f, "RR")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant59(op0) => {
+                write!(f, "SLA")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant60(op0) => {
+                write!(f, "SLA")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant61(op0) => {
+                write!(f, "SRA")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant62(op0) => {
+                write!(f, "SRA")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant63(op0) => {
+                write!(f, "SWAP")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant64(op0) => {
+                write!(f, "SWAP")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant65(op0) => {
+                write!(f, "SRL")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant66(op0) => {
+                write!(f, "SRL")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant67(op0, op1) => {
+                write!(f, "BIT")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                Ok(())
+            }
+            Self::Variant68(op0, op1) => {
+                write!(f, "BIT")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant69(op0, op1) => {
+                write!(f, "RES")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                Ok(())
+            }
+            Self::Variant70(op0, op1) => {
+                write!(f, "RES")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant71(op0, op1) => {
+                write!(f, "SET")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                Ok(())
+            }
+            Self::Variant72(op0, op1) => {
+                write!(f, "SET")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
+            Self::Variant73(op0) => {
+                write!(f, "JP")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant74(op0) => {
+                write!(f, "JP")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant75(op0) => {
+                write!(f, "JR")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant76(op0) => {
+                write!(f, "CALL")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant77() => {
+                write!(f, "RET")?;
+                Ok(())
+            }
+            Self::Variant78() => {
+                write!(f, "RETI")?;
+                Ok(())
+            }
+            Self::Variant79(op0, op1) => {
+                write!(f, "JP")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                Ok(())
+            }
+            Self::Variant80(op0, op1) => {
+                write!(f, "JR")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                Ok(())
+            }
+            Self::Variant81(op0, op1) => {
+                write!(f, "CALL")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                Ok(())
+            }
+            Self::Variant82(op0) => {
+                write!(f, "RET")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant83(op0) => {
+                write!(f, "RST")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant84() => {
+                write!(f, "HALT")?;
+                Ok(())
+            }
+            Self::Variant85() => {
+                write!(f, "STOP")?;
+                Ok(())
+            }
+            Self::Variant86() => {
+                write!(f, "DI")?;
+                Ok(())
+            }
+            Self::Variant87() => {
+                write!(f, "EI")?;
+                Ok(())
+            }
+            Self::Variant88() => {
+                write!(f, "CCF")?;
+                Ok(())
+            }
+            Self::Variant89() => {
+                write!(f, "SCF")?;
+                Ok(())
+            }
+            Self::Variant90() => {
+                write!(f, "NOP")?;
+                Ok(())
+            }
+            Self::Variant91() => {
+                write!(f, "DAA")?;
+                Ok(())
+            }
+            Self::Variant92() => {
+                write!(f, "CPL")?;
+                Ok(())
+            }
+            Self::Variant93(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                Ok(())
+            }
+            Self::Variant94(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant95(op0, op1) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                Ok(())
+            }
+            Self::Variant96(op0, op1, op2) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                write!(f, "+")?;
+                op2.write(f)?;
+                Ok(())
+            }
+            Self::Variant97(op0, op1, op2, op3) => {
+                write!(f, "LD")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                write!(f, "-")?;
+                op3.write(f, op2.0 as u64)?;
+                Ok(())
+            }
+            Self::Variant98(op0) => {
+                write!(f, "PUSH")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant99(op0) => {
+                write!(f, "POP")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant100(op0, op1) => {
+                write!(f, "ADD")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant101(op0, op1) => {
+                write!(f, "ADD")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                write!(f, ",")?;
+                write!(f, " ")?;
+                op1.write(f)?;
+                Ok(())
+            }
+            Self::Variant102(op0) => {
+                write!(f, "INC")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
+            Self::Variant103(op0) => {
+                write!(f, "DEC")?;
+                write!(f, " ")?;
+                op0.write(f)?;
+                Ok(())
+            }
         }
     }
 }
+
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Sym4();
+#[allow(dead_code)]
 impl Sym4 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1222,8 +1880,11 @@ impl std::fmt::Display for Sym4 {
         write!(f, "F")
     }
 }
+
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Sym5();
+#[allow(dead_code)]
 impl Sym5 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1234,8 +1895,11 @@ impl std::fmt::Display for Sym5 {
         write!(f, "A")
     }
 }
+
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Sym6();
+#[allow(dead_code)]
 impl Sym6 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1246,8 +1910,11 @@ impl std::fmt::Display for Sym6 {
         write!(f, "C")
     }
 }
+
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Sym7();
+#[allow(dead_code)]
 impl Sym7 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1258,8 +1925,11 @@ impl std::fmt::Display for Sym7 {
         write!(f, "B")
     }
 }
+
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Sym8();
+#[allow(dead_code)]
 impl Sym8 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1270,8 +1940,11 @@ impl std::fmt::Display for Sym8 {
         write!(f, "E")
     }
 }
+
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Sym9();
+#[allow(dead_code)]
 impl Sym9 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1282,8 +1955,11 @@ impl std::fmt::Display for Sym9 {
         write!(f, "D")
     }
 }
+
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Sym10();
+#[allow(dead_code)]
 impl Sym10 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1294,8 +1970,11 @@ impl std::fmt::Display for Sym10 {
         write!(f, "L")
     }
 }
+
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Sym11();
+#[allow(dead_code)]
 impl Sym11 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1306,8 +1985,11 @@ impl std::fmt::Display for Sym11 {
         write!(f, "H")
     }
 }
+
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Sym12();
+#[allow(dead_code)]
 impl Sym12 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1318,8 +2000,11 @@ impl std::fmt::Display for Sym12 {
         write!(f, "AF")
     }
 }
+
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Sym13();
+#[allow(dead_code)]
 impl Sym13 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1330,8 +2015,11 @@ impl std::fmt::Display for Sym13 {
         write!(f, "BC")
     }
 }
+
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Sym14();
+#[allow(dead_code)]
 impl Sym14 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1342,8 +2030,11 @@ impl std::fmt::Display for Sym14 {
         write!(f, "DE")
     }
 }
+
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Sym15();
+#[allow(dead_code)]
 impl Sym15 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1354,8 +2045,11 @@ impl std::fmt::Display for Sym15 {
         write!(f, "HL")
     }
 }
+
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Sym16();
+#[allow(dead_code)]
 impl Sym16 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1366,8 +2060,11 @@ impl std::fmt::Display for Sym16 {
         write!(f, "PC")
     }
 }
+
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Sym17();
+#[allow(dead_code)]
 impl Sym17 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1378,6 +2075,7 @@ impl std::fmt::Display for Sym17 {
         write!(f, "SP")
     }
 }
+
 #[derive(Debug)]
 enum Sym21 {
     Variant0(Sym7),
@@ -1415,6 +2113,7 @@ impl std::fmt::Display for Sym21 {
         }
     }
 }
+
 #[derive(Debug)]
 enum Sym24 {
     Variant0(Sym7),
@@ -1452,6 +2151,7 @@ impl std::fmt::Display for Sym24 {
         }
     }
 }
+
 #[derive(Debug)]
 enum Sym26 {
     Variant0(Sym13),
@@ -1480,6 +2180,7 @@ impl std::fmt::Display for Sym26 {
         }
     }
 }
+
 #[derive(Debug)]
 enum Sym27 {
     Variant0(Sym13),
@@ -1508,6 +2209,7 @@ impl std::fmt::Display for Sym27 {
         }
     }
 }
+
 #[derive(Debug)]
 enum Sym28 {
     Variant0(Sym13),
@@ -1536,6 +2238,7 @@ impl std::fmt::Display for Sym28 {
         }
     }
 }
+
 #[derive(Debug)]
 enum Sym35 {
     Variant0(),
@@ -1563,7 +2266,9 @@ impl Sym35 {
             _ => unreachable!(),
         }
     }
-    fn print(&self) {
+    #[allow(unused_variables)]
+    #[allow(dead_code)]
+    fn pcode(&self, vec: &mut Vec<Pcode>) {
         println!(
             "    {}", match self { Self::Variant0() => "INT_RIGHT, BOOL_NEGATE",
             Self::Variant1() => "INT_RIGHT", Self::Variant2() =>
@@ -1573,15 +2278,29 @@ impl Sym35 {
     }
 }
 impl std::fmt::Display for Sym35 {
+    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::Variant0() => write!(f, "NZ",),
-            Self::Variant1() => write!(f, "Z",),
-            Self::Variant2() => write!(f, "NC",),
-            Self::Variant3() => write!(f, "C",),
+            Self::Variant0() => {
+                write!(f, "NZ")?;
+                Ok(())
+            }
+            Self::Variant1() => {
+                write!(f, "Z")?;
+                Ok(())
+            }
+            Self::Variant2() => {
+                write!(f, "NC")?;
+                Ok(())
+            }
+            Self::Variant3() => {
+                write!(f, "C")?;
+                Ok(())
+            }
         }
     }
 }
+
 #[derive(Debug)]
 enum Sym36 {
     Variant0(Op37),
@@ -1592,17 +2311,24 @@ impl Sym36 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self::Variant0(Op37::decode(&buf)?))
     }
-    fn print(&self) {
+    #[allow(unused_variables)]
+    #[allow(dead_code)]
+    fn pcode(&self, vec: &mut Vec<Pcode>) {
         println!("    {}", match self { Self::Variant0(op0) => "", })
     }
 }
 impl std::fmt::Display for Sym36 {
+    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::Variant0(op0) => write!(f, "{}", op0),
+            Self::Variant0(op0) => {
+                op0.write(f)?;
+                Ok(())
+            }
         }
     }
 }
+
 #[derive(Debug)]
 struct Op37(u8);
 impl Op37 {
@@ -1610,12 +2336,11 @@ impl Op37 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[0usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op37 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 enum Sym38 {
     Variant0(Op39),
@@ -1626,17 +2351,26 @@ impl Sym38 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self::Variant0(Op39::decode(&buf)?))
     }
-    fn print(&self) {
+    #[allow(unused_variables)]
+    #[allow(dead_code)]
+    fn pcode(&self, vec: &mut Vec<Pcode>) {
         println!("    {}", match self { Self::Variant0(op0) => "", })
     }
 }
 impl std::fmt::Display for Sym38 {
+    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::Variant0(op0) => write!(f, "({})", op0),
+            Self::Variant0(op0) => {
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
         }
     }
 }
+
 #[derive(Debug)]
 struct Op39(u8);
 impl Op39 {
@@ -1644,12 +2378,11 @@ impl Op39 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[0usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op39 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 enum Sym40 {
     Variant0(Op41),
@@ -1660,17 +2393,26 @@ impl Sym40 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self::Variant0(Op41::decode(&buf)?))
     }
-    fn print(&self) {
+    #[allow(unused_variables)]
+    #[allow(dead_code)]
+    fn pcode(&self, vec: &mut Vec<Pcode>) {
         println!("    {}", match self { Self::Variant0(op0) => "", })
     }
 }
 impl std::fmt::Display for Sym40 {
+    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::Variant0(op0) => write!(f, "({})", op0),
+            Self::Variant0(op0) => {
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
         }
     }
 }
+
 #[derive(Debug)]
 struct Op41(u8);
 impl Op41 {
@@ -1678,12 +2420,11 @@ impl Op41 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[0usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op41 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 enum Sym42 {
     Variant0(Op44, Op43),
@@ -1694,17 +2435,24 @@ impl Sym42 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self::Variant0(Op44::decode(&buf)?, Op43::decode(&buf)?))
     }
-    fn print(&self) {
+    #[allow(unused_variables)]
+    #[allow(dead_code)]
+    fn pcode(&self, vec: &mut Vec<Pcode>) {
         println!("    {}", match self { Self::Variant0(op0, op1) => "", })
     }
 }
 impl std::fmt::Display for Sym42 {
+    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::Variant0(op0, op1) => write!(f, "{}", op1),
+            Self::Variant0(op0, op1) => {
+                op1.write(f, op0.0 as u64)?;
+                Ok(())
+            }
         }
     }
 }
+
 #[derive(Debug)]
 struct Op43();
 impl Op43 {
@@ -1712,12 +2460,11 @@ impl Op43 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self())
     }
-}
-impl std::fmt::Display for Op43 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "UNK43")
+    fn write(&self, f: &mut std::fmt::Formatter, arg0: u64) -> std::fmt::Result {
+        write!(f, "{}", (0 + arg0))
     }
 }
+
 #[derive(Debug)]
 struct Op44(u8);
 impl Op44 {
@@ -1725,12 +2472,11 @@ impl Op44 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[0usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op44 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 enum Sym45 {
     Variant0(Op47, Op46),
@@ -1741,17 +2487,24 @@ impl Sym45 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self::Variant0(Op47::decode(&buf)?, Op46::decode(&buf)?))
     }
-    fn print(&self) {
+    #[allow(unused_variables)]
+    #[allow(dead_code)]
+    fn pcode(&self, vec: &mut Vec<Pcode>) {
         println!("    {}", match self { Self::Variant0(op0, op1) => "", })
     }
 }
 impl std::fmt::Display for Sym45 {
+    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::Variant0(op0, op1) => write!(f, "{}", op1),
+            Self::Variant0(op0, op1) => {
+                op1.write(f, op0.0 as u64)?;
+                Ok(())
+            }
         }
     }
 }
+
 #[derive(Debug)]
 struct Op46();
 impl Op46 {
@@ -1759,12 +2512,11 @@ impl Op46 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self())
     }
-}
-impl std::fmt::Display for Op46 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "UNK46")
+    fn write(&self, f: &mut std::fmt::Formatter, arg0: u64) -> std::fmt::Result {
+        write!(f, "{}", (arg0 << 3u64))
     }
 }
+
 #[derive(Debug)]
 struct Op47(u8);
 impl Op47 {
@@ -1772,12 +2524,11 @@ impl Op47 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[0usize] >> 3u8 & 7u8).into()))
     }
-}
-impl std::fmt::Display for Op47 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 enum Sym48 {
     Variant0(Op49),
@@ -1788,17 +2539,26 @@ impl Sym48 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self::Variant0(Op49::decode(&buf)?))
     }
-    fn print(&self) {
+    #[allow(unused_variables)]
+    #[allow(dead_code)]
+    fn pcode(&self, vec: &mut Vec<Pcode>) {
         println!("    {}", match self { Self::Variant0(op0) => "COPY, INT_ADD", })
     }
 }
 impl std::fmt::Display for Sym48 {
+    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::Variant0(op0) => write!(f, "({}+)", op0),
+            Self::Variant0(op0) => {
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, "+)")?;
+                Ok(())
+            }
         }
     }
 }
+
 #[derive(Debug)]
 struct Op49(Sym15);
 impl Op49 {
@@ -1806,12 +2566,11 @@ impl Op49 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op49 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 enum Sym50 {
     Variant0(Op51),
@@ -1822,17 +2581,26 @@ impl Sym50 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self::Variant0(Op51::decode(&buf)?))
     }
-    fn print(&self) {
+    #[allow(unused_variables)]
+    #[allow(dead_code)]
+    fn pcode(&self, vec: &mut Vec<Pcode>) {
         println!("    {}", match self { Self::Variant0(op0) => "COPY, INT_SUB", })
     }
 }
 impl std::fmt::Display for Sym50 {
+    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::Variant0(op0) => write!(f, "({}-)", op0),
+            Self::Variant0(op0) => {
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, "-)")?;
+                Ok(())
+            }
         }
     }
 }
+
 #[derive(Debug)]
 struct Op51(Sym15);
 impl Op51 {
@@ -1840,12 +2608,11 @@ impl Op51 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op51 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 enum Sym52 {
     Variant0(Op53),
@@ -1856,17 +2623,26 @@ impl Sym52 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self::Variant0(Op53::decode(&buf)?))
     }
-    fn print(&self) {
+    #[allow(unused_variables)]
+    #[allow(dead_code)]
+    fn pcode(&self, vec: &mut Vec<Pcode>) {
         println!("    {}", match self { Self::Variant0(op0) => "INT_ZEXT, INT_OR", })
     }
 }
 impl std::fmt::Display for Sym52 {
+    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::Variant0(op0) => write!(f, "({})", op0),
+            Self::Variant0(op0) => {
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
         }
     }
 }
+
 #[derive(Debug)]
 struct Op53(Sym6);
 impl Op53 {
@@ -1874,12 +2650,11 @@ impl Op53 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym6::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op53 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 enum Sym54 {
     Variant0(Op55),
@@ -1890,17 +2665,26 @@ impl Sym54 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self::Variant0(Op55::decode(&buf)?))
     }
-    fn print(&self) {
+    #[allow(unused_variables)]
+    #[allow(dead_code)]
+    fn pcode(&self, vec: &mut Vec<Pcode>) {
         println!("    {}", match self { Self::Variant0(op0) => "INT_ZEXT, INT_OR", })
     }
 }
 impl std::fmt::Display for Sym54 {
+    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::Variant0(op0) => write!(f, "({})", op0),
+            Self::Variant0(op0) => {
+                write!(f, "(")?;
+                op0.write(f)?;
+                write!(f, ")")?;
+                Ok(())
+            }
         }
     }
 }
+
 #[derive(Debug)]
 struct Op55(u8);
 impl Op55 {
@@ -1908,12 +2692,11 @@ impl Op55 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[0usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op55 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op60(Sym24);
 impl Op60 {
@@ -1921,12 +2704,11 @@ impl Op60 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym24::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op60 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op61(Sym21);
 impl Op61 {
@@ -1934,12 +2716,11 @@ impl Op61 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op61 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op62(Sym24);
 impl Op62 {
@@ -1947,12 +2728,11 @@ impl Op62 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym24::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op62 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op63(u8);
 impl Op63 {
@@ -1960,12 +2740,11 @@ impl Op63 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op63 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op64(Sym24);
 impl Op64 {
@@ -1973,12 +2752,11 @@ impl Op64 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym24::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op64 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op65(Sym15);
 impl Op65 {
@@ -1986,12 +2764,11 @@ impl Op65 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op65 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op66(Sym15);
 impl Op66 {
@@ -1999,12 +2776,11 @@ impl Op66 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op66 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op67(Sym21);
 impl Op67 {
@@ -2012,12 +2788,11 @@ impl Op67 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op67 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op68(Sym15);
 impl Op68 {
@@ -2025,12 +2800,11 @@ impl Op68 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op68 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op69(u8);
 impl Op69 {
@@ -2038,12 +2812,11 @@ impl Op69 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op69 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op70(Sym5);
 impl Op70 {
@@ -2051,12 +2824,11 @@ impl Op70 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op70 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op71(Sym13);
 impl Op71 {
@@ -2064,12 +2836,11 @@ impl Op71 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym13::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op71 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op72(Sym5);
 impl Op72 {
@@ -2077,12 +2848,11 @@ impl Op72 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op72 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op73(Sym14);
 impl Op73 {
@@ -2090,12 +2860,11 @@ impl Op73 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym14::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op73 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op74(Sym5);
 impl Op74 {
@@ -2103,12 +2872,11 @@ impl Op74 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op74 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op75(Sym52);
 impl Op75 {
@@ -2116,12 +2884,11 @@ impl Op75 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym52::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op75 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op76(Sym52);
 impl Op76 {
@@ -2129,12 +2896,11 @@ impl Op76 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym52::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op76 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op77(Sym5);
 impl Op77 {
@@ -2142,12 +2908,11 @@ impl Op77 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op77 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op78(Sym5);
 impl Op78 {
@@ -2155,12 +2920,11 @@ impl Op78 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op78 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op79(Sym54);
 impl Op79 {
@@ -2168,12 +2932,11 @@ impl Op79 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym54::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op79 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op80(Sym54);
 impl Op80 {
@@ -2181,12 +2944,11 @@ impl Op80 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym54::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op80 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op81(Sym5);
 impl Op81 {
@@ -2194,12 +2956,11 @@ impl Op81 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op81 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op82(Sym5);
 impl Op82 {
@@ -2207,12 +2968,11 @@ impl Op82 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op82 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op83(Sym38);
 impl Op83 {
@@ -2220,12 +2980,11 @@ impl Op83 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym38::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op83 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op84(Sym38);
 impl Op84 {
@@ -2233,12 +2992,11 @@ impl Op84 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym38::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op84 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op85(Sym5);
 impl Op85 {
@@ -2246,12 +3004,11 @@ impl Op85 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op85 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op86(Sym5);
 impl Op86 {
@@ -2259,12 +3016,11 @@ impl Op86 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op86 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op87(Sym48);
 impl Op87 {
@@ -2272,12 +3028,11 @@ impl Op87 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym48::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op87 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op88(Sym5);
 impl Op88 {
@@ -2285,12 +3040,11 @@ impl Op88 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op88 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op89(Sym50);
 impl Op89 {
@@ -2298,12 +3052,11 @@ impl Op89 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym50::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op89 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op90(Sym13);
 impl Op90 {
@@ -2311,12 +3064,11 @@ impl Op90 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym13::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op90 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op91(Sym5);
 impl Op91 {
@@ -2324,12 +3076,11 @@ impl Op91 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op91 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op92(Sym14);
 impl Op92 {
@@ -2337,12 +3088,11 @@ impl Op92 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym14::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op92 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op93(Sym5);
 impl Op93 {
@@ -2350,12 +3100,11 @@ impl Op93 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op93 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op94(Sym48);
 impl Op94 {
@@ -2363,12 +3112,11 @@ impl Op94 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym48::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op94 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op95(Sym5);
 impl Op95 {
@@ -2376,12 +3124,11 @@ impl Op95 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op95 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op96(Sym50);
 impl Op96 {
@@ -2389,12 +3136,11 @@ impl Op96 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym50::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op96 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op97(Sym5);
 impl Op97 {
@@ -2402,12 +3148,11 @@ impl Op97 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op97 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op98(Sym21);
 impl Op98 {
@@ -2415,12 +3160,11 @@ impl Op98 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op98 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op99(u8);
 impl Op99 {
@@ -2428,12 +3172,11 @@ impl Op99 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op99 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op100(Sym15);
 impl Op100 {
@@ -2441,12 +3184,11 @@ impl Op100 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op100 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op101(Sym21);
 impl Op101 {
@@ -2454,12 +3196,11 @@ impl Op101 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op101 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op102(u8);
 impl Op102 {
@@ -2467,12 +3208,11 @@ impl Op102 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op102 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op103(Sym15);
 impl Op103 {
@@ -2480,12 +3220,11 @@ impl Op103 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op103 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op104(Sym21);
 impl Op104 {
@@ -2493,12 +3232,11 @@ impl Op104 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op104 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op105(u8);
 impl Op105 {
@@ -2506,12 +3244,11 @@ impl Op105 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op105 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op106(Sym15);
 impl Op106 {
@@ -2519,12 +3256,11 @@ impl Op106 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op106 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op107(Sym21);
 impl Op107 {
@@ -2532,12 +3268,11 @@ impl Op107 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op107 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op108(u8);
 impl Op108 {
@@ -2545,12 +3280,11 @@ impl Op108 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op108 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op109(Sym15);
 impl Op109 {
@@ -2558,12 +3292,11 @@ impl Op109 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op109 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op110(Sym21);
 impl Op110 {
@@ -2571,12 +3304,11 @@ impl Op110 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op110 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op111(u8);
 impl Op111 {
@@ -2584,12 +3316,11 @@ impl Op111 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op111 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op112(Sym15);
 impl Op112 {
@@ -2597,12 +3328,11 @@ impl Op112 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op112 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op113(Sym21);
 impl Op113 {
@@ -2610,12 +3340,11 @@ impl Op113 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op113 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op114(u8);
 impl Op114 {
@@ -2623,12 +3352,11 @@ impl Op114 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op114 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op115(Sym15);
 impl Op115 {
@@ -2636,12 +3364,11 @@ impl Op115 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op115 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op116(Sym21);
 impl Op116 {
@@ -2649,12 +3376,11 @@ impl Op116 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op116 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op117(u8);
 impl Op117 {
@@ -2662,12 +3388,11 @@ impl Op117 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op117 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op118(Sym15);
 impl Op118 {
@@ -2675,12 +3400,11 @@ impl Op118 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op118 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op119(Sym21);
 impl Op119 {
@@ -2688,12 +3412,11 @@ impl Op119 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op119 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op120(u8);
 impl Op120 {
@@ -2701,12 +3424,11 @@ impl Op120 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op120 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op121(Sym15);
 impl Op121 {
@@ -2714,12 +3436,11 @@ impl Op121 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op121 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op122(Sym24);
 impl Op122 {
@@ -2727,12 +3448,11 @@ impl Op122 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym24::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op122 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op123(Sym15);
 impl Op123 {
@@ -2740,12 +3460,11 @@ impl Op123 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op123 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op124(Sym24);
 impl Op124 {
@@ -2753,12 +3472,11 @@ impl Op124 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym24::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op124 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op125(Sym15);
 impl Op125 {
@@ -2766,12 +3484,11 @@ impl Op125 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op125 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op126(Sym21);
 impl Op126 {
@@ -2779,12 +3496,11 @@ impl Op126 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op126 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op127(Sym15);
 impl Op127 {
@@ -2792,12 +3508,11 @@ impl Op127 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op127 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op128(Sym21);
 impl Op128 {
@@ -2805,12 +3520,11 @@ impl Op128 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op128 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op129(Sym15);
 impl Op129 {
@@ -2818,12 +3532,11 @@ impl Op129 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op129 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op130(Sym21);
 impl Op130 {
@@ -2831,12 +3544,11 @@ impl Op130 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op130 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op131(Sym15);
 impl Op131 {
@@ -2844,12 +3556,11 @@ impl Op131 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op131 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op132(Sym21);
 impl Op132 {
@@ -2857,12 +3568,11 @@ impl Op132 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op132 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op133(Sym15);
 impl Op133 {
@@ -2870,12 +3580,11 @@ impl Op133 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op133 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op134(Sym21);
 impl Op134 {
@@ -2883,12 +3592,11 @@ impl Op134 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op134 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op135(Sym15);
 impl Op135 {
@@ -2896,12 +3604,11 @@ impl Op135 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op135 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op136(Sym21);
 impl Op136 {
@@ -2909,12 +3616,11 @@ impl Op136 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op136 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op137(Sym15);
 impl Op137 {
@@ -2922,12 +3628,11 @@ impl Op137 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op137 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op138(Sym21);
 impl Op138 {
@@ -2935,12 +3640,11 @@ impl Op138 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op138 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op139(Sym15);
 impl Op139 {
@@ -2948,12 +3652,11 @@ impl Op139 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op139 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op140(Sym21);
 impl Op140 {
@@ -2961,12 +3664,11 @@ impl Op140 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op140 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op141(Sym15);
 impl Op141 {
@@ -2974,12 +3676,11 @@ impl Op141 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op141 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op142(u8);
 impl Op142 {
@@ -2987,12 +3688,11 @@ impl Op142 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 3u8 & 7u8).into()))
     }
-}
-impl std::fmt::Display for Op142 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op143(Sym21);
 impl Op143 {
@@ -3000,12 +3700,11 @@ impl Op143 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op143 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op144(u8);
 impl Op144 {
@@ -3013,12 +3712,11 @@ impl Op144 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 3u8 & 7u8).into()))
     }
-}
-impl std::fmt::Display for Op144 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op145(Sym15);
 impl Op145 {
@@ -3026,12 +3724,11 @@ impl Op145 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op145 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op146(u8);
 impl Op146 {
@@ -3039,12 +3736,11 @@ impl Op146 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 3u8 & 7u8).into()))
     }
-}
-impl std::fmt::Display for Op146 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op147(Sym21);
 impl Op147 {
@@ -3052,12 +3748,11 @@ impl Op147 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op147 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op148(u8);
 impl Op148 {
@@ -3065,12 +3760,11 @@ impl Op148 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 3u8 & 7u8).into()))
     }
-}
-impl std::fmt::Display for Op148 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op149(Sym15);
 impl Op149 {
@@ -3078,12 +3772,11 @@ impl Op149 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op149 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op150(u8);
 impl Op150 {
@@ -3091,12 +3784,11 @@ impl Op150 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 3u8 & 7u8).into()))
     }
-}
-impl std::fmt::Display for Op150 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op151(Sym21);
 impl Op151 {
@@ -3104,12 +3796,11 @@ impl Op151 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op151 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op152(u8);
 impl Op152 {
@@ -3117,12 +3808,11 @@ impl Op152 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 3u8 & 7u8).into()))
     }
-}
-impl std::fmt::Display for Op152 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op153(Sym15);
 impl Op153 {
@@ -3130,12 +3820,11 @@ impl Op153 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op153 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op154(Sym36);
 impl Op154 {
@@ -3143,12 +3832,11 @@ impl Op154 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym36::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op154 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op155(Sym15);
 impl Op155 {
@@ -3156,12 +3844,11 @@ impl Op155 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op155 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op156(Sym42);
 impl Op156 {
@@ -3169,12 +3856,11 @@ impl Op156 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym42::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op156 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op157(Sym36);
 impl Op157 {
@@ -3182,12 +3868,11 @@ impl Op157 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym36::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op157 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op158(Sym35);
 impl Op158 {
@@ -3195,12 +3880,11 @@ impl Op158 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym35::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op158 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op159(Sym36);
 impl Op159 {
@@ -3208,12 +3892,11 @@ impl Op159 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym36::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op159 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op160(Sym35);
 impl Op160 {
@@ -3221,12 +3904,11 @@ impl Op160 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym35::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op160 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op161(Sym42);
 impl Op161 {
@@ -3234,12 +3916,11 @@ impl Op161 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym42::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op161 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op162(Sym35);
 impl Op162 {
@@ -3247,12 +3928,11 @@ impl Op162 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym35::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op162 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op163(Sym36);
 impl Op163 {
@@ -3260,12 +3940,11 @@ impl Op163 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym36::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op163 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op164(Sym35);
 impl Op164 {
@@ -3273,12 +3952,11 @@ impl Op164 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym35::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op164 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op165(Sym45);
 impl Op165 {
@@ -3286,12 +3964,11 @@ impl Op165 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym45::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op165 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op166(Sym27);
 impl Op166 {
@@ -3299,12 +3976,11 @@ impl Op166 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym27::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op166 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op167(u8);
 impl Op167 {
@@ -3312,12 +3988,11 @@ impl Op167 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op167 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op168(Sym40);
 impl Op168 {
@@ -3325,12 +4000,11 @@ impl Op168 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym40::decode(&buf[1usize..])?))
     }
-}
-impl std::fmt::Display for Op168 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op169(Sym17);
 impl Op169 {
@@ -3338,12 +4012,11 @@ impl Op169 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym17::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op169 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op170(Sym17);
 impl Op170 {
@@ -3351,12 +4024,11 @@ impl Op170 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym17::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op170 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op171(Sym15);
 impl Op171 {
@@ -3364,12 +4036,11 @@ impl Op171 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op171 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op172(Sym15);
 impl Op172 {
@@ -3377,12 +4048,11 @@ impl Op172 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op172 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op173(Sym17);
 impl Op173 {
@@ -3390,12 +4060,11 @@ impl Op173 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym17::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op173 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op174(u8);
 impl Op174 {
@@ -3403,12 +4072,11 @@ impl Op174 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op174 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op175(Sym15);
 impl Op175 {
@@ -3416,12 +4084,11 @@ impl Op175 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op175 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op176(Sym17);
 impl Op176 {
@@ -3429,12 +4096,11 @@ impl Op176 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym17::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op176 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op177();
 impl Op177 {
@@ -3442,12 +4108,11 @@ impl Op177 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self())
     }
-}
-impl std::fmt::Display for Op177 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "UNK177")
+    fn write(&self, f: &mut std::fmt::Formatter, arg0: u64) -> std::fmt::Result {
+        write!(f, "{}", (- (arg0 as i64)))
     }
 }
+
 #[derive(Debug)]
 struct Op178(u8);
 impl Op178 {
@@ -3455,12 +4120,11 @@ impl Op178 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op178 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op179(Sym26);
 impl Op179 {
@@ -3468,12 +4132,11 @@ impl Op179 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym26::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op179 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op180(Sym26);
 impl Op180 {
@@ -3481,12 +4144,11 @@ impl Op180 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym26::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op180 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op181(Sym15);
 impl Op181 {
@@ -3494,12 +4156,11 @@ impl Op181 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op181 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op182(Sym28);
 impl Op182 {
@@ -3507,12 +4168,11 @@ impl Op182 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym28::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op182 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op183(Sym17);
 impl Op183 {
@@ -3520,12 +4180,11 @@ impl Op183 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym17::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op183 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op184(u8);
 impl Op184 {
@@ -3533,12 +4192,11 @@ impl Op184 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
     }
-}
-impl std::fmt::Display for Op184 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op185(Sym28);
 impl Op185 {
@@ -3546,12 +4204,11 @@ impl Op185 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym28::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op185 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+
 #[derive(Debug)]
 struct Op186(Sym28);
 impl Op186 {
@@ -3559,9 +4216,7 @@ impl Op186 {
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym28::decode(&buf[0usize..])?))
     }
-}
-impl std::fmt::Display for Op186 {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }

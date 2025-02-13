@@ -8,9 +8,12 @@ fn main() {
         buf[0] = i;
         if let Some(out) = decode(&buf) {
             println!("{:x} {}", i, out);
-            out.print();
+
+            // let mut vec = Vec::new();
+            // out.pcode(&mut vec);
+            // println!("{:?}", vec);
         } else {
-            println!("{:x}", i);
+            // println!("{:x}", i);
         }
         /*
         for j in 0..=255 {
