@@ -114,7 +114,31 @@ pub(crate) struct Sleigh {
 
 // CONSTRUCTOR
 
+fn model_varnode_tpl(tpl: &Sla) {
+    assert_eq!(tpl.els.len(), 3);
+    for e in &tpl.els {
+        match e.eid {
+            EId::CONST_HANDLE => (),
+            EId::CONST_SPACEID => (),
+            EId::CONST_REAL => (),
+            EId::CONST_NEXT => (),
+            EId::CONST_CURSPACE => (),
+            EId::CONST_CURSPACE_SIZE => (),
+            _ => unreachable!("{}", e),
+        }
+    }
+}
+
 fn model_op_tpl(tpl: &Sla) -> PcodeOp {
+    for (i, e) in tpl.els.iter().enumerate() {
+        match e.eid {
+            EId::VARNODE_TPL => {
+                model_varnode_tpl(e);
+            }
+            EId::NULL => (),
+            _ => unreachable!("{}", e),
+        }
+    }
     tpl.get_int::<u8>(AId::CODE).into()
 }
 
