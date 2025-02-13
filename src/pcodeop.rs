@@ -7,7 +7,7 @@ macro_rules! create_pcode {
     } => {
         #[allow(non_camel_case_types)]
         #[allow(clippy::upper_case_acronyms)]
-        #[derive(Debug)]
+        #[derive(Debug, Clone, Copy)]
         pub(crate) enum PcodeOp {
             $($name = $num,)*
         }

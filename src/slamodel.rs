@@ -1,6 +1,6 @@
 use crate::pcodeop::PcodeOp;
 use crate::slaformat::{AId, EId};
-use crate::slaparser::Sla;
+use crate::slaparser::{Attribute, Sla};
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct SymIdx(u16);
@@ -130,7 +130,7 @@ fn model_varnode_tpl(tpl: &Sla) {
 }
 
 fn model_op_tpl(tpl: &Sla) -> PcodeOp {
-    for (i, e) in tpl.els.iter().enumerate() {
+    for e in &tpl.els {
         match e.eid {
             EId::VARNODE_TPL => {
                 model_varnode_tpl(e);
@@ -139,7 +139,10 @@ fn model_op_tpl(tpl: &Sla) -> PcodeOp {
             _ => unreachable!("{}", e),
         }
     }
-    tpl.get_int::<u8>(AId::CODE).into()
+    let Attribute::Pcode(pcode) = tpl.attrs[&AId::CODE] else {
+        unreachable!("{}", tpl);
+    };
+    pcode
 }
 
 fn model_constructor(constructor: &Sla) -> Constructor {
