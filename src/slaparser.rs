@@ -1,507 +1,201 @@
-use crate::pcodeop::PcodeOp;
 use crate::slaformat::{AId, EId};
-use crate::slareader::Attribute::{Int, Str, Uint};
-use crate::slareader::SlaItem::{Attr, Elem};
-use crate::slareader::{SlaBuf, SlaReader};
 
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct SymIdx(u16);
+use std::collections::HashMap;
 
-macro_rules! cast {
-    ($x:expr) => {
-        $x.try_into().unwrap()
-    };
-}
-
-macro_rules! sym_idx {
-    ($x:expr) => {
-        SymIdx(cast!($x))
-    };
-}
-
-impl quote::IdentFragment for crate::slaparser::SymIdx {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-// CONSTRUCTOR
+use std::io::Read;
 
 #[derive(Debug)]
-pub(crate) enum Print {
-    OpPrint(u8),
-    Print(String),
+pub(crate) enum Attribute {
+    Bool(bool),
+    Int(i64),
+    Uint(u64),
+    BasicAddr(u64),
+    SpecialAddr(u8),
+    Str(String),
 }
 
 #[derive(Debug)]
-pub(crate) struct Constructor {
-    pub(crate) id: SymIdx,
-    pub(crate) operands: Vec<SymIdx>,
-    pub(crate) prints: Vec<Print>,
-    pub(crate) construct_tpl: Vec<PcodeOp>,
+pub(crate) struct Sla {
+    pub(crate) eid: EId,
+    pub(crate) attrs: HashMap<AId, Attribute>,
+    pub(crate) els: Vec<Sla>,
 }
 
-// DECISION
+// BUF/READER
 
 #[derive(Debug)]
-pub(crate) struct Mask {
-    pub(crate) id: u8,
-    pub(crate) off: u8,
-    pub(crate) nonzero: u8,
-    pub(crate) mask: u64,
-    pub(crate) val: u64,
+enum Tag {
+    ElStart(EId),
+    ElEnd,
+    Attr(AId, Attribute),
 }
 
-#[derive(Debug)]
-pub(crate) enum Decision {
-    Bits {
-        start: u8,
-        size: u8,
-        options: Vec<Decision>,
-    },
-    Masks(Vec<Mask>),
-}
-
-#[derive(Debug)]
-pub(crate) struct TokenField {
-    pub(crate) startbit: u8,
-    pub(crate) endbit: u8,
-    pub(crate) startbyte: u8,
-    pub(crate) endbyte: u8,
-    pub(crate) shift: u8,
-}
-
-#[derive(Debug)]
-pub(crate) enum Expr {
-    Lshift(Box<Expr>, Box<Expr>),
-    Plus(Box<Expr>, Box<Expr>),
-    Minus(Box<Expr>),
-    Const(u64),
-    InsnEnd,
-    Operand, // TODO
-}
-
-#[derive(Debug)]
-pub(crate) enum OpExpr {
-    Subsym(SymIdx),
-    Tok(TokenField),
-    Expr(Expr),
-}
-
-#[derive(Debug)]
-pub(crate) struct Operand {
-    pub(crate) off: u8,
-    pub(crate) expr: OpExpr,
-}
-
-#[derive(Debug)]
-pub(crate) struct Subtable {
-    pub(crate) constructors: Vec<Constructor>,
-    pub(crate) decision: Option<Decision>,
-}
-
-#[derive(Debug)]
-pub(crate) struct Varlist {
-    pub(crate) tokenfield: TokenField,
-    pub(crate) vars: Vec<Option<SymIdx>>,
-}
-
-#[derive(Debug)]
-pub(crate) enum Sym {
-    Unknown,
-    Op(Operand),
-    Subtable(Subtable),
-    Varlist(Varlist),
-    Varnode,
-}
-
-#[derive(Debug)]
-pub(crate) struct SymbolTable {
-    pub(crate) syms: Vec<Sym>,
-    pub(crate) sym_names: Vec<String>,
-}
-
-// PARSER
-
-fn push_sym_at(vec: &mut Vec<Sym>, id: usize, val: Sym) {
-    vec.resize_with(id + 1, || Sym::Unknown);
-    vec[id] = val
-}
-
-struct SlaParser<'a>(SlaReader<'a>);
-
-impl SlaParser<'_> {
-    fn parse_element_id(&mut self) -> u64 {
-        let mut id = 0;
-        while let Some(item) = self.0.next() {
-            match item {
-                Attr(AId::ID, Uint(x)) => id = x,
-                Attr(AId::ID, Int(x)) => id = cast!(x),
-                Elem(_) => self.0.skip_elem(),
-                _ => (),
-            }
-        }
-        id
-    }
-
-    // CONSTRUCTOR
-
-    fn parse_op_tpl(&mut self) -> PcodeOp {
-        let mut code = 0;
-        while let Some(item) = self.0.next() {
-            match item {
-                Elem(_) => self.0.skip_elem(),
-                Attr(AId::CODE, Int(x)) => code = x,
-                Attr(_, _) => (),
-            }
-        }
-        code.into()
-    }
-
-    fn parse_construct_tpl(&mut self) -> Vec<PcodeOp> {
-        let mut ops = Vec::new();
-        while let Some(item) = self.0.next() {
-            match item {
-                Elem(EId::NULL) => self.0.skip_elem(),
-                Elem(EId::OP_TPL) => ops.push(self.parse_op_tpl()),
-                Elem(EId::HANDLE_TPL) => self.0.skip_elem(),
-                Attr(_, _) => (),
-                _ => unreachable!("unknown construct_tpl item: {:?}", item),
-            }
-        }
-        ops
-    }
-
-    fn parse_constructor(&mut self, id: SymIdx) -> Constructor {
-        let mut operands = Vec::new();
-        let mut prints = Vec::new();
-        let mut construct_tpl = None;
-
-        while let Some(item) = self.0.next() {
-            match item {
-                Elem(EId::OPER) => operands.push(sym_idx!(self.parse_element_id())),
-                Elem(EId::OPPRINT) => prints.push(Print::OpPrint(cast!(self.parse_element_id()))),
-                // opprint
-                Elem(EId::PRINT) => self.0.enter(),
-                // opprint -> piece
-                Attr(AId::PIECE, Str(s)) => prints.push(Print::Print(s)),
-                // end
-                Elem(EId::CONSTRUCT_TPL) => construct_tpl = Some(self.parse_construct_tpl()),
-                Attr(_, _) => (),
-                _ => unreachable!("unknown constructor item: {:?}", item),
-            }
-        }
-
-        Constructor {
-            id,
-            prints,
-            operands,
-            construct_tpl: construct_tpl.unwrap(),
-        }
-    }
-
-    // DECISION
-
-    fn parse_pair(&mut self) -> Mask {
-        let mut id = 0;
-        let (mut off, mut nonzero) = (0, 0);
-        let (mut mask, mut val) = (0, 0);
-
-        while let Some(item) = self.0.next() {
-            match item {
-                // pair
-                Attr(AId::ID, Int(x)) => id = x, // TODO
-                // pair -> instruct pat
-                Elem(EId::INSTRUCT_PAT) => self.0.enter(),
-                // pair -> instruct pat -> pat block
-                Elem(EId::PAT_BLOCK) => self.0.enter(),
-                Attr(AId::OFF, Int(x)) => off = x,
-                Attr(AId::NONZERO, Int(x)) => nonzero = x,
-                // pair -> instruct pat -> pat block -> mask word
-                Elem(EId::MASK_WORD) => self.0.enter(),
-                Attr(AId::MASK, Uint(x)) => mask = x,
-                Attr(AId::VAL, Uint(x)) => val = x,
-                // end
-                Attr(_, _) => (),
-                _ => unreachable!("unknown pair item: {:?}", item),
-            }
-        }
-
-        Mask {
-            id: cast!(id),
-            off: cast!(off),
-            nonzero: cast!(nonzero),
-            mask,
-            val,
-        }
-    }
-
-    fn parse_decision(&mut self) -> Option<Decision> {
-        let (mut start, mut size) = (0, 0);
-        let mut masks = Vec::new();
-        let mut options = Vec::new();
-        while let Some(item) = self.0.next() {
-            match item {
-                Elem(EId::PAIR) => masks.push(self.parse_pair()),
-                Elem(EId::DECISION) => options.push(
-                    self.parse_decision()
-                        .expect("non-root decisions must have mask"),
-                ),
-                Attr(AId::STARTBIT, Int(x)) => start = x,
-                Attr(AId::SIZE, Int(x)) => size = x,
-                Attr(_, _) => (),
-                _ => unreachable!("unknown decision item: {:?}", item),
-            }
-        }
-
-        if size != 0 {
-            assert_eq!(options.len(), 1 << size);
-            Some(Decision::Bits {
-                start: cast!(start),
-                size: cast!(size),
-                options,
-            })
-        } else if masks.iter().any(|m| m.mask == 0) {
-            assert_eq!(masks.len(), 1);
-            None
-        } else {
-            Some(Decision::Masks(masks))
-        }
-    }
-
-    // OPERAND
-
-    fn parse_tokenfield(&mut self) -> TokenField {
-        let (mut startbit, mut endbit, mut startbyte, mut endbyte, mut shift) = (0, 0, 0, 0, 0);
-
-        for item in self.0.by_ref() {
-            match item {
-                Attr(AId::STARTBIT, Int(x)) => startbit = cast!(x),
-                Attr(AId::ENDBIT, Int(x)) => endbit = cast!(x),
-                Attr(AId::STARTBYTE, Int(x)) => startbyte = cast!(x),
-                Attr(AId::ENDBYTE, Int(x)) => endbyte = cast!(x),
-                Attr(AId::SHIFT, Int(x)) => shift = cast!(x),
-                _ => (),
-            }
-        }
-
-        TokenField {
-            startbit,
-            endbit,
-            startbyte,
-            endbyte,
-            shift,
-        }
-    }
-
-    fn parse_exprs<const C: usize>(&mut self) -> [Box<Expr>; C] {
-        let mut exprs = Vec::new();
-        while let Some(item) = self.0.next() {
-            match item {
-                Elem(EId::OPERAND_EXP) => {
-                    self.0.skip_elem();
-                    exprs.push(Box::new(Expr::Operand))
-                }
-                Elem(EId::INTB) => {
-                    let mut val = None;
-                    for item in self.0.by_ref() {
-                        match item {
-                            Attr(AId::VAL, Int(x)) => val = Some(x.try_into().unwrap()),
-                            _ => unreachable!("unknown intb item: {:?}", item),
-                        }
-                    }
-                    exprs.push(Box::new(Expr::Const(val.unwrap())))
-                }
-                Elem(EId::END_EXP) => {
-                    self.0.skip_elem();
-                    exprs.push(Box::new(Expr::InsnEnd))
-                }
-                _ => unreachable!("unknown decision item: {:?}", item),
-            }
-        }
-        exprs.try_into().unwrap()
-    }
-
-    fn parse_operand(&mut self, syms: &mut Vec<Sym>) {
-        let mut id = 0;
-        let (mut off, mut _minlen) = (0, 0);
-        let mut subsym = None;
-        let mut tokenfield = None;
-        let mut expr = None;
-
-        while let Some(item) = self.0.next() {
-            match item {
-                Elem(EId::OPERAND_EXP) => self.0.skip_elem(),
-                Elem(EId::TOKENFIELD) => tokenfield = Some(self.parse_tokenfield()),
-                Elem(EId::PLUS_EXP) => {
-                    let [a, b] = self.parse_exprs::<2>();
-                    expr = Some(Expr::Plus(a, b))
-                }
-                Elem(EId::LSHIFT_EXP) => {
-                    let [a, b] = self.parse_exprs::<2>();
-                    expr = Some(Expr::Lshift(a, b))
-                }
-                Elem(EId::MINUS_EXP) => {
-                    let [a] = self.parse_exprs::<1>();
-                    expr = Some(Expr::Minus(a))
-                }
-                Attr(AId::ID, Uint(x)) => id = cast!(x),
-                Attr(AId::OFF, Int(x)) => off = cast!(x),
-                Attr(AId::SUBSYM, Uint(x)) => subsym = Some(x),
-                Attr(AId::BASE, Int(x)) => assert_eq!(x, -1),
-                Attr(_, _) => (),
-                _ => unreachable!("unknown operand item: {:?}", item),
-            }
-        }
-
-        let expr = if let Some(subsym) = subsym {
-            OpExpr::Subsym(sym_idx!(subsym))
-        } else if let Some(tokenfield) = tokenfield {
-            OpExpr::Tok(tokenfield)
-        } else if let Some(expr) = expr {
-            OpExpr::Expr(expr)
-        } else {
-            unreachable!("operand is not any known variant")
-        };
-
-        push_sym_at(syms, cast!(id), Sym::Op(Operand { off, expr }));
-    }
-
-    fn parse_subtable(&mut self, syms: &mut Vec<Sym>) {
-        let mut id = 0;
-        let mut decision = None;
-        let mut constructors = Vec::new();
-
-        while let Some(item) = self.0.next() {
-            match item {
-                Elem(EId::CONSTRUCTOR) => {
-                    constructors.push(self.parse_constructor(sym_idx!(constructors.len())))
-                }
-                Elem(EId::DECISION) => decision = Some(self.parse_decision()),
-                Attr(AId::ID, Uint(x)) => id = x,
-                Attr(_, _) => (),
-                _ => unreachable!("unknown subtable item: {:?}", item),
-            }
-        }
-
-        let sym = Sym::Subtable(Subtable {
-            constructors,
-            decision: decision.unwrap(),
-        });
-        push_sym_at(syms, cast!(id), sym);
-    }
-
-    fn parse_varlist(&mut self, syms: &mut Vec<Sym>) {
-        let mut id = 0;
-        let mut tokenfield = None;
-        let mut vars = Vec::new();
-
-        while let Some(item) = self.0.next() {
-            match item {
-                Attr(AId::ID, Uint(x)) => id = x,
-                Elem(EId::TOKENFIELD) => tokenfield = Some(self.parse_tokenfield()),
-                Elem(EId::VAR) => vars.push(Some(sym_idx!(self.parse_element_id()))),
-                Elem(EId::NULL) => {
-                    vars.push(None);
-                    self.0.skip_elem()
-                }
-                Attr(_, _) => (),
-                _ => unreachable!("unknown varlist item: {:?}", item),
-            }
-        }
-
-        let sym = Sym::Varlist(Varlist {
-            tokenfield: tokenfield.unwrap(),
-            vars,
-        });
-        push_sym_at(syms, cast!(id), sym);
-    }
-
-    fn parse_varnode(&mut self, syms: &mut Vec<Sym>) {
-        let mut id = 0;
-
-        while let Some(item) = self.0.next() {
-            match item {
-                Attr(AId::ID, Uint(x)) => id = x,
-                Elem(_) => self.0.skip_elem(),
-                Attr(_, _) => (),
-            }
-        }
-
-        let sym = Sym::Varnode;
-        push_sym_at(syms, cast!(id), sym);
-    }
-
-    // SYMBOL TABLE
-
-    fn parse_head(&mut self, sym_names: &mut Vec<String>) {
-        let mut name = None;
-        let mut id = 0;
-        for item in self.0.by_ref() {
-            match item {
-                Attr(AId::NAME, Str(aname)) => name = Some(aname),
-                Attr(AId::ID, Uint(x)) => id = x,
-                Attr(AId::SCOPE, Uint(_)) => (),
-                _ => unreachable!("unknown head item: {:?}", item),
-            }
-        }
-
-        assert_eq!(sym_names.len(), cast!(id));
-        sym_names.push(name.unwrap());
-    }
-
-    fn parse_symbol_table(&mut self) -> SymbolTable {
-        let mut syms = Vec::new();
-        let mut sym_names = Vec::new();
-
-        while let Some(item) = self.0.next() {
-            match item {
-                Elem(
-                    EId::SUBTABLE_SYM_HEAD
-                    | EId::START_SYM_HEAD
-                    | EId::END_SYM_HEAD
-                    | EId::NEXT2_SYM_HEAD
-                    | EId::VARNODE_SYM_HEAD
-                    | EId::VALUE_SYM_HEAD
-                    | EId::VARLIST_SYM_HEAD
-                    | EId::OPERAND_SYM_HEAD
-                    | EId::USEROP_HEAD,
-                ) => self.parse_head(&mut sym_names),
-                Elem(EId::SUBTABLE_SYM) => self.parse_subtable(&mut syms),
-                Elem(EId::OPERAND_SYM) => self.parse_operand(&mut syms),
-                Elem(EId::VARLIST_SYM) => self.parse_varlist(&mut syms),
-                Elem(EId::VARNODE_SYM) => self.parse_varnode(&mut syms),
-                Elem(_) => self.0.skip_elem(),
-                Attr(_, _) => (),
-            }
-        }
-
-        SymbolTable { syms, sym_names }
-    }
-
-    fn parse(&mut self) -> SymbolTable {
-        let mut symtab = None;
-
-        let Elem(EId::SLEIGH) = self.0.next().unwrap() else {
-            unreachable!("root element is not sleigh");
-        };
-
-        while let Some(item) = self.0.next() {
-            match item {
-                Elem(EId::SOURCEFILES | EId::SPACES) => self.0.skip_elem(),
-                Elem(EId::SYMBOL_TABLE) => symtab = Some(self.parse_symbol_table()),
-                Attr(_, _) => (),
-                _ => unreachable!("unknown sleigh item: {:?}", item),
-            }
-        }
-
-        symtab.unwrap()
-    }
-}
+pub(crate) struct SlaBuf(Vec<u8>);
 
 impl SlaBuf {
-    pub(crate) fn parse(&self) -> SymbolTable {
-        let mut parser = SlaParser(self.into_iter());
-        parser.parse()
+    pub(crate) fn new(path: &str) -> Result<SlaBuf, Box<dyn std::error::Error>> {
+        let mut uncompressed = Vec::new();
+        let mut file = std::fs::File::open(path)?;
+        file.read_to_end(&mut uncompressed)?;
+
+        assert!(&uncompressed[..4] == b"sla\x04");
+
+        let bufvec = miniz_oxide::inflate::decompress_to_vec_zlib_with_limit(
+            &uncompressed[4..],
+            1024 * 1024 * 1024,
+        )?;
+
+        Ok(SlaBuf(bufvec))
+    }
+
+    pub(crate) fn parse(self) -> Sla {
+        let mut reader = SlaReader(self.0.into_iter());
+        let Tag::ElStart(EId::SLEIGH) = reader.read_tag() else {
+            unreachable!();
+        };
+        reader.parse(EId::SLEIGH)
+    }
+}
+
+struct SlaReader(std::vec::IntoIter<u8>);
+
+impl SlaReader {
+    fn read_tag(&mut self) -> Tag {
+        // see Ghidra file: PackedDecode.java
+        // commit: GP-4285 Compressed SLEIGH
+
+        // ttXi_iiii 1iii_iiii
+        // | | ^-id  ^-continued id (if xbit set)
+        // | \-xbit
+        // \-tagid
+        let (tagid, id) = {
+            let b0 = self.0.next().unwrap();
+            let (tagid, xbit, mut id) = (b0 >> 6, b0 >> 5 & 1, b0 as u16 & 0b0001_1111);
+            if xbit != 0 {
+                let b1 = self.0.next().unwrap();
+                id <<= 7;
+                id |= b1 as u16 & 0b0111_1111;
+            }
+            (tagid, id)
+        };
+
+        match tagid {
+            0b01 => Tag::ElStart(id.into()),
+            0b10 => Tag::ElEnd,
+            0b11 => {
+                let b0 = self.0.next().unwrap();
+                let (typ, len) = (b0 >> 4, b0 & 0b1111);
+                let attr = match typ {
+                    1 => Attribute::Bool(len == 1),
+                    6 => Attribute::SpecialAddr(len),
+                    _ => {
+                        // length-reliant attributes
+                        let mut x = 0;
+                        for b in self.0.by_ref().take(len as usize) {
+                            x <<= 7;
+                            x |= b as u64 & 0b0111_1111;
+                        }
+                        match typ {
+                            2 => Attribute::Int(x.try_into().unwrap()),
+                            3 => Attribute::Int(-TryInto::<i64>::try_into(x).unwrap()),
+                            4 => Attribute::Uint(x),
+                            5 => Attribute::BasicAddr(x),
+                            7 => Attribute::Str(
+                                String::from_utf8(self.0.by_ref().take(x as usize).collect())
+                                    .unwrap(),
+                            ),
+                            _ => unreachable!("invalid attr type: {}", typ),
+                        }
+                    }
+                };
+                Tag::Attr(id.into(), attr)
+            }
+            _ => unreachable!("invalid tag id: {}", tagid),
+        }
+    }
+
+    fn parse(&mut self, eid: EId) -> Sla {
+        let mut attrs = HashMap::new();
+        let mut els = Vec::new();
+
+        loop {
+            match self.read_tag() {
+                Tag::ElStart(eid) => els.push(self.parse(eid)),
+                Tag::Attr(aid, attr) => {
+                    if let Some(old) = attrs.insert(aid, attr) {
+                        unreachable!() // TODO: error handling
+                    }
+                }
+                Tag::ElEnd => break,
+            }
+        }
+
+        Sla { eid, attrs, els }
+    }
+}
+
+// SLA
+
+impl Sla {
+    fn write(&self, f: &mut std::fmt::Formatter, mut space: usize) -> std::fmt::Result {
+        writeln!(f, "{:space$}{:?}", "", self.eid, space = space)?;
+        space += 4;
+        for (aid, val) in &self.attrs {
+            writeln!(f, "{:space$}{:?} = {:?}", "", aid, val, space = space)?;
+        }
+        for el in &self.els {
+            el.write(f, space)?
+        }
+        Ok(())
+    }
+
+    pub(crate) fn get_int<T>(&self, key: AId) -> T
+    where
+        T: TryFrom<u64> + TryFrom<i64>,
+        <T as TryFrom<u64>>::Error: std::fmt::Debug,
+        <T as TryFrom<i64>>::Error: std::fmt::Debug,
+    {
+        match self.attrs.get(&key) {
+            Some(Attribute::Int(x)) => (*x).try_into().unwrap(),
+            Some(Attribute::Uint(x)) => (*x).try_into().unwrap(),
+            _ => unreachable!("{}", self), // TODO
+        }
+    }
+
+    pub(crate) fn get_id<T>(&self) -> T
+    where
+        T: TryFrom<u64> + TryFrom<i64>,
+        <T as TryFrom<u64>>::Error: std::fmt::Debug,
+        <T as TryFrom<i64>>::Error: std::fmt::Debug,
+    {
+        self.get_int(AId::ID)
+    }
+
+    pub(crate) fn get_str(&self, key: AId) -> String {
+        let Attribute::Str(s) = &self.attrs[&key] else {
+            unreachable!() // TODO
+        };
+        s.clone()
+    }
+}
+
+impl std::fmt::Display for Sla {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        self.write(f, 0)
+    }
+}
+
+impl std::ops::Index<EId> for Sla {
+    type Output = Sla;
+
+    fn index(&self, eid: EId) -> &Self::Output {
+        let mut matches = self.els.iter().filter(|e| e.eid == eid);
+        let Some(first) = matches.next() else {
+            unreachable!("No occurrences of {:?} in Sla: {}", eid, self);
+        };
+        if matches.next().is_some() {
+            unreachable!("Item {:?} is not unique in Sla: {}", eid, self);
+        }
+        first
     }
 }

@@ -7,7 +7,7 @@ macro_rules! create_enum {
     } => {
         #[allow(non_camel_case_types)]
         #[allow(clippy::upper_case_acronyms)]
-        #[derive(Debug)]
+        #[derive(Debug, Eq, PartialEq, Hash)]
         pub(crate) enum $enum_name {
             $($name = $num,)*
         }

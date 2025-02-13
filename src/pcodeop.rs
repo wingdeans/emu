@@ -12,8 +12,8 @@ macro_rules! create_pcode {
             $($name = $num,)*
         }
 
-        impl From<i64> for PcodeOp {
-            fn from(v: i64) -> Self {
+        impl From<u8> for PcodeOp {
+            fn from(v: u8) -> Self {
                 match v {
                     $($num => Self::$name,)*
                         _ => unreachable!()

@@ -1,6 +1,6 @@
-use crate::slaparser::{
-    Constructor, Decision, Mask, OpExpr, Operand, Print, Subtable, Sym, SymbolTable, TokenField,
-    Varlist,
+use crate::slamodel::{
+    Constructor, Decision, Mask, OpExpr, Operand, Print, Sleigh, Subtable, Sym, SymbolTable,
+    TokenField, Varlist,
 };
 
 use proc_macro2::TokenStream;
@@ -129,46 +129,56 @@ fn gen_subtable(subtable: Subtable, idx: usize) -> TokenStream {
         }
     };
 
-    let fmt_cases = subtable.constructors.iter().map(|constructor| {
-        let variant = format_ident!("Variant{}", constructor.id);
-        let operand_bindings = (0..constructor.operands.len()).map(|i| format_ident!("op{}", i));
+    let fmt_cases = subtable
+        .constructors
+        .iter()
+        .enumerate()
+        .map(|(id, constructor)| {
+            let variant = format_ident!("Variant{}", id);
+            let operand_bindings =
+                (0..constructor.operands.len()).map(|i| format_ident!("op{}", i));
 
-        let operand_args = constructor.prints.iter().filter_map(|print| match print {
-            Print::Print(_) => None,
-            Print::OpPrint(idx) => Some(format_ident!("op{}", idx)),
+            let operand_args = constructor.prints.iter().filter_map(|print| match print {
+                Print::Print(_) => None,
+                Print::OpPrint(idx) => Some(format_ident!("op{}", idx)),
+            });
+
+            let fstring = constructor
+                .prints
+                .iter()
+                .map(|print| match print {
+                    Print::Print(piece) => piece,
+                    Print::OpPrint(_) => "{}",
+                })
+                .collect::<Vec<_>>()
+                .join("");
+
+            quote! {
+                Self::#variant(#(#operand_bindings),*) =>
+                    write!(f, #fstring, #(#operand_args),*),
+            }
         });
 
-        let fstring = constructor
-            .prints
-            .iter()
-            .map(|print| match print {
-                Print::Print(piece) => piece,
-                Print::OpPrint(_) => "{}",
-            })
-            .collect::<Vec<_>>()
-            .join("");
+    let pcode_cases = subtable
+        .constructors
+        .iter()
+        .enumerate()
+        .map(|(id, constructor)| {
+            let variant = format_ident!("Variant{}", id);
+            let operand_bindings =
+                (0..constructor.operands.len()).map(|i| format_ident!("op{}", i));
 
-        quote! {
-            Self::#variant(#(#operand_bindings),*) =>
-                write!(f, #fstring, #(#operand_args),*),
-        }
-    });
+            let op = constructor
+                .construct_tpl
+                .iter()
+                .map(|op_tpl| format!("{:?}", op_tpl))
+                .collect::<Vec<_>>()
+                .join(", ");
 
-    let pcode_cases = subtable.constructors.iter().map(|constructor| {
-        let variant = format_ident!("Variant{}", constructor.id);
-        let operand_bindings = (0..constructor.operands.len()).map(|i| format_ident!("op{}", i));
-
-        let op = constructor
-            .construct_tpl
-            .iter()
-            .map(|op_tpl| format!("{:?}", op_tpl))
-            .collect::<Vec<_>>()
-            .join(", ");
-
-        quote! {
-            Self::#variant(#(#operand_bindings),*) => #op,
-        }
-    });
+            quote! {
+                Self::#variant(#(#operand_bindings),*) => #op,
+            }
+        });
 
     quote! {
         #[derive(Debug)]
@@ -344,7 +354,7 @@ fn gen_varlist(varlist: Varlist, idx: usize) -> TokenStream {
     }
 }
 
-pub(crate) fn emit(sleigh: SymbolTable) -> Result<(), Box<dyn std::error::Error>> {
+pub(crate) fn emit(sleigh: Sleigh) -> Result<(), Box<dyn std::error::Error>> {
     let tokens = quote! {
         #[derive(Debug)]
         pub(crate) struct Pcode();
@@ -370,11 +380,11 @@ pub(crate) fn emit(sleigh: SymbolTable) -> Result<(), Box<dyn std::error::Error>
     };
     println!("{}", prettyplease::unparse(&syn::parse2(tokens)?));
 
-    for (i, sym) in sleigh.syms.into_iter().enumerate() {
+    for (i, sym) in sleigh.symtab.syms.into_iter().enumerate() {
         let tokens = match sym {
             Sym::Subtable(subtable) => gen_subtable(subtable, i),
             Sym::Op(operand) => gen_operand(operand, i),
-            Sym::Varnode => gen_varnode(&sleigh.sym_names[i], i),
+            Sym::Varnode => gen_varnode(&sleigh.symtab.sym_names[i], i),
             Sym::Varlist(varlist) => gen_varlist(varlist, i),
             _ => continue,
         };
