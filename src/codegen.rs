@@ -431,7 +431,6 @@ pub(crate) fn emit(sleigh: Sleigh) -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     };
-    println!("{}", prettyplease::unparse(&syn::parse2(tokens)?));
 
     for (i, sym) in sleigh.symtab.syms.iter().enumerate() {
         let tokens = match sym {
@@ -441,7 +440,8 @@ pub(crate) fn emit(sleigh: Sleigh) -> Result<(), Box<dyn std::error::Error>> {
             Sym::Varlist(varlist) => gen_varlist(varlist, i),
             _ => continue,
         };
-        println!("{}", prettyplease::unparse(&syn::parse2(tokens)?));
+        let file = syn::parse2(tokens)?;
+        println!("{}", prettyplease::unparse(&file));
     }
 
     Ok(())

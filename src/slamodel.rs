@@ -364,8 +364,8 @@ fn model_symtab(symtab: &Sla) -> SymbolTable {
             _ => continue,
         };
 
-        syms.resize_with(id + 1, || Sym::Unknown);
-        syms[id] = sym;
+        syms.resize_with(id, || Sym::Unknown);
+        syms.push(sym);
     }
 
     SymbolTable { syms, sym_names }
