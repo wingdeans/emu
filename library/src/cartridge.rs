@@ -14,8 +14,8 @@ pub const CHECKSUM_BEGIN: usize = 0x134;
 pub const CHECKSUM_END: usize = 0x14d;
 
 pub enum Mapper {
-    None,
-    MBC1,
+    NoMbc,
+    Mbc1,
 }
 
 #[repr(packed)]
@@ -74,7 +74,7 @@ impl Header {
         }
     }
 
-    pub fn rom_bank_size(&self) -> Result<u32> {
+    pub fn rom_bank_size(&self) -> Result<usize> {
         match self.rom_size {
             0..=4 => Ok(1024 * 16),
             _ => Err(Error::UnrecognizedCartridgeHeaderField(format!(
@@ -94,7 +94,11 @@ impl Header {
         }
     }
 
-    pub fn ram_bank_size(&self) -> Result<u32> {
+    pub fn ram_byte_size(&self) -> Result<usize> {
+        Ok(self.ram_bank_size()? * (self.ram_bank_count()? as usize))
+    }
+
+    pub fn ram_bank_size(&self) -> Result<usize> {
         Ok(1024 * 8)
     }
 
@@ -116,8 +120,8 @@ impl Header {
         use Mapper::*;
 
         match self.cartridge_type {
-            0 => Ok(None),
-            0x01..=0x03 => Ok(MBC1),
+            0 => Ok(NoMbc),
+            0x01..=0x03 => Ok(Mbc1),
             _ => Err(Error::UnrecognizedCartridgeHeaderField(format!(
                 "unrecognized cartridge type: 0x{:02x}",
                 self.cartridge_type
@@ -138,9 +142,9 @@ impl Cartridge {
         let rom = Rc::new(Rom::from_file(&header, &mut file)?);
 
         let mapper = match header.mapper()? {
-            Mapper::None => Rc::new(RefCell::new(MbcNone::new(&header, Rc::clone(&rom))?))
+            Mapper::NoMbc => Rc::new(RefCell::new(MbcNone::new(&header, Rc::clone(&rom))?))
                 as Rc<RefCell<dyn Bus>>,
-            Mapper::MBC1 => {
+            Mapper::Mbc1 => {
                 Rc::new(RefCell::new(Mbc1::new(&header, Rc::clone(&rom))?)) as Rc<RefCell<dyn Bus>>
             }
         };

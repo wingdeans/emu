@@ -44,7 +44,7 @@ impl Mbc1 {
             rom_bank: 1,
             ram_enable: false,
             ram_bank: 0,
-            ram_banks: vec![vec![0u8; ram_bank_size as usize]; ram_bank_count as usize],
+            ram_banks: vec![vec![0u8; ram_bank_size]; ram_bank_count as usize],
             rom,
             advanced_banking: false,
         })
