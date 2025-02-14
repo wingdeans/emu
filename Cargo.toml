@@ -1,3 +1,5 @@
+cargo-features = ["codegen-backend", "profile-rustflags"]
+
 [package]
 name = "sleighthing"
 version = "0.1.0"
@@ -9,3 +11,9 @@ proc-macro2 = "1.0.93"
 syn = "2.0.98"
 quote = "1.0.38"
 prettyplease = "0.2.29"
+
+# Faster builds
+
+[profile.dev]
+codegen-backend = "cranelift"
+rustflags = ["-C", "link-arg=-fuse-ld=mold"]

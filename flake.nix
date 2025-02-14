@@ -12,7 +12,11 @@
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
           packages = with pkgs; [
-            (rust-bin.selectLatestNightlyWith (toolchain: toolchain.default))
+            ((rust-bin.selectLatestNightlyWith
+              (toolchain: toolchain.default)).override {
+              extensions = [ "rustc-codegen-cranelift" ];
+            })
+            mold
           ];
         };
       });
