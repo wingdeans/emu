@@ -15,8 +15,8 @@ macro_rules! create_pcode {
         impl From<u8> for PcodeOp {
             fn from(v: u8) -> Self {
                 match v {
-                    $($num => Self::$name,)*
-                        _ => unreachable!()
+                    $($num => Self::$name),*,
+                    unk => panic!("Invalid Pcode: {}", unk)
                 }
             }
         }

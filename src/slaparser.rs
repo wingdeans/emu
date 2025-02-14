@@ -40,7 +40,7 @@ impl SlaBuf {
         let mut file = std::fs::File::open(path)?;
         file.read_to_end(&mut uncompressed)?;
 
-        assert!(&uncompressed[..4] == b"sla\x04");
+        assert_eq!(&uncompressed[..4], b"sla\x04");
 
         let bufvec = miniz_oxide::inflate::decompress_to_vec_zlib_with_limit(
             &uncompressed[4..],
@@ -52,10 +52,10 @@ impl SlaBuf {
 
     pub(crate) fn parse(self) -> Sla {
         let mut reader = SlaReader(self.0.into_iter());
-        let Tag::ElStart(EId::SLEIGH) = reader.read_tag() else {
-            unreachable!("sla must start with sleigh tag");
-        };
-        reader.parse(EId::SLEIGH)
+        match reader.read_tag() {
+            Tag::ElStart(EId::SLEIGH) => reader.parse(EId::SLEIGH),
+            unk => panic!("Expected sla to start with SLEIGH tag, got {:?}", unk),
+        }
     }
 }
 
@@ -72,7 +72,7 @@ impl SlaReader {
         // \-tagid
         let (tagid, id) = {
             let b0 = self.0.next().unwrap();
-            let (tagid, xbit, mut id) = (b0 >> 6, b0 >> 5 & 1, b0 as u16 & 0b0001_1111);
+            let (tagid, xbit, mut id) = (b0 >> 6, (b0 >> 5) & 1, b0 as u16 & 0b0001_1111);
             if xbit != 0 {
                 let b1 = self.0.next().unwrap();
                 id <<= 7;
@@ -106,13 +106,13 @@ impl SlaReader {
                                 String::from_utf8(self.0.by_ref().take(x as usize).collect())
                                     .unwrap(),
                             ),
-                            _ => unreachable!("invalid attr type: {}", typ),
+                            _ => panic!("invalid attr type: {}", typ),
                         }
                     }
                 };
                 Tag::Attr(id.into(), attr)
             }
-            _ => unreachable!("invalid tag id: {}", tagid),
+            _ => panic!("invalid tag id: {}", tagid),
         }
     }
 
@@ -130,7 +130,7 @@ impl SlaReader {
                         }
                     }
                     if attrs.insert(aid, attr).is_some() {
-                        unreachable!("duplicate attribute: {:?}", aid)
+                        panic!("Duplicate attribute: {:?}", aid)
                     }
                 }
                 Tag::ElEnd => break,
@@ -156,16 +156,23 @@ impl Sla {
         Ok(())
     }
 
+    fn get(&self, key: AId) -> &Attribute {
+        let Some(attr) = self.attrs.get(&key) else {
+            panic!("No key {:?} in {}", key, self)
+        };
+        attr
+    }
+
     pub(crate) fn get_int<T>(&self, key: AId) -> T
     where
         T: TryFrom<u64> + TryFrom<i64>,
         <T as TryFrom<u64>>::Error: std::fmt::Debug,
         <T as TryFrom<i64>>::Error: std::fmt::Debug,
     {
-        match self.attrs.get(&key) {
-            Some(Attribute::Int(x)) => (*x).try_into().unwrap(),
-            Some(Attribute::Uint(x)) => (*x).try_into().unwrap(),
-            _ => unreachable!("{}", self), // TODO
+        match self.get(key) {
+            Attribute::Int(x) => (*x).try_into().unwrap(),
+            Attribute::Uint(x) => (*x).try_into().unwrap(),
+            _ => panic!("Key {:?} is not integer in {}", key, self),
         }
     }
 
@@ -179,8 +186,8 @@ impl Sla {
     }
 
     pub(crate) fn get_str(&self, key: AId) -> String {
-        let Attribute::Str(s) = &self.attrs[&key] else {
-            unreachable!() // TODO
+        let Attribute::Str(s) = self.get(key) else {
+            panic!("Key {:?} is not string in {}", key, self)
         };
         s.clone()
     }
@@ -188,10 +195,10 @@ impl Sla {
     pub(crate) fn get_el(&self, eid: EId) -> &Sla {
         let mut matches = self.els.iter().filter(|e| e.eid == eid);
         let Some(first) = matches.next() else {
-            unreachable!("No occurrences of {:?} in Sla: {}", eid, self);
+            panic!("No occurrences of {:?} in Sla: {}", eid, self);
         };
         if matches.next().is_some() {
-            unreachable!("Item {:?} is not unique in Sla: {}", eid, self);
+            panic!("Item {:?} is not unique in Sla: {}", eid, self);
         }
         first
     }

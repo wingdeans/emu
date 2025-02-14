@@ -15,8 +15,8 @@ macro_rules! create_enum {
         impl From<u16> for $enum_name {
             fn from(v: u16) -> Self {
                 match v {
-                    $($num => Self::$name,)*
-                        _ => unreachable!()
+                    $($num => Self::$name),*,
+                    unk => panic!("Invalid {}: {}", stringify!($enum_name), unk)
                 }
             }
         }
