@@ -202,6 +202,10 @@ impl Sla {
         }
         first
     }
+
+    pub(crate) fn filter_els<'a>(&'a self, eid: EId) -> impl Iterator<Item = &'a Sla> {
+        self.els.iter().filter(move |e| e.eid == eid)
+    }
 }
 
 impl std::fmt::Display for Sla {

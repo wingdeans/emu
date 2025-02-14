@@ -132,9 +132,7 @@ fn model_varnode_tpl(tpl: &Sla) {
 fn model_op_tpl(tpl: &Sla) -> PcodeOp {
     for e in &tpl.els {
         match e.eid {
-            EId::VARNODE_TPL => {
-                model_varnode_tpl(e);
-            }
+            EId::VARNODE_TPL => model_varnode_tpl(e),
             EId::NULL => (),
             _ => unreachable!("{}", e),
         }
@@ -147,9 +145,7 @@ fn model_op_tpl(tpl: &Sla) -> PcodeOp {
 
 fn model_constructor(constructor: &Sla) -> Constructor {
     let operands = constructor
-        .els
-        .iter()
-        .filter(|e| e.eid == EId::OPER)
+        .filter_els(EId::OPER)
         .map(|e| SymIdx(e.get_id()))
         .collect();
 
@@ -208,19 +204,16 @@ fn model_pair(pair: &Sla) -> Option<Mask> {
 
 fn model_decision(decision: &Sla) -> Option<Decision> {
     let masks = decision
-        .els
-        .iter()
-        .filter(|e| e.eid == EId::PAIR)
+        .filter_els(EId::PAIR)
         .map(model_pair)
         .collect::<Option<Vec<_>>>()?;
+    // return None if no masks
 
     let size: u8 = decision.get_int(AId::SIZE);
 
     if size != 0 {
         let options: Vec<_> = decision
-            .els
-            .iter()
-            .filter(|e| e.eid == EId::DECISION)
+            .filter_els(EId::DECISION)
             .map(|e| model_decision(e).expect("non-root decisions must have mask"))
             .collect();
 
@@ -250,7 +243,7 @@ fn model_tokenfield(tokenfield: &Sla) -> TokenField {
 fn parse_exprs<const C: usize>(expr: &Sla, args: &mut Vec<(u8, u8, u8)>) -> [Box<Expr>; C] {
     expr.els
         .iter()
-        .map(|e| match e.eid {
+        .map(|e| Box::new(match e.eid {
             EId::OPERAND_EXP => {
                 let idx = args.len().try_into().unwrap();
                 args.push((
@@ -258,12 +251,12 @@ fn parse_exprs<const C: usize>(expr: &Sla, args: &mut Vec<(u8, u8, u8)>) -> [Box
                     e.get_int(AId::CT),
                     e.get_int(AId::INDEX),
                 ));
-                Box::new(Expr::Operand(idx))
+                Expr::Operand(idx)
             }
-            EId::INTB => Box::new(Expr::Const(e.get_int(AId::VAL))),
-            EId::END_EXP => Box::new(Expr::InsnEnd),
+            EId::INTB => Expr::Const(e.get_int(AId::VAL)),
+            EId::END_EXP => Expr::InsnEnd,
             _ => unreachable!(),
-        })
+        }))
         .collect::<Vec<_>>()
         .try_into()
         .unwrap()
@@ -305,9 +298,7 @@ fn model_operand(op: &Sla) -> Sym {
 fn model_subtable(subtable: &Sla) -> Sym {
     let decision = model_decision(subtable.get_el(EId::DECISION));
     let constructors = subtable
-        .els
-        .iter()
-        .filter(|e| e.eid == EId::CONSTRUCTOR)
+        .filter_els(EId::CONSTRUCTOR)
         .map(model_constructor)
         .collect();
 
