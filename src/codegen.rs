@@ -21,7 +21,7 @@ fn gen_decision(decision: &Decision, constructors: &Vec<Constructor>) -> TokenSt
 
             let range = 0..(options.len() as u8);
             let decisions = options
-                .into_iter()
+                .iter()
                 .map(|decision| gen_decision(decision, constructors));
 
             quote! {
@@ -137,11 +137,6 @@ fn gen_subtable(subtable: &Subtable, symtab: &SymbolTable, idx: usize) -> TokenS
             let variant = format_ident!("Variant{}", id);
             let operand_bindings =
                 (0..constructor.operands.len()).map(|i| format_ident!("op{}", i));
-
-            let operand_args = constructor.prints.iter().filter_map(|print| match print {
-                Print::Print(_) => None,
-                Print::OpPrint(idx) => Some(format_ident!("op{}", idx)),
-            });
 
             let writes = constructor.prints.iter().map(|print| {
                 match print {
@@ -431,6 +426,7 @@ pub(crate) fn emit(sleigh: Sleigh) -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     };
+    println!("{}", prettyplease::unparse(&syn::parse2(tokens)?));
 
     for (i, sym) in sleigh.symtab.syms.iter().enumerate() {
         let tokens = match sym {
@@ -440,8 +436,7 @@ pub(crate) fn emit(sleigh: Sleigh) -> Result<(), Box<dyn std::error::Error>> {
             Sym::Varlist(varlist) => gen_varlist(varlist, i),
             _ => continue,
         };
-        let file = syn::parse2(tokens)?;
-        println!("{}", prettyplease::unparse(&file));
+        println!("{}", prettyplease::unparse(&syn::parse2(tokens)?));
     }
 
     Ok(())

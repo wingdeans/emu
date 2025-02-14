@@ -129,7 +129,7 @@ impl SlaReader {
                             attr = Attribute::Pcode(TryInto::<u8>::try_into(x).unwrap().into());
                         }
                     }
-                    if let Some(old) = attrs.insert(aid, attr) {
+                    if attrs.insert(aid, attr).is_some() {
                         unreachable!("duplicate attribute: {:?}", aid)
                     }
                 }
