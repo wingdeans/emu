@@ -4,6 +4,6 @@
 
 pkgs.mkShell {
   packages = with pkgs; [
-    cargo
+    cargo clippy rustfmt
   ];
 }
