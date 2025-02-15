@@ -1,3 +1,4 @@
+use crate::pcode::{Const, Pcode, Varnode};
 use crate::pcodeop::PcodeOp;
 use crate::slaformat::{AId, EId};
 use crate::slaparser::{Attribute, Sla};
@@ -23,7 +24,7 @@ pub(crate) enum Print {
 pub(crate) struct Constructor {
     pub(crate) operands: Vec<SymIdx>,
     pub(crate) prints: Vec<Print>,
-    pub(crate) construct_tpl: Vec<PcodeOp>,
+    pub(crate) construct_tpl: Vec<Pcode>,
 }
 
 // DECISION
@@ -114,33 +115,86 @@ pub(crate) struct Sleigh {
 
 // CONSTRUCTOR
 
-fn model_varnode_tpl(tpl: &Sla) {
+fn model_const_tpl(tpl: &Sla) -> Const {
+    match tpl.eid {
+        EId::CONST_HANDLE => {
+            let sel = tpl.get_int::<u8>(AId::S);
+            match sel {
+                0 => Const::Unk,
+                1 => Const::Unk,
+                2 => Const::Unk,
+                3 => todo!(),
+                _ => unreachable!(),
+            }
+        }
+        EId::CONST_SPACEID => Const::Unk,
+        EId::CONST_REAL => Const::Real(tpl.get_int(AId::VAL)),
+        EId::CONST_NEXT => Const::Unk,
+        EId::CONST_CURSPACE => Const::Unk,
+        EId::CONST_CURSPACE_SIZE => Const::Unk,
+        _ => unreachable!("{}", tpl),
+    }
+}
+
+fn model_varnode_tpl(tpl: &Sla) -> Varnode {
     assert_eq!(tpl.els.len(), 3);
-    for e in &tpl.els {
-        match e.eid {
-            EId::CONST_HANDLE => (),
-            EId::CONST_SPACEID => (),
-            EId::CONST_REAL => (),
-            EId::CONST_NEXT => (),
-            EId::CONST_CURSPACE => (),
-            EId::CONST_CURSPACE_SIZE => (),
+    Varnode {
+        space: model_const_tpl(&tpl.els[0]),
+        offset: model_const_tpl(&tpl.els[1]),
+        size: model_const_tpl(&tpl.els[2]),
+    }
+}
+
+fn model_pcode(pcode: &Sla) -> Vec<Option<Varnode>> {
+    pcode
+        .els
+        .iter()
+        .map(|e| match e.eid {
+            EId::VARNODE_TPL => Some(model_varnode_tpl(e)),
+            EId::NULL => None,
             _ => unreachable!("{}", e),
+        })
+        .collect()
+}
+
+fn model_op_tpl(tpl: &Sla) -> Pcode {
+    let Attribute::Pcode(pcode) = tpl.attrs[&AId::CODE] else {
+        unreachable!("{}", tpl);
+    };
+
+    fn model_pcode2<F: Fn(Varnode, Varnode) -> Pcode>(tpl: &Sla, f: F) -> Pcode {
+        match model_pcode(tpl)[..] {
+            [Some(a), Some(b)] => f(a, b),
+            ref unk => unreachable!("{:?}", unk),
+        }
+    }
+    fn model_pcode3<F: Fn(Varnode, Varnode, Varnode) -> Pcode>(tpl: &Sla, f: F) -> Pcode {
+        match model_pcode(tpl)[..] {
+            [Some(a), Some(b), Some(c)] => f(a, b, c),
+            ref unk => unreachable!("{:?}", unk),
+        }
+    }
+
+    match pcode {
+        PcodeOp::BOOL_AND => model_pcode3(tpl, Pcode::BoolAnd),
+        PcodeOp::BOOL_NEGATE => model_pcode2(tpl, Pcode::BoolNegate),
+        _ => {
+            model_pcode(tpl);
+            // unreachable!("{}", tpl)
+            Pcode::Unk
         }
     }
 }
 
-fn model_op_tpl(tpl: &Sla) -> PcodeOp {
-    for e in &tpl.els {
-        match e.eid {
-            EId::VARNODE_TPL => model_varnode_tpl(e),
-            EId::NULL => (),
-            _ => unreachable!("{}", e),
-        }
-    }
-    let Attribute::Pcode(pcode) = tpl.attrs[&AId::CODE] else {
-        unreachable!("{}", tpl);
-    };
-    pcode
+fn model_construct_tpl(tpl: &Sla) -> Vec<Pcode> {
+    let mut it = tpl.els.iter();
+    let _ = it.next(); // TODO
+
+    it.map(|e| {
+        assert_eq!(e.eid, EId::OP_TPL);
+        model_op_tpl(e)
+    })
+    .collect()
 }
 
 fn model_constructor(constructor: &Sla) -> Constructor {
@@ -161,17 +215,7 @@ fn model_constructor(constructor: &Sla) -> Constructor {
         })
         .collect();
 
-    let construct_tpl = constructor
-        .get_el(EId::CONSTRUCT_TPL)
-        .els
-        .iter()
-        .filter_map(|e| match e.eid {
-            EId::NULL => None,
-            EId::OP_TPL => Some(model_op_tpl(e)),
-            EId::HANDLE_TPL => None,
-            _ => unreachable!(),
-        })
-        .collect();
+    let construct_tpl = model_construct_tpl(constructor.get_el(EId::CONSTRUCT_TPL));
 
     Constructor {
         operands,
@@ -240,7 +284,7 @@ fn model_tokenfield(tokenfield: &Sla) -> TokenField {
     }
 }
 
-fn parse_exprs<const C: usize>(expr: &Sla, args: &mut Vec<(u8, u8, u8)>) -> [Box<Expr>; C] {
+fn model_exprs<const C: usize>(expr: &Sla, args: &mut Vec<(u8, u8, u8)>) -> [Box<Expr>; C] {
     expr.els
         .iter()
         .map(|e| {
@@ -275,15 +319,15 @@ fn model_operand(op: &Sla) -> Sym {
         match e.eid {
             EId::TOKENFIELD => OpExpr::Tok(model_tokenfield(e)),
             EId::PLUS_EXP => {
-                let [a, b] = parse_exprs::<2>(e, &mut args);
+                let [a, b] = model_exprs::<2>(e, &mut args);
                 OpExpr::Expr(Expr::Plus(a, b))
             }
             EId::LSHIFT_EXP => {
-                let [a, b] = parse_exprs::<2>(e, &mut args);
+                let [a, b] = model_exprs::<2>(e, &mut args);
                 OpExpr::Expr(Expr::Lshift(a, b))
             }
             EId::MINUS_EXP => {
-                let [a] = parse_exprs::<1>(e, &mut args);
+                let [a] = model_exprs::<1>(e, &mut args);
                 OpExpr::Expr(Expr::Minus(a))
             }
             _ => unreachable!(),

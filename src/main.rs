@@ -1,4 +1,5 @@
 mod codegen;
+mod pcode;
 mod pcodeop;
 mod slaformat;
 mod slamodel;
