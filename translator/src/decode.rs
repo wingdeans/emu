@@ -1,9 +1,13 @@
-#[derive(Debug)]
+#![allow(unused_variables)]
+#![allow(dead_code)]
+#![allow(unused_parens)]
+#![allow(clippy::identity_op)]
+#![allow(clippy::double_parens)]
+#![allow(clippy::ptr_arg)]
 pub(crate) struct Pcode();
-#[derive(Debug)]
 pub(crate) struct Insn(Sym0);
 pub(crate) fn decode(buf: &[u8]) -> Option<Insn> {
-    Sym0::decode(buf).map(|st| Insn(st))
+    Sym0::decode(buf).map(Insn)
 }
 impl Insn {
     pub(crate) fn pcode(&self, vec: &mut Vec<Pcode>) {
@@ -16,7 +20,6 @@ impl std::fmt::Display for Insn {
     }
 }
 
-#[derive(Debug)]
 enum Sym0 {
     Variant0(Op60, Op61),
     Variant1(Op62, Op63),
@@ -124,8 +127,6 @@ enum Sym0 {
     Variant103(Op186),
 }
 impl Sym0 {
-    #[allow(unused_parens)]
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         match (buf[0usize] >> 6u8) & 3u8 {
             0u8 => {
@@ -144,7 +145,7 @@ impl Sym0 {
                                     1u8 => {
                                         if (buf[0usize] & 255u8 == 8u8) {
                                             Some(
-                                                Self::Variant94(Op169::decode(&buf)?, Op168::decode(&buf)?),
+                                                Self::Variant94(Op169::decode(buf)?, Op168::decode(buf)?),
                                             )
                                         } else {
                                             None
@@ -159,7 +160,7 @@ impl Sym0 {
                                     }
                                     3u8 => {
                                         if (buf[0usize] & 255u8 == 24u8) {
-                                            Some(Self::Variant75(Op156::decode(&buf)?))
+                                            Some(Self::Variant75(Op156::decode(buf)?))
                                         } else {
                                             None
                                         }
@@ -170,7 +171,7 @@ impl Sym0 {
                             1u8 => {
                                 if (buf[0usize] & 231u8 == 32u8) {
                                     Some(
-                                        Self::Variant80(Op160::decode(&buf)?, Op161::decode(&buf)?),
+                                        Self::Variant80(Op160::decode(buf)?, Op161::decode(buf)?),
                                     )
                                 } else {
                                     None
@@ -184,7 +185,7 @@ impl Sym0 {
                             0u8 => {
                                 if (buf[0usize] & 207u8 == 1u8) {
                                     Some(
-                                        Self::Variant93(Op166::decode(&buf)?, Op167::decode(&buf)?),
+                                        Self::Variant93(Op166::decode(buf)?, Op167::decode(buf)?),
                                     )
                                 } else {
                                     None
@@ -193,7 +194,7 @@ impl Sym0 {
                             1u8 => {
                                 if (buf[0usize] & 207u8 == 9u8) {
                                     Some(
-                                        Self::Variant100(Op182::decode(&buf)?, Op181::decode(&buf)?),
+                                        Self::Variant100(Op182::decode(buf)?, Op181::decode(buf)?),
                                     )
                                 } else {
                                     None
@@ -207,7 +208,7 @@ impl Sym0 {
                             0u8 => {
                                 if (buf[0usize] & 255u8 == 2u8) {
                                     Some(
-                                        Self::Variant15(Op91::decode(&buf)?, Op90::decode(&buf)?),
+                                        Self::Variant15(Op91::decode(buf)?, Op90::decode(buf)?),
                                     )
                                 } else {
                                     None
@@ -215,9 +216,7 @@ impl Sym0 {
                             }
                             1u8 => {
                                 if (buf[0usize] & 255u8 == 10u8) {
-                                    Some(
-                                        Self::Variant5(Op70::decode(&buf)?, Op71::decode(&buf)?),
-                                    )
+                                    Some(Self::Variant5(Op70::decode(buf)?, Op71::decode(buf)?))
                                 } else {
                                     None
                                 }
@@ -225,7 +224,7 @@ impl Sym0 {
                             2u8 => {
                                 if (buf[0usize] & 255u8 == 18u8) {
                                     Some(
-                                        Self::Variant16(Op93::decode(&buf)?, Op92::decode(&buf)?),
+                                        Self::Variant16(Op93::decode(buf)?, Op92::decode(buf)?),
                                     )
                                 } else {
                                     None
@@ -233,9 +232,7 @@ impl Sym0 {
                             }
                             3u8 => {
                                 if (buf[0usize] & 255u8 == 26u8) {
-                                    Some(
-                                        Self::Variant6(Op72::decode(&buf)?, Op73::decode(&buf)?),
-                                    )
+                                    Some(Self::Variant6(Op72::decode(buf)?, Op73::decode(buf)?))
                                 } else {
                                     None
                                 }
@@ -243,7 +240,7 @@ impl Sym0 {
                             4u8 => {
                                 if (buf[0usize] & 255u8 == 34u8) {
                                     Some(
-                                        Self::Variant17(Op95::decode(&buf)?, Op94::decode(&buf)?),
+                                        Self::Variant17(Op95::decode(buf)?, Op94::decode(buf)?),
                                     )
                                 } else {
                                     None
@@ -252,7 +249,7 @@ impl Sym0 {
                             5u8 => {
                                 if (buf[0usize] & 255u8 == 42u8) {
                                     Some(
-                                        Self::Variant13(Op86::decode(&buf)?, Op87::decode(&buf)?),
+                                        Self::Variant13(Op86::decode(buf)?, Op87::decode(buf)?),
                                     )
                                 } else {
                                     None
@@ -261,7 +258,7 @@ impl Sym0 {
                             6u8 => {
                                 if (buf[0usize] & 255u8 == 50u8) {
                                     Some(
-                                        Self::Variant18(Op97::decode(&buf)?, Op96::decode(&buf)?),
+                                        Self::Variant18(Op97::decode(buf)?, Op96::decode(buf)?),
                                     )
                                 } else {
                                     None
@@ -270,7 +267,7 @@ impl Sym0 {
                             7u8 => {
                                 if (buf[0usize] & 255u8 == 58u8) {
                                     Some(
-                                        Self::Variant14(Op88::decode(&buf)?, Op89::decode(&buf)?),
+                                        Self::Variant14(Op88::decode(buf)?, Op89::decode(buf)?),
                                     )
                                 } else {
                                     None
@@ -283,14 +280,14 @@ impl Sym0 {
                         match (buf[0usize] >> 3u8) & 1u8 {
                             0u8 => {
                                 if (buf[0usize] & 207u8 == 3u8) {
-                                    Some(Self::Variant102(Op185::decode(&buf)?))
+                                    Some(Self::Variant102(Op185::decode(buf)?))
                                 } else {
                                     None
                                 }
                             }
                             1u8 => {
                                 if (buf[0usize] & 207u8 == 11u8) {
-                                    Some(Self::Variant103(Op186::decode(&buf)?))
+                                    Some(Self::Variant103(Op186::decode(buf)?))
                                 } else {
                                     None
                                 }
@@ -300,31 +297,27 @@ impl Sym0 {
                     }
                     4u8 => {
                         if (buf[0usize] & 255u8 == 52u8) {
-                            Some(Self::Variant44(Op123::decode(&buf)?))
+                            Some(Self::Variant44(Op123::decode(buf)?))
                         } else if (buf[0usize] & 199u8 == 4u8) {
-                            Some(Self::Variant43(Op122::decode(&buf)?))
+                            Some(Self::Variant43(Op122::decode(buf)?))
                         } else {
                             None
                         }
                     }
                     5u8 => {
                         if (buf[0usize] & 255u8 == 53u8) {
-                            Some(Self::Variant46(Op125::decode(&buf)?))
+                            Some(Self::Variant46(Op125::decode(buf)?))
                         } else if (buf[0usize] & 199u8 == 5u8) {
-                            Some(Self::Variant45(Op124::decode(&buf)?))
+                            Some(Self::Variant45(Op124::decode(buf)?))
                         } else {
                             None
                         }
                     }
                     6u8 => {
                         if (buf[0usize] & 255u8 == 54u8) {
-                            Some(
-                                Self::Variant4(Op68::decode(&buf)?, Op69::decode(&buf)?),
-                            )
+                            Some(Self::Variant4(Op68::decode(buf)?, Op69::decode(buf)?))
                         } else if (buf[0usize] & 199u8 == 6u8) {
-                            Some(
-                                Self::Variant1(Op62::decode(&buf)?, Op63::decode(&buf)?),
-                            )
+                            Some(Self::Variant1(Op62::decode(buf)?, Op63::decode(buf)?))
                         } else {
                             None
                         }
@@ -397,11 +390,11 @@ impl Sym0 {
                 if (buf[0usize] & 255u8 == 118u8) {
                     Some(Self::Variant84())
                 } else if (buf[0usize] & 199u8 == 70u8) {
-                    Some(Self::Variant2(Op64::decode(&buf)?, Op65::decode(&buf)?))
+                    Some(Self::Variant2(Op64::decode(buf)?, Op65::decode(buf)?))
                 } else if (buf[0usize] & 248u8 == 112u8) {
-                    Some(Self::Variant3(Op67::decode(&buf)?, Op66::decode(&buf)?))
+                    Some(Self::Variant3(Op67::decode(buf)?, Op66::decode(buf)?))
                 } else if (buf[0usize] & 192u8 == 64u8) {
-                    Some(Self::Variant0(Op60::decode(&buf)?, Op61::decode(&buf)?))
+                    Some(Self::Variant0(Op60::decode(buf)?, Op61::decode(buf)?))
                 } else {
                     None
                 }
@@ -410,72 +403,72 @@ impl Sym0 {
                 match (buf[0usize] >> 3u8) & 7u8 {
                     0u8 => {
                         if (buf[0usize] & 255u8 == 134u8) {
-                            Some(Self::Variant21(Op100::decode(&buf)?))
+                            Some(Self::Variant21(Op100::decode(buf)?))
                         } else if (buf[0usize] & 248u8 == 128u8) {
-                            Some(Self::Variant19(Op98::decode(&buf)?))
+                            Some(Self::Variant19(Op98::decode(buf)?))
                         } else {
                             None
                         }
                     }
                     1u8 => {
                         if (buf[0usize] & 255u8 == 142u8) {
-                            Some(Self::Variant24(Op103::decode(&buf)?))
+                            Some(Self::Variant24(Op103::decode(buf)?))
                         } else if (buf[0usize] & 248u8 == 136u8) {
-                            Some(Self::Variant22(Op101::decode(&buf)?))
+                            Some(Self::Variant22(Op101::decode(buf)?))
                         } else {
                             None
                         }
                     }
                     2u8 => {
                         if (buf[0usize] & 255u8 == 150u8) {
-                            Some(Self::Variant27(Op106::decode(&buf)?))
+                            Some(Self::Variant27(Op106::decode(buf)?))
                         } else if (buf[0usize] & 248u8 == 144u8) {
-                            Some(Self::Variant25(Op104::decode(&buf)?))
+                            Some(Self::Variant25(Op104::decode(buf)?))
                         } else {
                             None
                         }
                     }
                     3u8 => {
                         if (buf[0usize] & 255u8 == 158u8) {
-                            Some(Self::Variant30(Op109::decode(&buf)?))
+                            Some(Self::Variant30(Op109::decode(buf)?))
                         } else if (buf[0usize] & 248u8 == 152u8) {
-                            Some(Self::Variant28(Op107::decode(&buf)?))
+                            Some(Self::Variant28(Op107::decode(buf)?))
                         } else {
                             None
                         }
                     }
                     4u8 => {
                         if (buf[0usize] & 255u8 == 166u8) {
-                            Some(Self::Variant33(Op112::decode(&buf)?))
+                            Some(Self::Variant33(Op112::decode(buf)?))
                         } else if (buf[0usize] & 248u8 == 160u8) {
-                            Some(Self::Variant31(Op110::decode(&buf)?))
+                            Some(Self::Variant31(Op110::decode(buf)?))
                         } else {
                             None
                         }
                     }
                     5u8 => {
                         if (buf[0usize] & 255u8 == 174u8) {
-                            Some(Self::Variant36(Op115::decode(&buf)?))
+                            Some(Self::Variant36(Op115::decode(buf)?))
                         } else if (buf[0usize] & 248u8 == 168u8) {
-                            Some(Self::Variant34(Op113::decode(&buf)?))
+                            Some(Self::Variant34(Op113::decode(buf)?))
                         } else {
                             None
                         }
                     }
                     6u8 => {
                         if (buf[0usize] & 255u8 == 182u8) {
-                            Some(Self::Variant39(Op118::decode(&buf)?))
+                            Some(Self::Variant39(Op118::decode(buf)?))
                         } else if (buf[0usize] & 248u8 == 176u8) {
-                            Some(Self::Variant37(Op116::decode(&buf)?))
+                            Some(Self::Variant37(Op116::decode(buf)?))
                         } else {
                             None
                         }
                     }
                     7u8 => {
                         if (buf[0usize] & 255u8 == 190u8) {
-                            Some(Self::Variant42(Op121::decode(&buf)?))
+                            Some(Self::Variant42(Op121::decode(buf)?))
                         } else if (buf[0usize] & 248u8 == 184u8) {
-                            Some(Self::Variant40(Op119::decode(&buf)?))
+                            Some(Self::Variant40(Op119::decode(buf)?))
                         } else {
                             None
                         }
@@ -489,7 +482,7 @@ impl Sym0 {
                         match (buf[0usize] >> 5u8) & 1u8 {
                             0u8 => {
                                 if (buf[0usize] & 231u8 == 192u8) {
-                                    Some(Self::Variant82(Op164::decode(&buf)?))
+                                    Some(Self::Variant82(Op164::decode(buf)?))
                                 } else {
                                     None
                                 }
@@ -499,7 +492,7 @@ impl Sym0 {
                                     0u8 => {
                                         if (buf[0usize] & 255u8 == 224u8) {
                                             Some(
-                                                Self::Variant10(Op81::decode(&buf)?, Op80::decode(&buf)?),
+                                                Self::Variant10(Op81::decode(buf)?, Op80::decode(buf)?),
                                             )
                                         } else {
                                             None
@@ -508,7 +501,7 @@ impl Sym0 {
                                     1u8 => {
                                         if (buf[0usize] & 255u8 == 232u8) {
                                             Some(
-                                                Self::Variant101(Op183::decode(&buf)?, Op184::decode(&buf)?),
+                                                Self::Variant101(Op183::decode(buf)?, Op184::decode(buf)?),
                                             )
                                         } else {
                                             None
@@ -516,9 +509,7 @@ impl Sym0 {
                                     }
                                     2u8 => {
                                         if (buf[0usize] & 255u8 == 240u8) {
-                                            Some(
-                                                Self::Variant9(Op78::decode(&buf)?, Op79::decode(&buf)?),
-                                            )
+                                            Some(Self::Variant9(Op78::decode(buf)?, Op79::decode(buf)?))
                                         } else {
                                             None
                                         }
@@ -529,18 +520,18 @@ impl Sym0 {
                                         {
                                             Some(
                                                 Self::Variant97(
-                                                    Op175::decode(&buf)?,
-                                                    Op176::decode(&buf)?,
-                                                    Op178::decode(&buf)?,
-                                                    Op177::decode(&buf)?,
+                                                    Op175::decode(buf)?,
+                                                    Op176::decode(buf)?,
+                                                    Op178::decode(buf)?,
+                                                    Op177::decode(buf)?,
                                                 ),
                                             )
                                         } else if (buf[0usize] & 255u8 == 248u8) {
                                             Some(
                                                 Self::Variant96(
-                                                    Op172::decode(&buf)?,
-                                                    Op173::decode(&buf)?,
-                                                    Op174::decode(&buf)?,
+                                                    Op172::decode(buf)?,
+                                                    Op173::decode(buf)?,
+                                                    Op174::decode(buf)?,
                                                 ),
                                             )
                                         } else {
@@ -557,7 +548,7 @@ impl Sym0 {
                         match (buf[0usize] >> 3u8) & 1u8 {
                             0u8 => {
                                 if (buf[0usize] & 207u8 == 193u8) {
-                                    Some(Self::Variant99(Op180::decode(&buf)?))
+                                    Some(Self::Variant99(Op180::decode(buf)?))
                                 } else {
                                     None
                                 }
@@ -580,7 +571,7 @@ impl Sym0 {
                                     }
                                     2u8 => {
                                         if (buf[0usize] & 255u8 == 233u8) {
-                                            Some(Self::Variant74(Op155::decode(&buf)?))
+                                            Some(Self::Variant74(Op155::decode(buf)?))
                                         } else {
                                             None
                                         }
@@ -588,7 +579,7 @@ impl Sym0 {
                                     3u8 => {
                                         if (buf[0usize] & 255u8 == 249u8) {
                                             Some(
-                                                Self::Variant95(Op170::decode(&buf)?, Op171::decode(&buf)?),
+                                                Self::Variant95(Op170::decode(buf)?, Op171::decode(buf)?),
                                             )
                                         } else {
                                             None
@@ -605,7 +596,7 @@ impl Sym0 {
                             0u8 => {
                                 if (buf[0usize] & 231u8 == 194u8) {
                                     Some(
-                                        Self::Variant79(Op158::decode(&buf)?, Op159::decode(&buf)?),
+                                        Self::Variant79(Op158::decode(buf)?, Op159::decode(buf)?),
                                     )
                                 } else {
                                     None
@@ -615,9 +606,7 @@ impl Sym0 {
                                 match (buf[0usize] >> 3u8) & 3u8 {
                                     0u8 => {
                                         if (buf[0usize] & 255u8 == 226u8) {
-                                            Some(
-                                                Self::Variant8(Op77::decode(&buf)?, Op76::decode(&buf)?),
-                                            )
+                                            Some(Self::Variant8(Op77::decode(buf)?, Op76::decode(buf)?))
                                         } else {
                                             None
                                         }
@@ -625,7 +614,7 @@ impl Sym0 {
                                     1u8 => {
                                         if (buf[0usize] & 255u8 == 234u8) {
                                             Some(
-                                                Self::Variant12(Op85::decode(&buf)?, Op84::decode(&buf)?),
+                                                Self::Variant12(Op85::decode(buf)?, Op84::decode(buf)?),
                                             )
                                         } else {
                                             None
@@ -633,9 +622,7 @@ impl Sym0 {
                                     }
                                     2u8 => {
                                         if (buf[0usize] & 255u8 == 242u8) {
-                                            Some(
-                                                Self::Variant7(Op74::decode(&buf)?, Op75::decode(&buf)?),
-                                            )
+                                            Some(Self::Variant7(Op74::decode(buf)?, Op75::decode(buf)?))
                                         } else {
                                             None
                                         }
@@ -643,7 +630,7 @@ impl Sym0 {
                                     3u8 => {
                                         if (buf[0usize] & 255u8 == 250u8) {
                                             Some(
-                                                Self::Variant11(Op82::decode(&buf)?, Op83::decode(&buf)?),
+                                                Self::Variant11(Op82::decode(buf)?, Op83::decode(buf)?),
                                             )
                                         } else {
                                             None
@@ -659,7 +646,7 @@ impl Sym0 {
                         match (buf[0usize] >> 3u8) & 3u8 {
                             0u8 => {
                                 if (buf[0usize] & 255u8 == 195u8) {
-                                    Some(Self::Variant73(Op154::decode(&buf)?))
+                                    Some(Self::Variant73(Op154::decode(buf)?))
                                 } else {
                                     None
                                 }
@@ -672,11 +659,11 @@ impl Sym0 {
                                                 if (buf[0usize] & 255u8 == 203u8)
                                                     && (buf[1usize] & 255u8 == 6u8)
                                                 {
-                                                    Some(Self::Variant52(Op127::decode(&buf)?))
+                                                    Some(Self::Variant52(Op127::decode(buf)?))
                                                 } else if (buf[0usize] & 255u8 == 203u8)
                                                     && (buf[1usize] & 248u8 == 0u8)
                                                 {
-                                                    Some(Self::Variant51(Op126::decode(&buf)?))
+                                                    Some(Self::Variant51(Op126::decode(buf)?))
                                                 } else {
                                                     None
                                                 }
@@ -685,11 +672,11 @@ impl Sym0 {
                                                 if (buf[0usize] & 255u8 == 203u8)
                                                     && (buf[1usize] & 255u8 == 14u8)
                                                 {
-                                                    Some(Self::Variant54(Op129::decode(&buf)?))
+                                                    Some(Self::Variant54(Op129::decode(buf)?))
                                                 } else if (buf[0usize] & 255u8 == 203u8)
                                                     && (buf[1usize] & 248u8 == 8u8)
                                                 {
-                                                    Some(Self::Variant53(Op128::decode(&buf)?))
+                                                    Some(Self::Variant53(Op128::decode(buf)?))
                                                 } else {
                                                     None
                                                 }
@@ -698,11 +685,11 @@ impl Sym0 {
                                                 if (buf[0usize] & 255u8 == 203u8)
                                                     && (buf[1usize] & 255u8 == 22u8)
                                                 {
-                                                    Some(Self::Variant56(Op131::decode(&buf)?))
+                                                    Some(Self::Variant56(Op131::decode(buf)?))
                                                 } else if (buf[0usize] & 255u8 == 203u8)
                                                     && (buf[1usize] & 248u8 == 16u8)
                                                 {
-                                                    Some(Self::Variant55(Op130::decode(&buf)?))
+                                                    Some(Self::Variant55(Op130::decode(buf)?))
                                                 } else {
                                                     None
                                                 }
@@ -711,11 +698,11 @@ impl Sym0 {
                                                 if (buf[0usize] & 255u8 == 203u8)
                                                     && (buf[1usize] & 255u8 == 30u8)
                                                 {
-                                                    Some(Self::Variant58(Op133::decode(&buf)?))
+                                                    Some(Self::Variant58(Op133::decode(buf)?))
                                                 } else if (buf[0usize] & 255u8 == 203u8)
                                                     && (buf[1usize] & 248u8 == 24u8)
                                                 {
-                                                    Some(Self::Variant57(Op132::decode(&buf)?))
+                                                    Some(Self::Variant57(Op132::decode(buf)?))
                                                 } else {
                                                     None
                                                 }
@@ -724,11 +711,11 @@ impl Sym0 {
                                                 if (buf[0usize] & 255u8 == 203u8)
                                                     && (buf[1usize] & 255u8 == 38u8)
                                                 {
-                                                    Some(Self::Variant60(Op135::decode(&buf)?))
+                                                    Some(Self::Variant60(Op135::decode(buf)?))
                                                 } else if (buf[0usize] & 255u8 == 203u8)
                                                     && (buf[1usize] & 248u8 == 32u8)
                                                 {
-                                                    Some(Self::Variant59(Op134::decode(&buf)?))
+                                                    Some(Self::Variant59(Op134::decode(buf)?))
                                                 } else {
                                                     None
                                                 }
@@ -737,11 +724,11 @@ impl Sym0 {
                                                 if (buf[0usize] & 255u8 == 203u8)
                                                     && (buf[1usize] & 255u8 == 46u8)
                                                 {
-                                                    Some(Self::Variant62(Op137::decode(&buf)?))
+                                                    Some(Self::Variant62(Op137::decode(buf)?))
                                                 } else if (buf[0usize] & 255u8 == 203u8)
                                                     && (buf[1usize] & 248u8 == 40u8)
                                                 {
-                                                    Some(Self::Variant61(Op136::decode(&buf)?))
+                                                    Some(Self::Variant61(Op136::decode(buf)?))
                                                 } else {
                                                     None
                                                 }
@@ -750,11 +737,11 @@ impl Sym0 {
                                                 if (buf[0usize] & 255u8 == 203u8)
                                                     && (buf[1usize] & 255u8 == 54u8)
                                                 {
-                                                    Some(Self::Variant64(Op139::decode(&buf)?))
+                                                    Some(Self::Variant64(Op139::decode(buf)?))
                                                 } else if (buf[0usize] & 255u8 == 203u8)
                                                     && (buf[1usize] & 248u8 == 48u8)
                                                 {
-                                                    Some(Self::Variant63(Op138::decode(&buf)?))
+                                                    Some(Self::Variant63(Op138::decode(buf)?))
                                                 } else {
                                                     None
                                                 }
@@ -763,11 +750,11 @@ impl Sym0 {
                                                 if (buf[0usize] & 255u8 == 203u8)
                                                     && (buf[1usize] & 255u8 == 62u8)
                                                 {
-                                                    Some(Self::Variant66(Op141::decode(&buf)?))
+                                                    Some(Self::Variant66(Op141::decode(buf)?))
                                                 } else if (buf[0usize] & 255u8 == 203u8)
                                                     && (buf[1usize] & 248u8 == 56u8)
                                                 {
-                                                    Some(Self::Variant65(Op140::decode(&buf)?))
+                                                    Some(Self::Variant65(Op140::decode(buf)?))
                                                 } else {
                                                     None
                                                 }
@@ -780,13 +767,13 @@ impl Sym0 {
                                             && (buf[1usize] & 199u8 == 70u8)
                                         {
                                             Some(
-                                                Self::Variant68(Op145::decode(&buf)?, Op144::decode(&buf)?),
+                                                Self::Variant68(Op145::decode(buf)?, Op144::decode(buf)?),
                                             )
                                         } else if (buf[0usize] & 255u8 == 203u8)
                                             && (buf[1usize] & 192u8 == 64u8)
                                         {
                                             Some(
-                                                Self::Variant67(Op142::decode(&buf)?, Op143::decode(&buf)?),
+                                                Self::Variant67(Op142::decode(buf)?, Op143::decode(buf)?),
                                             )
                                         } else {
                                             None
@@ -797,13 +784,13 @@ impl Sym0 {
                                             && (buf[1usize] & 199u8 == 134u8)
                                         {
                                             Some(
-                                                Self::Variant70(Op149::decode(&buf)?, Op148::decode(&buf)?),
+                                                Self::Variant70(Op149::decode(buf)?, Op148::decode(buf)?),
                                             )
                                         } else if (buf[0usize] & 255u8 == 203u8)
                                             && (buf[1usize] & 192u8 == 128u8)
                                         {
                                             Some(
-                                                Self::Variant69(Op146::decode(&buf)?, Op147::decode(&buf)?),
+                                                Self::Variant69(Op146::decode(buf)?, Op147::decode(buf)?),
                                             )
                                         } else {
                                             None
@@ -814,13 +801,13 @@ impl Sym0 {
                                             && (buf[1usize] & 199u8 == 198u8)
                                         {
                                             Some(
-                                                Self::Variant72(Op153::decode(&buf)?, Op152::decode(&buf)?),
+                                                Self::Variant72(Op153::decode(buf)?, Op152::decode(buf)?),
                                             )
                                         } else if (buf[0usize] & 255u8 == 203u8)
                                             && (buf[1usize] & 192u8 == 192u8)
                                         {
                                             Some(
-                                                Self::Variant71(Op150::decode(&buf)?, Op151::decode(&buf)?),
+                                                Self::Variant71(Op150::decode(buf)?, Op151::decode(buf)?),
                                             )
                                         } else {
                                             None
@@ -849,7 +836,7 @@ impl Sym0 {
                     4u8 => {
                         if (buf[0usize] & 231u8 == 196u8) {
                             Some(
-                                Self::Variant81(Op162::decode(&buf)?, Op163::decode(&buf)?),
+                                Self::Variant81(Op162::decode(buf)?, Op163::decode(buf)?),
                             )
                         } else {
                             None
@@ -859,14 +846,14 @@ impl Sym0 {
                         match (buf[0usize] >> 3u8) & 1u8 {
                             0u8 => {
                                 if (buf[0usize] & 207u8 == 197u8) {
-                                    Some(Self::Variant98(Op179::decode(&buf)?))
+                                    Some(Self::Variant98(Op179::decode(buf)?))
                                 } else {
                                     None
                                 }
                             }
                             1u8 => {
                                 if (buf[0usize] & 255u8 == 205u8) {
-                                    Some(Self::Variant76(Op157::decode(&buf)?))
+                                    Some(Self::Variant76(Op157::decode(buf)?))
                                 } else {
                                     None
                                 }
@@ -878,56 +865,56 @@ impl Sym0 {
                         match (buf[0usize] >> 3u8) & 7u8 {
                             0u8 => {
                                 if (buf[0usize] & 255u8 == 198u8) {
-                                    Some(Self::Variant20(Op99::decode(&buf)?))
+                                    Some(Self::Variant20(Op99::decode(buf)?))
                                 } else {
                                     None
                                 }
                             }
                             1u8 => {
                                 if (buf[0usize] & 255u8 == 206u8) {
-                                    Some(Self::Variant23(Op102::decode(&buf)?))
+                                    Some(Self::Variant23(Op102::decode(buf)?))
                                 } else {
                                     None
                                 }
                             }
                             2u8 => {
                                 if (buf[0usize] & 255u8 == 214u8) {
-                                    Some(Self::Variant26(Op105::decode(&buf)?))
+                                    Some(Self::Variant26(Op105::decode(buf)?))
                                 } else {
                                     None
                                 }
                             }
                             3u8 => {
                                 if (buf[0usize] & 255u8 == 222u8) {
-                                    Some(Self::Variant29(Op108::decode(&buf)?))
+                                    Some(Self::Variant29(Op108::decode(buf)?))
                                 } else {
                                     None
                                 }
                             }
                             4u8 => {
                                 if (buf[0usize] & 255u8 == 230u8) {
-                                    Some(Self::Variant32(Op111::decode(&buf)?))
+                                    Some(Self::Variant32(Op111::decode(buf)?))
                                 } else {
                                     None
                                 }
                             }
                             5u8 => {
                                 if (buf[0usize] & 255u8 == 238u8) {
-                                    Some(Self::Variant35(Op114::decode(&buf)?))
+                                    Some(Self::Variant35(Op114::decode(buf)?))
                                 } else {
                                     None
                                 }
                             }
                             6u8 => {
                                 if (buf[0usize] & 255u8 == 246u8) {
-                                    Some(Self::Variant38(Op117::decode(&buf)?))
+                                    Some(Self::Variant38(Op117::decode(buf)?))
                                 } else {
                                     None
                                 }
                             }
                             7u8 => {
                                 if (buf[0usize] & 255u8 == 254u8) {
-                                    Some(Self::Variant41(Op120::decode(&buf)?))
+                                    Some(Self::Variant41(Op120::decode(buf)?))
                                 } else {
                                     None
                                 }
@@ -937,7 +924,7 @@ impl Sym0 {
                     }
                     7u8 => {
                         if (buf[0usize] & 199u8 == 199u8) {
-                            Some(Self::Variant83(Op165::decode(&buf)?))
+                            Some(Self::Variant83(Op165::decode(buf)?))
                         } else {
                             None
                         }
@@ -948,163 +935,4764 @@ impl Sym0 {
             _ => unreachable!(),
         }
     }
-    #[allow(unused_variables)]
-    #[allow(dead_code)]
     fn pcode(&self, vec: &mut Vec<Pcode>) {
-        println!(
-            "    {}", match self { Self::Variant0(op0, op1) => "COPY",
-            Self::Variant1(op0, op1) => "COPY", Self::Variant2(op0, op1) => "LOAD",
-            Self::Variant3(op0, op1) => "STORE", Self::Variant4(op0, op1) => "STORE",
-            Self::Variant5(op0, op1) => "LOAD", Self::Variant6(op0, op1) => "LOAD",
-            Self::Variant7(op0, op1) => "MULTIEQUAL, COPY", Self::Variant8(op0, op1) =>
-            "MULTIEQUAL, COPY", Self::Variant9(op0, op1) => "MULTIEQUAL, COPY",
-            Self::Variant10(op0, op1) => "MULTIEQUAL, COPY", Self::Variant11(op0, op1) =>
-            "MULTIEQUAL, COPY", Self::Variant12(op0, op1) => "MULTIEQUAL, COPY",
-            Self::Variant13(op0, op1) => "MULTIEQUAL, COPY", Self::Variant14(op0, op1) =>
-            "MULTIEQUAL, COPY", Self::Variant15(op0, op1) => "STORE",
-            Self::Variant16(op0, op1) => "STORE", Self::Variant17(op0, op1) =>
-            "MULTIEQUAL, COPY", Self::Variant18(op0, op1) => "MULTIEQUAL, COPY",
-            Self::Variant19(op0) =>
-            "COPY, INT_ADD, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_ADD, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_CARRY, INT_LEFT, INT_OR, COPY",
-            Self::Variant20(op0) =>
-            "COPY, INT_ADD, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_ADD, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_CARRY, INT_LEFT, INT_OR, COPY",
-            Self::Variant21(op0) =>
-            "LOAD, INT_ADD, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_ADD, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_CARRY, INT_LEFT, INT_OR, COPY",
-            Self::Variant22(op0) =>
-            "COPY, INT_RIGHT, INT_AND, INT_ADD, INT_ADD, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_ADD, INT_ADD, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_CARRY, INT_CARRY, INT_LEFT, INT_OR, COPY",
-            Self::Variant23(op0) =>
-            "COPY, INT_RIGHT, INT_AND, INT_ADD, INT_ADD, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_ADD, INT_ADD, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_CARRY, INT_CARRY, INT_LEFT, INT_OR, COPY",
-            Self::Variant24(op0) =>
-            "LOAD, INT_RIGHT, INT_AND, INT_ADD, INT_ADD, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_ADD, INT_ADD, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_CARRY, INT_CARRY, INT_LEFT, INT_OR, COPY",
-            Self::Variant25(op0) =>
-            "COPY, INT_SUB, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_SUB, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_LESS, INT_LEFT, INT_OR, COPY",
-            Self::Variant26(op0) =>
-            "COPY, INT_SUB, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_SUB, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_LESS, INT_LEFT, INT_OR, COPY",
-            Self::Variant27(op0) =>
-            "LOAD, INT_SUB, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_SUB, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_LESS, INT_LEFT, INT_OR, COPY",
-            Self::Variant28(op0) =>
-            "COPY, INT_RIGHT, INT_AND, INT_SUB, INT_SUB, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_SUB, INT_SUB, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_ADD, INT_LESS, INT_LEFT, INT_OR, COPY",
-            Self::Variant29(op0) =>
-            "COPY, INT_RIGHT, INT_AND, INT_SUB, INT_SUB, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_SUB, INT_SUB, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_ADD, INT_LESS, INT_LEFT, INT_OR, COPY",
-            Self::Variant30(op0) =>
-            "LOAD, INT_RIGHT, INT_AND, INT_SUB, INT_SUB, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_SUB, INT_SUB, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_ADD, INT_LESS, INT_LEFT, INT_OR, COPY",
-            Self::Variant31(op0) =>
-            "INT_AND, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR",
-            Self::Variant32(op0) =>
-            "INT_AND, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR",
-            Self::Variant33(op0) =>
-            "LOAD, INT_AND, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR",
-            Self::Variant34(op0) =>
-            "INT_XOR, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR",
-            Self::Variant35(op0) =>
-            "INT_XOR, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR",
-            Self::Variant36(op0) =>
-            "LOAD, INT_XOR, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR",
-            Self::Variant37(op0) =>
-            "INT_OR, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR",
-            Self::Variant38(op0) =>
-            "INT_OR, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR",
-            Self::Variant39(op0) =>
-            "LOAD, INT_OR, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR",
-            Self::Variant40(op0) =>
-            "COPY, INT_SUB, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_SUB, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_LESS, INT_LEFT, INT_OR",
-            Self::Variant41(op0) =>
-            "COPY, INT_SUB, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_SUB, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_LESS, INT_LEFT, INT_OR",
-            Self::Variant42(op0) =>
-            "LOAD, INT_SUB, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_SUB, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_LESS, INT_LEFT, INT_OR",
-            Self::Variant43(op0) =>
-            "COPY, INT_ADD, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, COPY",
-            Self::Variant44(op0) =>
-            "LOAD, COPY, INT_ADD, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, COPY, STORE",
-            Self::Variant45(op0) =>
-            "COPY, INT_SUB, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, COPY",
-            Self::Variant46(op0) =>
-            "LOAD, COPY, INT_SUB, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, COPY, STORE",
-            Self::Variant47() =>
-            "INT_RIGHT, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR",
-            Self::Variant48() =>
-            "INT_RIGHT, INT_LEFT, INT_RIGHT, INT_AND, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR",
-            Self::Variant49() =>
-            "INT_AND, INT_LEFT, INT_RIGHT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR",
-            Self::Variant50() =>
-            "INT_AND, INT_RIGHT, INT_AND, INT_LEFT, INT_RIGHT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR",
-            Self::Variant51(op0) =>
-            "COPY, INT_RIGHT, INT_LEFT, INT_OR, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, COPY",
-            Self::Variant52(op0) =>
-            "LOAD, COPY, INT_RIGHT, INT_LEFT, INT_OR, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, COPY, STORE",
-            Self::Variant53(op0) =>
-            "COPY, INT_AND, INT_LEFT, INT_RIGHT, INT_OR, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, COPY",
-            Self::Variant54(op0) =>
-            "LOAD, COPY, INT_AND, INT_LEFT, INT_RIGHT, INT_OR, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, COPY, STORE",
-            Self::Variant55(op0) =>
-            "COPY, INT_RIGHT, INT_LEFT, INT_RIGHT, INT_AND, INT_OR, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, COPY",
-            Self::Variant56(op0) =>
-            "LOAD, COPY, INT_RIGHT, INT_LEFT, INT_RIGHT, INT_AND, INT_OR, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, COPY, STORE",
-            Self::Variant57(op0) =>
-            "COPY, INT_AND, INT_RIGHT, INT_AND, INT_LEFT, INT_RIGHT, INT_OR, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, COPY",
-            Self::Variant58(op0) =>
-            "LOAD, COPY, INT_AND, INT_RIGHT, INT_AND, INT_LEFT, INT_RIGHT, INT_OR, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, COPY, STORE",
-            Self::Variant59(op0) =>
-            "COPY, INT_RIGHT, INT_LEFT, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, COPY",
-            Self::Variant60(op0) =>
-            "LOAD, COPY, INT_RIGHT, INT_LEFT, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, COPY, STORE",
-            Self::Variant61(op0) =>
-            "COPY, INT_AND, INT_SRIGHT, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, COPY",
-            Self::Variant62(op0) =>
-            "LOAD, COPY, INT_AND, INT_SRIGHT, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, COPY, STORE",
-            Self::Variant63(op0) =>
-            "COPY, INT_AND, INT_LEFT, INT_RIGHT, INT_OR, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, COPY",
-            Self::Variant64(op0) =>
-            "LOAD, COPY, INT_AND, INT_LEFT, INT_RIGHT, INT_OR, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, COPY, STORE",
-            Self::Variant65(op0) =>
-            "COPY, INT_AND, INT_RIGHT, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, COPY",
-            Self::Variant66(op0) =>
-            "LOAD, COPY, INT_AND, INT_RIGHT, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, COPY, STORE",
-            Self::Variant67(op0, op1) =>
-            "INT_LEFT, INT_AND, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR",
-            Self::Variant68(op0, op1) =>
-            "LOAD, INT_LEFT, INT_AND, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR",
-            Self::Variant69(op0, op1) => "INT_LEFT, INT_NEGATE, INT_AND",
-            Self::Variant70(op0, op1) => "LOAD, INT_LEFT, INT_NEGATE, INT_AND, STORE",
-            Self::Variant71(op0, op1) => "INT_LEFT, INT_OR", Self::Variant72(op0, op1) =>
-            "LOAD, INT_LEFT, INT_OR, STORE", Self::Variant73(op0) =>
-            "MULTIEQUAL, BRANCH", Self::Variant74(op0) => "BRANCHIND",
-            Self::Variant75(op0) => "MULTIEQUAL, BRANCH", Self::Variant76(op0) =>
-            "MULTIEQUAL, INT_SUB, STORE, CALL", Self::Variant77() =>
-            "LOAD, INT_ADD, RETURN", Self::Variant78() =>
-            "LOAD, INT_ADD, CALLOTHER, RETURN", Self::Variant79(op0, op1) =>
-            "MULTIEQUAL, MULTIEQUAL, CBRANCH", Self::Variant80(op0, op1) =>
-            "MULTIEQUAL, MULTIEQUAL, CBRANCH", Self::Variant81(op0, op1) =>
-            "MULTIEQUAL, MULTIEQUAL, BOOL_NEGATE, CBRANCH, INT_SUB, STORE, CALL",
-            Self::Variant82(op0) =>
-            "MULTIEQUAL, BOOL_NEGATE, CBRANCH, LOAD, INT_ADD, RETURN",
-            Self::Variant83(op0) => "MULTIEQUAL, INT_SUB, STORE, CALL", Self::Variant84()
-            => "CALLOTHER", Self::Variant85() => "CALLOTHER", Self::Variant86() =>
-            "CALLOTHER", Self::Variant87() => "CALLOTHER", Self::Variant88() =>
-            "INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_RIGHT, INT_AND, BOOL_NEGATE, INT_LEFT, INT_OR",
-            Self::Variant89() =>
-            "INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR",
-            Self::Variant90() => "", Self::Variant91() =>
-            "COPY, INT_RIGHT, INT_AND, INT_RIGHT, INT_AND, INT_RIGHT, INT_AND, CALLOTHER, INT_ADD, INT_CARRY, INT_AND, INT_EQUAL, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_RIGHT, INT_AND, INT_RIGHT, INT_AND, BOOL_NEGATE, BOOL_AND, BOOL_OR, INT_LEFT, INT_OR, COPY",
-            Self::Variant92() =>
-            "INT_NEGATE, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR",
-            Self::Variant93(op0, op1) => "COPY", Self::Variant94(op0, op1) =>
-            "MULTIEQUAL, COPY", Self::Variant95(op0, op1) => "COPY", Self::Variant96(op0,
-            op1, op2) =>
-            "INT_ADD, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_ADD, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_CARRY, INT_LEFT, INT_OR, COPY",
-            Self::Variant97(op0, op1, op2, op3) =>
-            "INT_ADD, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_ADD, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_CARRY, INT_LEFT, INT_OR, COPY",
-            Self::Variant98(op0) => "INT_SUB, STORE", Self::Variant99(op0) =>
-            "LOAD, INT_ADD", Self::Variant100(op0, op1) =>
-            "INT_ADD, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_ADD, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_CARRY, INT_LEFT, INT_OR, COPY",
-            Self::Variant101(op0, op1) =>
-            "INT_ADD, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_LEFT, INT_OR, INT_AND, INT_AND, INT_AND, INT_ADD, INT_AND, INT_NOTEQUAL, INT_LEFT, INT_OR, INT_AND, INT_CARRY, INT_LEFT, INT_OR, COPY",
-            Self::Variant102(op0) => "INT_ADD", Self::Variant103(op0) => "INT_SUB", }
-        )
+        match self {
+            Self::Variant0(op0, op1) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+            }
+            Self::Variant1(op0, op1) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+            }
+            Self::Variant2(op0, op1) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+            }
+            Self::Variant3(op0, op1) => {
+                println!("\t{}", "Unk");
+            }
+            Self::Variant4(op0, op1) => {
+                println!("\t{}", "Unk");
+            }
+            Self::Variant5(op0, op1) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(2), size: Real(2) })"
+                );
+            }
+            Self::Variant6(op0, op1) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(4), size: Real(2) })"
+                );
+            }
+            Self::Variant7(op0, op1) => {
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+            }
+            Self::Variant8(op0, op1) => {
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+            }
+            Self::Variant9(op0, op1) => {
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+            }
+            Self::Variant10(op0, op1) => {
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+            }
+            Self::Variant11(op0, op1) => {
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+            }
+            Self::Variant12(op0, op1) => {
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+            }
+            Self::Variant13(op0, op1) => {
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+            }
+            Self::Variant14(op0, op1) => {
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+            }
+            Self::Variant15(op0, op1) => {
+                println!("\t{}", "Unk");
+            }
+            Self::Variant16(op0, op1) => {
+                println!("\t{}", "Unk");
+            }
+            Self::Variant17(op0, op1) => {
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+            }
+            Self::Variant18(op0, op1) => {
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+            }
+            Self::Variant19(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(4480), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(4736), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(4480), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(4992), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(4864), size: Real(1) }, Varnode { space: Unk, offset: Real(4736), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(5120), size: Real(1) }, Varnode { space: Unk, offset: Real(4864), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4992), size: Real(1) }, Varnode { space: Unk, offset: Real(5120), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(5248), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(5376), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5248), size: Real(1) }, Varnode { space: Unk, offset: Real(5376), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(6144), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(5504), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(5632), size: Real(1) }, Varnode { space: Unk, offset: Real(4480), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(5760), size: Real(1) }, Varnode { space: Unk, offset: Real(5504), size: Real(1) }, Varnode { space: Unk, offset: Real(5632), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(5888), size: Real(1) }, Varnode { space: Unk, offset: Real(5760), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(6016), size: Real(1) }, Varnode { space: Unk, offset: Real(5888), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(6272), size: Real(1) }, Varnode { space: Unk, offset: Real(6016), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6144), size: Real(1) }, Varnode { space: Unk, offset: Real(6272), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(6528), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntCarry(Varnode { space: Unk, offset: Real(6400), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(4480), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(6656), size: Real(1) }, Varnode { space: Unk, offset: Real(6400), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6528), size: Real(1) }, Varnode { space: Unk, offset: Real(6656), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(4736), size: Real(1) })"
+                );
+            }
+            Self::Variant20(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(4480), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(4736), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(4480), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(4992), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(4864), size: Real(1) }, Varnode { space: Unk, offset: Real(4736), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(5120), size: Real(1) }, Varnode { space: Unk, offset: Real(4864), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4992), size: Real(1) }, Varnode { space: Unk, offset: Real(5120), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(5248), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(5376), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5248), size: Real(1) }, Varnode { space: Unk, offset: Real(5376), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(6144), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(5504), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(5632), size: Real(1) }, Varnode { space: Unk, offset: Real(4480), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(5760), size: Real(1) }, Varnode { space: Unk, offset: Real(5504), size: Real(1) }, Varnode { space: Unk, offset: Real(5632), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(5888), size: Real(1) }, Varnode { space: Unk, offset: Real(5760), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(6016), size: Real(1) }, Varnode { space: Unk, offset: Real(5888), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(6272), size: Real(1) }, Varnode { space: Unk, offset: Real(6016), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6144), size: Real(1) }, Varnode { space: Unk, offset: Real(6272), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(6528), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntCarry(Varnode { space: Unk, offset: Real(6400), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(4480), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(6656), size: Real(1) }, Varnode { space: Unk, offset: Real(6400), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6528), size: Real(1) }, Varnode { space: Unk, offset: Real(6656), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(4736), size: Real(1) })"
+                );
+            }
+            Self::Variant21(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(4480), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(4736), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(4480), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(4992), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(4864), size: Real(1) }, Varnode { space: Unk, offset: Real(4736), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(5120), size: Real(1) }, Varnode { space: Unk, offset: Real(4864), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4992), size: Real(1) }, Varnode { space: Unk, offset: Real(5120), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(5248), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(5376), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5248), size: Real(1) }, Varnode { space: Unk, offset: Real(5376), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(6144), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(5504), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(5632), size: Real(1) }, Varnode { space: Unk, offset: Real(4480), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(5760), size: Real(1) }, Varnode { space: Unk, offset: Real(5504), size: Real(1) }, Varnode { space: Unk, offset: Real(5632), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(5888), size: Real(1) }, Varnode { space: Unk, offset: Real(5760), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(6016), size: Real(1) }, Varnode { space: Unk, offset: Real(5888), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(6272), size: Real(1) }, Varnode { space: Unk, offset: Real(6016), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6144), size: Real(1) }, Varnode { space: Unk, offset: Real(6272), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(6528), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntCarry(Varnode { space: Unk, offset: Real(6400), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(4480), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(6656), size: Real(1) }, Varnode { space: Unk, offset: Real(6400), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6528), size: Real(1) }, Varnode { space: Unk, offset: Real(6656), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(4736), size: Real(1) })"
+                );
+            }
+            Self::Variant22(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(6784), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(6912), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(7168), size: Real(1) }, Varnode { space: Unk, offset: Real(6912), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(7296), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6784), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(7552), size: Real(1) }, Varnode { space: Unk, offset: Real(7296), size: Real(1) }, Varnode { space: Unk, offset: Real(7168), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(7808), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(7680), size: Real(1) }, Varnode { space: Unk, offset: Real(7552), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(7936), size: Real(1) }, Varnode { space: Unk, offset: Real(7680), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(7808), size: Real(1) }, Varnode { space: Unk, offset: Real(7936), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(8064), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(8192), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(8064), size: Real(1) }, Varnode { space: Unk, offset: Real(8192), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(9088), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(8320), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(8448), size: Real(1) }, Varnode { space: Unk, offset: Real(6784), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(8576), size: Real(1) }, Varnode { space: Unk, offset: Real(8320), size: Real(1) }, Varnode { space: Unk, offset: Real(8448), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(8704), size: Real(1) }, Varnode { space: Unk, offset: Real(8576), size: Real(1) }, Varnode { space: Unk, offset: Real(7168), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(8832), size: Real(1) }, Varnode { space: Unk, offset: Real(8704), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(8960), size: Real(1) }, Varnode { space: Unk, offset: Real(8832), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(9216), size: Real(1) }, Varnode { space: Unk, offset: Real(8960), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(9088), size: Real(1) }, Varnode { space: Unk, offset: Real(9216), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(9600), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntCarry(Varnode { space: Unk, offset: Real(9344), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6784), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntCarry(Varnode { space: Unk, offset: Real(9472), size: Real(1) }, Varnode { space: Unk, offset: Real(9344), size: Real(1) }, Varnode { space: Unk, offset: Real(7168), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(9728), size: Real(1) }, Varnode { space: Unk, offset: Real(9472), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(9600), size: Real(1) }, Varnode { space: Unk, offset: Real(9728), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(7552), size: Real(1) })"
+                );
+            }
+            Self::Variant23(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(6784), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(6912), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(7168), size: Real(1) }, Varnode { space: Unk, offset: Real(6912), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(7296), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6784), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(7552), size: Real(1) }, Varnode { space: Unk, offset: Real(7296), size: Real(1) }, Varnode { space: Unk, offset: Real(7168), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(7808), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(7680), size: Real(1) }, Varnode { space: Unk, offset: Real(7552), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(7936), size: Real(1) }, Varnode { space: Unk, offset: Real(7680), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(7808), size: Real(1) }, Varnode { space: Unk, offset: Real(7936), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(8064), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(8192), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(8064), size: Real(1) }, Varnode { space: Unk, offset: Real(8192), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(9088), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(8320), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(8448), size: Real(1) }, Varnode { space: Unk, offset: Real(6784), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(8576), size: Real(1) }, Varnode { space: Unk, offset: Real(8320), size: Real(1) }, Varnode { space: Unk, offset: Real(8448), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(8704), size: Real(1) }, Varnode { space: Unk, offset: Real(8576), size: Real(1) }, Varnode { space: Unk, offset: Real(7168), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(8832), size: Real(1) }, Varnode { space: Unk, offset: Real(8704), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(8960), size: Real(1) }, Varnode { space: Unk, offset: Real(8832), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(9216), size: Real(1) }, Varnode { space: Unk, offset: Real(8960), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(9088), size: Real(1) }, Varnode { space: Unk, offset: Real(9216), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(9600), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntCarry(Varnode { space: Unk, offset: Real(9344), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6784), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntCarry(Varnode { space: Unk, offset: Real(9472), size: Real(1) }, Varnode { space: Unk, offset: Real(9344), size: Real(1) }, Varnode { space: Unk, offset: Real(7168), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(9728), size: Real(1) }, Varnode { space: Unk, offset: Real(9472), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(9600), size: Real(1) }, Varnode { space: Unk, offset: Real(9728), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(7552), size: Real(1) })"
+                );
+            }
+            Self::Variant24(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(6784), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(6912), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(7168), size: Real(1) }, Varnode { space: Unk, offset: Real(6912), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(7296), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6784), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(7552), size: Real(1) }, Varnode { space: Unk, offset: Real(7296), size: Real(1) }, Varnode { space: Unk, offset: Real(7168), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(7808), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(7680), size: Real(1) }, Varnode { space: Unk, offset: Real(7552), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(7936), size: Real(1) }, Varnode { space: Unk, offset: Real(7680), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(7808), size: Real(1) }, Varnode { space: Unk, offset: Real(7936), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(8064), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(8192), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(8064), size: Real(1) }, Varnode { space: Unk, offset: Real(8192), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(9088), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(8320), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(8448), size: Real(1) }, Varnode { space: Unk, offset: Real(6784), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(8576), size: Real(1) }, Varnode { space: Unk, offset: Real(8320), size: Real(1) }, Varnode { space: Unk, offset: Real(8448), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(8704), size: Real(1) }, Varnode { space: Unk, offset: Real(8576), size: Real(1) }, Varnode { space: Unk, offset: Real(7168), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(8832), size: Real(1) }, Varnode { space: Unk, offset: Real(8704), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(8960), size: Real(1) }, Varnode { space: Unk, offset: Real(8832), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(9216), size: Real(1) }, Varnode { space: Unk, offset: Real(8960), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(9088), size: Real(1) }, Varnode { space: Unk, offset: Real(9216), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(9600), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntCarry(Varnode { space: Unk, offset: Real(9344), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6784), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntCarry(Varnode { space: Unk, offset: Real(9472), size: Real(1) }, Varnode { space: Unk, offset: Real(9344), size: Real(1) }, Varnode { space: Unk, offset: Real(7168), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(9728), size: Real(1) }, Varnode { space: Unk, offset: Real(9472), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(9600), size: Real(1) }, Varnode { space: Unk, offset: Real(9728), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(7552), size: Real(1) })"
+                );
+            }
+            Self::Variant25(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(9856), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(10112), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(9856), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(10368), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(10240), size: Real(1) }, Varnode { space: Unk, offset: Real(10112), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(10496), size: Real(1) }, Varnode { space: Unk, offset: Real(10240), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(10368), size: Real(1) }, Varnode { space: Unk, offset: Real(10496), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(10624), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(10752), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(10624), size: Real(1) }, Varnode { space: Unk, offset: Real(10752), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(11520), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(10880), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(11008), size: Real(1) }, Varnode { space: Unk, offset: Real(9856), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(11136), size: Real(1) }, Varnode { space: Unk, offset: Real(10880), size: Real(1) }, Varnode { space: Unk, offset: Real(11008), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(11264), size: Real(1) }, Varnode { space: Unk, offset: Real(11136), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(11392), size: Real(1) }, Varnode { space: Unk, offset: Real(11264), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(11648), size: Real(1) }, Varnode { space: Unk, offset: Real(11392), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(11520), size: Real(1) }, Varnode { space: Unk, offset: Real(11648), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(11904), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLess(Varnode { space: Unk, offset: Real(11776), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(9856), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(12032), size: Real(1) }, Varnode { space: Unk, offset: Real(11776), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(11904), size: Real(1) }, Varnode { space: Unk, offset: Real(12032), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(10112), size: Real(1) })"
+                );
+            }
+            Self::Variant26(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(9856), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(10112), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(9856), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(10368), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(10240), size: Real(1) }, Varnode { space: Unk, offset: Real(10112), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(10496), size: Real(1) }, Varnode { space: Unk, offset: Real(10240), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(10368), size: Real(1) }, Varnode { space: Unk, offset: Real(10496), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(10624), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(10752), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(10624), size: Real(1) }, Varnode { space: Unk, offset: Real(10752), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(11520), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(10880), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(11008), size: Real(1) }, Varnode { space: Unk, offset: Real(9856), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(11136), size: Real(1) }, Varnode { space: Unk, offset: Real(10880), size: Real(1) }, Varnode { space: Unk, offset: Real(11008), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(11264), size: Real(1) }, Varnode { space: Unk, offset: Real(11136), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(11392), size: Real(1) }, Varnode { space: Unk, offset: Real(11264), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(11648), size: Real(1) }, Varnode { space: Unk, offset: Real(11392), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(11520), size: Real(1) }, Varnode { space: Unk, offset: Real(11648), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(11904), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLess(Varnode { space: Unk, offset: Real(11776), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(9856), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(12032), size: Real(1) }, Varnode { space: Unk, offset: Real(11776), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(11904), size: Real(1) }, Varnode { space: Unk, offset: Real(12032), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(10112), size: Real(1) })"
+                );
+            }
+            Self::Variant27(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(9856), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(10112), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(9856), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(10368), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(10240), size: Real(1) }, Varnode { space: Unk, offset: Real(10112), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(10496), size: Real(1) }, Varnode { space: Unk, offset: Real(10240), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(10368), size: Real(1) }, Varnode { space: Unk, offset: Real(10496), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(10624), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(10752), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(10624), size: Real(1) }, Varnode { space: Unk, offset: Real(10752), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(11520), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(10880), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(11008), size: Real(1) }, Varnode { space: Unk, offset: Real(9856), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(11136), size: Real(1) }, Varnode { space: Unk, offset: Real(10880), size: Real(1) }, Varnode { space: Unk, offset: Real(11008), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(11264), size: Real(1) }, Varnode { space: Unk, offset: Real(11136), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(11392), size: Real(1) }, Varnode { space: Unk, offset: Real(11264), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(11648), size: Real(1) }, Varnode { space: Unk, offset: Real(11392), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(11520), size: Real(1) }, Varnode { space: Unk, offset: Real(11648), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(11904), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLess(Varnode { space: Unk, offset: Real(11776), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(9856), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(12032), size: Real(1) }, Varnode { space: Unk, offset: Real(11776), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(11904), size: Real(1) }, Varnode { space: Unk, offset: Real(12032), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(10112), size: Real(1) })"
+                );
+            }
+            Self::Variant28(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(12160), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(12288), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(12544), size: Real(1) }, Varnode { space: Unk, offset: Real(12288), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(12672), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(12160), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(12928), size: Real(1) }, Varnode { space: Unk, offset: Real(12672), size: Real(1) }, Varnode { space: Unk, offset: Real(12544), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(13184), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(13056), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(13312), size: Real(1) }, Varnode { space: Unk, offset: Real(13056), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(13184), size: Real(1) }, Varnode { space: Unk, offset: Real(13312), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(13440), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(13568), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(13440), size: Real(1) }, Varnode { space: Unk, offset: Real(13568), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(14464), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(13696), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(13824), size: Real(1) }, Varnode { space: Unk, offset: Real(12160), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(13952), size: Real(1) }, Varnode { space: Unk, offset: Real(13696), size: Real(1) }, Varnode { space: Unk, offset: Real(13824), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(14080), size: Real(1) }, Varnode { space: Unk, offset: Real(13952), size: Real(1) }, Varnode { space: Unk, offset: Real(12544), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(14208), size: Real(1) }, Varnode { space: Unk, offset: Real(14080), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(14336), size: Real(1) }, Varnode { space: Unk, offset: Real(14208), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(14592), size: Real(1) }, Varnode { space: Unk, offset: Real(14336), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(14464), size: Real(1) }, Varnode { space: Unk, offset: Real(14592), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(14976), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(14720), size: Real(1) }, Varnode { space: Unk, offset: Real(12160), size: Real(1) }, Varnode { space: Unk, offset: Real(12544), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLess(Varnode { space: Unk, offset: Real(14848), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(14720), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(15104), size: Real(1) }, Varnode { space: Unk, offset: Real(14848), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(14976), size: Real(1) }, Varnode { space: Unk, offset: Real(15104), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(12928), size: Real(1) })"
+                );
+            }
+            Self::Variant29(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(12160), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(12288), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(12544), size: Real(1) }, Varnode { space: Unk, offset: Real(12288), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(12672), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(12160), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(12928), size: Real(1) }, Varnode { space: Unk, offset: Real(12672), size: Real(1) }, Varnode { space: Unk, offset: Real(12544), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(13184), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(13056), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(13312), size: Real(1) }, Varnode { space: Unk, offset: Real(13056), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(13184), size: Real(1) }, Varnode { space: Unk, offset: Real(13312), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(13440), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(13568), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(13440), size: Real(1) }, Varnode { space: Unk, offset: Real(13568), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(14464), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(13696), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(13824), size: Real(1) }, Varnode { space: Unk, offset: Real(12160), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(13952), size: Real(1) }, Varnode { space: Unk, offset: Real(13696), size: Real(1) }, Varnode { space: Unk, offset: Real(13824), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(14080), size: Real(1) }, Varnode { space: Unk, offset: Real(13952), size: Real(1) }, Varnode { space: Unk, offset: Real(12544), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(14208), size: Real(1) }, Varnode { space: Unk, offset: Real(14080), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(14336), size: Real(1) }, Varnode { space: Unk, offset: Real(14208), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(14592), size: Real(1) }, Varnode { space: Unk, offset: Real(14336), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(14464), size: Real(1) }, Varnode { space: Unk, offset: Real(14592), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(14976), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(14720), size: Real(1) }, Varnode { space: Unk, offset: Real(12160), size: Real(1) }, Varnode { space: Unk, offset: Real(12544), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLess(Varnode { space: Unk, offset: Real(14848), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(14720), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(15104), size: Real(1) }, Varnode { space: Unk, offset: Real(14848), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(14976), size: Real(1) }, Varnode { space: Unk, offset: Real(15104), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(12928), size: Real(1) })"
+                );
+            }
+            Self::Variant30(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(12160), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(12288), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(12544), size: Real(1) }, Varnode { space: Unk, offset: Real(12288), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(12672), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(12160), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(12928), size: Real(1) }, Varnode { space: Unk, offset: Real(12672), size: Real(1) }, Varnode { space: Unk, offset: Real(12544), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(13184), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(13056), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(13312), size: Real(1) }, Varnode { space: Unk, offset: Real(13056), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(13184), size: Real(1) }, Varnode { space: Unk, offset: Real(13312), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(13440), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(13568), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(13440), size: Real(1) }, Varnode { space: Unk, offset: Real(13568), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(14464), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(13696), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(13824), size: Real(1) }, Varnode { space: Unk, offset: Real(12160), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(13952), size: Real(1) }, Varnode { space: Unk, offset: Real(13696), size: Real(1) }, Varnode { space: Unk, offset: Real(13824), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(14080), size: Real(1) }, Varnode { space: Unk, offset: Real(13952), size: Real(1) }, Varnode { space: Unk, offset: Real(12544), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(14208), size: Real(1) }, Varnode { space: Unk, offset: Real(14080), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(14336), size: Real(1) }, Varnode { space: Unk, offset: Real(14208), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(14592), size: Real(1) }, Varnode { space: Unk, offset: Real(14336), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(14464), size: Real(1) }, Varnode { space: Unk, offset: Real(14592), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(14976), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(14720), size: Real(1) }, Varnode { space: Unk, offset: Real(12160), size: Real(1) }, Varnode { space: Unk, offset: Real(12544), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLess(Varnode { space: Unk, offset: Real(14848), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(14720), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(15104), size: Real(1) }, Varnode { space: Unk, offset: Real(14848), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(14976), size: Real(1) }, Varnode { space: Unk, offset: Real(15104), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(12928), size: Real(1) })"
+                );
+            }
+            Self::Variant31(op0) => {
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(15616), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(15488), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(15744), size: Real(1) }, Varnode { space: Unk, offset: Real(15488), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(15616), size: Real(1) }, Varnode { space: Unk, offset: Real(15744), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(15872), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(16000), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(15872), size: Real(1) }, Varnode { space: Unk, offset: Real(16000), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(16128), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(16256), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(16128), size: Real(1) }, Varnode { space: Unk, offset: Real(16256), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(16384), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(16512), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(16384), size: Real(1) }, Varnode { space: Unk, offset: Real(16512), size: Real(1) })"
+                );
+            }
+            Self::Variant32(op0) => {
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(15616), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(15488), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(15744), size: Real(1) }, Varnode { space: Unk, offset: Real(15488), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(15616), size: Real(1) }, Varnode { space: Unk, offset: Real(15744), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(15872), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(16000), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(15872), size: Real(1) }, Varnode { space: Unk, offset: Real(16000), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(16128), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(16256), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(16128), size: Real(1) }, Varnode { space: Unk, offset: Real(16256), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(16384), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(16512), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(16384), size: Real(1) }, Varnode { space: Unk, offset: Real(16512), size: Real(1) })"
+                );
+            }
+            Self::Variant33(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(45056), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(45056), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(15616), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(15488), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(15744), size: Real(1) }, Varnode { space: Unk, offset: Real(15488), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(15616), size: Real(1) }, Varnode { space: Unk, offset: Real(15744), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(15872), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(16000), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(15872), size: Real(1) }, Varnode { space: Unk, offset: Real(16000), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(16128), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(16256), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(16128), size: Real(1) }, Varnode { space: Unk, offset: Real(16256), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(16384), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(16512), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(16384), size: Real(1) }, Varnode { space: Unk, offset: Real(16512), size: Real(1) })"
+                );
+            }
+            Self::Variant34(op0) => {
+                println!(
+                    "\t{}",
+                    "IntXor(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(17024), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(16896), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(17152), size: Real(1) }, Varnode { space: Unk, offset: Real(16896), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(17024), size: Real(1) }, Varnode { space: Unk, offset: Real(17152), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(17280), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(17408), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(17280), size: Real(1) }, Varnode { space: Unk, offset: Real(17408), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(17536), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(17664), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(17536), size: Real(1) }, Varnode { space: Unk, offset: Real(17664), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(17792), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(17920), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(17792), size: Real(1) }, Varnode { space: Unk, offset: Real(17920), size: Real(1) })"
+                );
+            }
+            Self::Variant35(op0) => {
+                println!(
+                    "\t{}",
+                    "IntXor(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(17024), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(16896), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(17152), size: Real(1) }, Varnode { space: Unk, offset: Real(16896), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(17024), size: Real(1) }, Varnode { space: Unk, offset: Real(17152), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(17280), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(17408), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(17280), size: Real(1) }, Varnode { space: Unk, offset: Real(17408), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(17536), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(17664), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(17536), size: Real(1) }, Varnode { space: Unk, offset: Real(17664), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(17792), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(17920), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(17792), size: Real(1) }, Varnode { space: Unk, offset: Real(17920), size: Real(1) })"
+                );
+            }
+            Self::Variant36(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(45312), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntXor(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(45312), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(17024), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(16896), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(17152), size: Real(1) }, Varnode { space: Unk, offset: Real(16896), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(17024), size: Real(1) }, Varnode { space: Unk, offset: Real(17152), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(17280), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(17408), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(17280), size: Real(1) }, Varnode { space: Unk, offset: Real(17408), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(17536), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(17664), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(17536), size: Real(1) }, Varnode { space: Unk, offset: Real(17664), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(17792), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(17920), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(17792), size: Real(1) }, Varnode { space: Unk, offset: Real(17920), size: Real(1) })"
+                );
+            }
+            Self::Variant37(op0) => {
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(18432), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(18304), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(18560), size: Real(1) }, Varnode { space: Unk, offset: Real(18304), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18432), size: Real(1) }, Varnode { space: Unk, offset: Real(18560), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(18688), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(18816), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18688), size: Real(1) }, Varnode { space: Unk, offset: Real(18816), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(18944), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(19072), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18944), size: Real(1) }, Varnode { space: Unk, offset: Real(19072), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(19200), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(19328), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(19200), size: Real(1) }, Varnode { space: Unk, offset: Real(19328), size: Real(1) })"
+                );
+            }
+            Self::Variant38(op0) => {
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(18432), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(18304), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(18560), size: Real(1) }, Varnode { space: Unk, offset: Real(18304), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18432), size: Real(1) }, Varnode { space: Unk, offset: Real(18560), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(18688), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(18816), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18688), size: Real(1) }, Varnode { space: Unk, offset: Real(18816), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(18944), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(19072), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18944), size: Real(1) }, Varnode { space: Unk, offset: Real(19072), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(19200), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(19328), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(19200), size: Real(1) }, Varnode { space: Unk, offset: Real(19328), size: Real(1) })"
+                );
+            }
+            Self::Variant39(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(45568), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(45568), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(18432), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(18304), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(18560), size: Real(1) }, Varnode { space: Unk, offset: Real(18304), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18432), size: Real(1) }, Varnode { space: Unk, offset: Real(18560), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(18688), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(18816), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18688), size: Real(1) }, Varnode { space: Unk, offset: Real(18816), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(18944), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(19072), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18944), size: Real(1) }, Varnode { space: Unk, offset: Real(19072), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(19200), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(19328), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(19200), size: Real(1) }, Varnode { space: Unk, offset: Real(19328), size: Real(1) })"
+                );
+            }
+            Self::Variant40(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(19456), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(19712), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(19456), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(19968), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(19840), size: Real(1) }, Varnode { space: Unk, offset: Real(19712), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(20096), size: Real(1) }, Varnode { space: Unk, offset: Real(19840), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(19968), size: Real(1) }, Varnode { space: Unk, offset: Real(20096), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(20224), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(20352), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(20224), size: Real(1) }, Varnode { space: Unk, offset: Real(20352), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(21120), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(20480), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(20608), size: Real(1) }, Varnode { space: Unk, offset: Real(19456), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(20736), size: Real(1) }, Varnode { space: Unk, offset: Real(20480), size: Real(1) }, Varnode { space: Unk, offset: Real(20608), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(20864), size: Real(1) }, Varnode { space: Unk, offset: Real(20736), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(20992), size: Real(1) }, Varnode { space: Unk, offset: Real(20864), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(21248), size: Real(1) }, Varnode { space: Unk, offset: Real(20992), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(21120), size: Real(1) }, Varnode { space: Unk, offset: Real(21248), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(21504), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLess(Varnode { space: Unk, offset: Real(21376), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(19456), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(21632), size: Real(1) }, Varnode { space: Unk, offset: Real(21376), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(21504), size: Real(1) }, Varnode { space: Unk, offset: Real(21632), size: Real(1) })"
+                );
+            }
+            Self::Variant41(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(19456), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(19712), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(19456), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(19968), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(19840), size: Real(1) }, Varnode { space: Unk, offset: Real(19712), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(20096), size: Real(1) }, Varnode { space: Unk, offset: Real(19840), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(19968), size: Real(1) }, Varnode { space: Unk, offset: Real(20096), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(20224), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(20352), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(20224), size: Real(1) }, Varnode { space: Unk, offset: Real(20352), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(21120), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(20480), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(20608), size: Real(1) }, Varnode { space: Unk, offset: Real(19456), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(20736), size: Real(1) }, Varnode { space: Unk, offset: Real(20480), size: Real(1) }, Varnode { space: Unk, offset: Real(20608), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(20864), size: Real(1) }, Varnode { space: Unk, offset: Real(20736), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(20992), size: Real(1) }, Varnode { space: Unk, offset: Real(20864), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(21248), size: Real(1) }, Varnode { space: Unk, offset: Real(20992), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(21120), size: Real(1) }, Varnode { space: Unk, offset: Real(21248), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(21504), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLess(Varnode { space: Unk, offset: Real(21376), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(19456), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(21632), size: Real(1) }, Varnode { space: Unk, offset: Real(21376), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(21504), size: Real(1) }, Varnode { space: Unk, offset: Real(21632), size: Real(1) })"
+                );
+            }
+            Self::Variant42(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(19456), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(19712), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(19456), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(19968), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(19840), size: Real(1) }, Varnode { space: Unk, offset: Real(19712), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(20096), size: Real(1) }, Varnode { space: Unk, offset: Real(19840), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(19968), size: Real(1) }, Varnode { space: Unk, offset: Real(20096), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(20224), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(20352), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(20224), size: Real(1) }, Varnode { space: Unk, offset: Real(20352), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(21120), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(20480), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(20608), size: Real(1) }, Varnode { space: Unk, offset: Real(19456), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(20736), size: Real(1) }, Varnode { space: Unk, offset: Real(20480), size: Real(1) }, Varnode { space: Unk, offset: Real(20608), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(20864), size: Real(1) }, Varnode { space: Unk, offset: Real(20736), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(20992), size: Real(1) }, Varnode { space: Unk, offset: Real(20864), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(21248), size: Real(1) }, Varnode { space: Unk, offset: Real(20992), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(21120), size: Real(1) }, Varnode { space: Unk, offset: Real(21248), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(21504), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLess(Varnode { space: Unk, offset: Real(21376), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(19456), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(21632), size: Real(1) }, Varnode { space: Unk, offset: Real(21376), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(21504), size: Real(1) }, Varnode { space: Unk, offset: Real(21632), size: Real(1) })"
+                );
+            }
+            Self::Variant43(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(21760), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(22016), size: Real(1) }, Varnode { space: Unk, offset: Real(21760), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(22272), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(22144), size: Real(1) }, Varnode { space: Unk, offset: Real(22016), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(22400), size: Real(1) }, Varnode { space: Unk, offset: Real(22144), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(22272), size: Real(1) }, Varnode { space: Unk, offset: Real(22400), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(22528), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(22656), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(22528), size: Real(1) }, Varnode { space: Unk, offset: Real(22656), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(23040), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(22784), size: Real(1) }, Varnode { space: Unk, offset: Real(21760), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(22912), size: Real(1) }, Varnode { space: Unk, offset: Real(22784), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(23168), size: Real(1) }, Varnode { space: Unk, offset: Real(22912), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(23040), size: Real(1) }, Varnode { space: Unk, offset: Real(23168), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(22016), size: Real(1) })"
+                );
+            }
+            Self::Variant44(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(46080), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(21760), size: Real(1) }, Varnode { space: Unk, offset: Real(46080), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(22016), size: Real(1) }, Varnode { space: Unk, offset: Real(21760), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(22272), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(22144), size: Real(1) }, Varnode { space: Unk, offset: Real(22016), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(22400), size: Real(1) }, Varnode { space: Unk, offset: Real(22144), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(22272), size: Real(1) }, Varnode { space: Unk, offset: Real(22400), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(22528), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(22656), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(22528), size: Real(1) }, Varnode { space: Unk, offset: Real(22656), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(23040), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(22784), size: Real(1) }, Varnode { space: Unk, offset: Real(21760), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(22912), size: Real(1) }, Varnode { space: Unk, offset: Real(22784), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(23168), size: Real(1) }, Varnode { space: Unk, offset: Real(22912), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(23040), size: Real(1) }, Varnode { space: Unk, offset: Real(23168), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(46080), size: Real(1) }, Varnode { space: Unk, offset: Real(22016), size: Real(1) })"
+                );
+                println!("\t{}", "Unk");
+            }
+            Self::Variant45(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(23296), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(23552), size: Real(1) }, Varnode { space: Unk, offset: Real(23296), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(23808), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(23680), size: Real(1) }, Varnode { space: Unk, offset: Real(23552), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(23936), size: Real(1) }, Varnode { space: Unk, offset: Real(23680), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(23808), size: Real(1) }, Varnode { space: Unk, offset: Real(23936), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(24064), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(24192), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(24064), size: Real(1) }, Varnode { space: Unk, offset: Real(24192), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(24576), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(24320), size: Real(1) }, Varnode { space: Unk, offset: Real(23296), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(24448), size: Real(1) }, Varnode { space: Unk, offset: Real(24320), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(24704), size: Real(1) }, Varnode { space: Unk, offset: Real(24448), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(24576), size: Real(1) }, Varnode { space: Unk, offset: Real(24704), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(23552), size: Real(1) })"
+                );
+            }
+            Self::Variant46(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(46336), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(23296), size: Real(1) }, Varnode { space: Unk, offset: Real(46336), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(23552), size: Real(1) }, Varnode { space: Unk, offset: Real(23296), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(23808), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(23680), size: Real(1) }, Varnode { space: Unk, offset: Real(23552), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(23936), size: Real(1) }, Varnode { space: Unk, offset: Real(23680), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(23808), size: Real(1) }, Varnode { space: Unk, offset: Real(23936), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(24064), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(24192), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(24064), size: Real(1) }, Varnode { space: Unk, offset: Real(24192), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(24576), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(24320), size: Real(1) }, Varnode { space: Unk, offset: Real(23296), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(24448), size: Real(1) }, Varnode { space: Unk, offset: Real(24320), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(24704), size: Real(1) }, Varnode { space: Unk, offset: Real(24448), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(24576), size: Real(1) }, Varnode { space: Unk, offset: Real(24704), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(46336), size: Real(1) }, Varnode { space: Unk, offset: Real(23552), size: Real(1) })"
+                );
+                println!("\t{}", "Unk");
+            }
+            Self::Variant47() => {
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(46592), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(46720), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(46720), size: Real(1) }, Varnode { space: Unk, offset: Real(46592), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(46976), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(47104), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(46976), size: Real(1) }, Varnode { space: Unk, offset: Real(47104), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(47232), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(47360), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(47232), size: Real(1) }, Varnode { space: Unk, offset: Real(47360), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(47488), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(47616), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(47488), size: Real(1) }, Varnode { space: Unk, offset: Real(47616), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(47744), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(47872), size: Real(1) }, Varnode { space: Unk, offset: Real(46592), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(47744), size: Real(1) }, Varnode { space: Unk, offset: Real(47872), size: Real(1) })"
+                );
+            }
+            Self::Variant48() => {
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(48128), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(48256), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(48384), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(48512), size: Real(1) }, Varnode { space: Unk, offset: Real(48384), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(48256), size: Real(1) }, Varnode { space: Unk, offset: Real(48512), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(48768), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(48896), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(48768), size: Real(1) }, Varnode { space: Unk, offset: Real(48896), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(49024), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(49152), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(49024), size: Real(1) }, Varnode { space: Unk, offset: Real(49152), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(49280), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(49408), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(49280), size: Real(1) }, Varnode { space: Unk, offset: Real(49408), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(49536), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(49664), size: Real(1) }, Varnode { space: Unk, offset: Real(48128), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(49536), size: Real(1) }, Varnode { space: Unk, offset: Real(49664), size: Real(1) })"
+                );
+            }
+            Self::Variant49() => {
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(49920), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(50048), size: Real(1) }, Varnode { space: Unk, offset: Real(49920), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(50176), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(50048), size: Real(1) }, Varnode { space: Unk, offset: Real(50176), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(50432), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(50560), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(50432), size: Real(1) }, Varnode { space: Unk, offset: Real(50560), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(50688), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(50816), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(50688), size: Real(1) }, Varnode { space: Unk, offset: Real(50816), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(50944), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(51072), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(50944), size: Real(1) }, Varnode { space: Unk, offset: Real(51072), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(51200), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(51328), size: Real(1) }, Varnode { space: Unk, offset: Real(49920), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(51200), size: Real(1) }, Varnode { space: Unk, offset: Real(51328), size: Real(1) })"
+                );
+            }
+            Self::Variant50() => {
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(51584), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(51712), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(51840), size: Real(1) }, Varnode { space: Unk, offset: Real(51712), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(51968), size: Real(1) }, Varnode { space: Unk, offset: Real(51840), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(52096), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(51968), size: Real(1) }, Varnode { space: Unk, offset: Real(52096), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(52352), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(52480), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(52352), size: Real(1) }, Varnode { space: Unk, offset: Real(52480), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(52608), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(52736), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(52608), size: Real(1) }, Varnode { space: Unk, offset: Real(52736), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(52864), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(52992), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(52864), size: Real(1) }, Varnode { space: Unk, offset: Real(52992), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(53120), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(53248), size: Real(1) }, Varnode { space: Unk, offset: Real(51584), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(53120), size: Real(1) }, Varnode { space: Unk, offset: Real(53248), size: Real(1) })"
+                );
+            }
+            Self::Variant51(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(24832), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(25088), size: Real(1) }, Varnode { space: Unk, offset: Real(24832), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(25216), size: Real(1) }, Varnode { space: Unk, offset: Real(24832), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(25472), size: Real(1) }, Varnode { space: Unk, offset: Real(25216), size: Real(1) }, Varnode { space: Unk, offset: Real(25088), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(25728), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(25600), size: Real(1) }, Varnode { space: Unk, offset: Real(25472), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(25856), size: Real(1) }, Varnode { space: Unk, offset: Real(25600), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(25728), size: Real(1) }, Varnode { space: Unk, offset: Real(25856), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(25984), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(26112), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(25984), size: Real(1) }, Varnode { space: Unk, offset: Real(26112), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(26240), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(26368), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(26240), size: Real(1) }, Varnode { space: Unk, offset: Real(26368), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(26496), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(26624), size: Real(1) }, Varnode { space: Unk, offset: Real(25088), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(26496), size: Real(1) }, Varnode { space: Unk, offset: Real(26624), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(25472), size: Real(1) })"
+                );
+            }
+            Self::Variant52(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(53504), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(24832), size: Real(1) }, Varnode { space: Unk, offset: Real(53504), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(25088), size: Real(1) }, Varnode { space: Unk, offset: Real(24832), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(25216), size: Real(1) }, Varnode { space: Unk, offset: Real(24832), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(25472), size: Real(1) }, Varnode { space: Unk, offset: Real(25216), size: Real(1) }, Varnode { space: Unk, offset: Real(25088), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(25728), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(25600), size: Real(1) }, Varnode { space: Unk, offset: Real(25472), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(25856), size: Real(1) }, Varnode { space: Unk, offset: Real(25600), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(25728), size: Real(1) }, Varnode { space: Unk, offset: Real(25856), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(25984), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(26112), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(25984), size: Real(1) }, Varnode { space: Unk, offset: Real(26112), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(26240), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(26368), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(26240), size: Real(1) }, Varnode { space: Unk, offset: Real(26368), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(26496), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(26624), size: Real(1) }, Varnode { space: Unk, offset: Real(25088), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(26496), size: Real(1) }, Varnode { space: Unk, offset: Real(26624), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(53504), size: Real(1) }, Varnode { space: Unk, offset: Real(25472), size: Real(1) })"
+                );
+                println!("\t{}", "Unk");
+            }
+            Self::Variant53(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(26752), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(27008), size: Real(1) }, Varnode { space: Unk, offset: Real(26752), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(27136), size: Real(1) }, Varnode { space: Unk, offset: Real(27008), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(27264), size: Real(1) }, Varnode { space: Unk, offset: Real(26752), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(27520), size: Real(1) }, Varnode { space: Unk, offset: Real(27136), size: Real(1) }, Varnode { space: Unk, offset: Real(27264), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(27776), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(27648), size: Real(1) }, Varnode { space: Unk, offset: Real(27520), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(27904), size: Real(1) }, Varnode { space: Unk, offset: Real(27648), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(27776), size: Real(1) }, Varnode { space: Unk, offset: Real(27904), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(28032), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(28160), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(28032), size: Real(1) }, Varnode { space: Unk, offset: Real(28160), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(28288), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(28416), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(28288), size: Real(1) }, Varnode { space: Unk, offset: Real(28416), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(28544), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(28672), size: Real(1) }, Varnode { space: Unk, offset: Real(27008), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(28544), size: Real(1) }, Varnode { space: Unk, offset: Real(28672), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(27520), size: Real(1) })"
+                );
+            }
+            Self::Variant54(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(53760), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(26752), size: Real(1) }, Varnode { space: Unk, offset: Real(53760), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(27008), size: Real(1) }, Varnode { space: Unk, offset: Real(26752), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(27136), size: Real(1) }, Varnode { space: Unk, offset: Real(27008), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(27264), size: Real(1) }, Varnode { space: Unk, offset: Real(26752), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(27520), size: Real(1) }, Varnode { space: Unk, offset: Real(27136), size: Real(1) }, Varnode { space: Unk, offset: Real(27264), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(27776), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(27648), size: Real(1) }, Varnode { space: Unk, offset: Real(27520), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(27904), size: Real(1) }, Varnode { space: Unk, offset: Real(27648), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(27776), size: Real(1) }, Varnode { space: Unk, offset: Real(27904), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(28032), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(28160), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(28032), size: Real(1) }, Varnode { space: Unk, offset: Real(28160), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(28288), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(28416), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(28288), size: Real(1) }, Varnode { space: Unk, offset: Real(28416), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(28544), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(28672), size: Real(1) }, Varnode { space: Unk, offset: Real(27008), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(28544), size: Real(1) }, Varnode { space: Unk, offset: Real(28672), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(53760), size: Real(1) }, Varnode { space: Unk, offset: Real(27520), size: Real(1) })"
+                );
+                println!("\t{}", "Unk");
+            }
+            Self::Variant55(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(28800), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(29056), size: Real(1) }, Varnode { space: Unk, offset: Real(28800), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(29184), size: Real(1) }, Varnode { space: Unk, offset: Real(28800), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(29312), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(29440), size: Real(1) }, Varnode { space: Unk, offset: Real(29312), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(29696), size: Real(1) }, Varnode { space: Unk, offset: Real(29184), size: Real(1) }, Varnode { space: Unk, offset: Real(29440), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(29952), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(29824), size: Real(1) }, Varnode { space: Unk, offset: Real(29696), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(30080), size: Real(1) }, Varnode { space: Unk, offset: Real(29824), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(29952), size: Real(1) }, Varnode { space: Unk, offset: Real(30080), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(30208), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(30336), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(30208), size: Real(1) }, Varnode { space: Unk, offset: Real(30336), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(30464), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(30592), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(30464), size: Real(1) }, Varnode { space: Unk, offset: Real(30592), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(30720), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(30848), size: Real(1) }, Varnode { space: Unk, offset: Real(29056), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(30720), size: Real(1) }, Varnode { space: Unk, offset: Real(30848), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(29696), size: Real(1) })"
+                );
+            }
+            Self::Variant56(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(54016), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(28800), size: Real(1) }, Varnode { space: Unk, offset: Real(54016), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(29056), size: Real(1) }, Varnode { space: Unk, offset: Real(28800), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(29184), size: Real(1) }, Varnode { space: Unk, offset: Real(28800), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(29312), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(29440), size: Real(1) }, Varnode { space: Unk, offset: Real(29312), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(29696), size: Real(1) }, Varnode { space: Unk, offset: Real(29184), size: Real(1) }, Varnode { space: Unk, offset: Real(29440), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(29952), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(29824), size: Real(1) }, Varnode { space: Unk, offset: Real(29696), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(30080), size: Real(1) }, Varnode { space: Unk, offset: Real(29824), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(29952), size: Real(1) }, Varnode { space: Unk, offset: Real(30080), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(30208), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(30336), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(30208), size: Real(1) }, Varnode { space: Unk, offset: Real(30336), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(30464), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(30592), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(30464), size: Real(1) }, Varnode { space: Unk, offset: Real(30592), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(30720), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(30848), size: Real(1) }, Varnode { space: Unk, offset: Real(29056), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(30720), size: Real(1) }, Varnode { space: Unk, offset: Real(30848), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(54016), size: Real(1) }, Varnode { space: Unk, offset: Real(29696), size: Real(1) })"
+                );
+                println!("\t{}", "Unk");
+            }
+            Self::Variant57(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(30976), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(31232), size: Real(1) }, Varnode { space: Unk, offset: Real(30976), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(31360), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(31488), size: Real(1) }, Varnode { space: Unk, offset: Real(31360), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(31616), size: Real(1) }, Varnode { space: Unk, offset: Real(31488), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(31744), size: Real(1) }, Varnode { space: Unk, offset: Real(30976), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(32000), size: Real(1) }, Varnode { space: Unk, offset: Real(31616), size: Real(1) }, Varnode { space: Unk, offset: Real(31744), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(32256), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(32128), size: Real(1) }, Varnode { space: Unk, offset: Real(32000), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(32384), size: Real(1) }, Varnode { space: Unk, offset: Real(32128), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(32256), size: Real(1) }, Varnode { space: Unk, offset: Real(32384), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(32512), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(32640), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(32512), size: Real(1) }, Varnode { space: Unk, offset: Real(32640), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(32768), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(32896), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(32768), size: Real(1) }, Varnode { space: Unk, offset: Real(32896), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(33024), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(33152), size: Real(1) }, Varnode { space: Unk, offset: Real(31232), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(33024), size: Real(1) }, Varnode { space: Unk, offset: Real(33152), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(32000), size: Real(1) })"
+                );
+            }
+            Self::Variant58(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(54272), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(30976), size: Real(1) }, Varnode { space: Unk, offset: Real(54272), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(31232), size: Real(1) }, Varnode { space: Unk, offset: Real(30976), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(31360), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(31488), size: Real(1) }, Varnode { space: Unk, offset: Real(31360), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(31616), size: Real(1) }, Varnode { space: Unk, offset: Real(31488), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(31744), size: Real(1) }, Varnode { space: Unk, offset: Real(30976), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(32000), size: Real(1) }, Varnode { space: Unk, offset: Real(31616), size: Real(1) }, Varnode { space: Unk, offset: Real(31744), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(32256), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(32128), size: Real(1) }, Varnode { space: Unk, offset: Real(32000), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(32384), size: Real(1) }, Varnode { space: Unk, offset: Real(32128), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(32256), size: Real(1) }, Varnode { space: Unk, offset: Real(32384), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(32512), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(32640), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(32512), size: Real(1) }, Varnode { space: Unk, offset: Real(32640), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(32768), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(32896), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(32768), size: Real(1) }, Varnode { space: Unk, offset: Real(32896), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(33024), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(33152), size: Real(1) }, Varnode { space: Unk, offset: Real(31232), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(33024), size: Real(1) }, Varnode { space: Unk, offset: Real(33152), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(54272), size: Real(1) }, Varnode { space: Unk, offset: Real(32000), size: Real(1) })"
+                );
+                println!("\t{}", "Unk");
+            }
+            Self::Variant59(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(33280), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(33536), size: Real(1) }, Varnode { space: Unk, offset: Real(33280), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(33792), size: Real(1) }, Varnode { space: Unk, offset: Real(33280), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(34048), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(33920), size: Real(1) }, Varnode { space: Unk, offset: Real(33792), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(34176), size: Real(1) }, Varnode { space: Unk, offset: Real(33920), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(34048), size: Real(1) }, Varnode { space: Unk, offset: Real(34176), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(34304), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(34432), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(34304), size: Real(1) }, Varnode { space: Unk, offset: Real(34432), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(34560), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(34688), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(34560), size: Real(1) }, Varnode { space: Unk, offset: Real(34688), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(34816), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(34944), size: Real(1) }, Varnode { space: Unk, offset: Real(33536), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(34816), size: Real(1) }, Varnode { space: Unk, offset: Real(34944), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(33792), size: Real(1) })"
+                );
+            }
+            Self::Variant60(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(54528), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(33280), size: Real(1) }, Varnode { space: Unk, offset: Real(54528), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(33536), size: Real(1) }, Varnode { space: Unk, offset: Real(33280), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(33792), size: Real(1) }, Varnode { space: Unk, offset: Real(33280), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(34048), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(33920), size: Real(1) }, Varnode { space: Unk, offset: Real(33792), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(34176), size: Real(1) }, Varnode { space: Unk, offset: Real(33920), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(34048), size: Real(1) }, Varnode { space: Unk, offset: Real(34176), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(34304), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(34432), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(34304), size: Real(1) }, Varnode { space: Unk, offset: Real(34432), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(34560), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(34688), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(34560), size: Real(1) }, Varnode { space: Unk, offset: Real(34688), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(34816), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(34944), size: Real(1) }, Varnode { space: Unk, offset: Real(33536), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(34816), size: Real(1) }, Varnode { space: Unk, offset: Real(34944), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(54528), size: Real(1) }, Varnode { space: Unk, offset: Real(33792), size: Real(1) })"
+                );
+                println!("\t{}", "Unk");
+            }
+            Self::Variant61(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(35072), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(35328), size: Real(1) }, Varnode { space: Unk, offset: Real(35072), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSright(Varnode { space: Unk, offset: Real(35584), size: Real(1) }, Varnode { space: Unk, offset: Real(35072), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(35840), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(35712), size: Real(1) }, Varnode { space: Unk, offset: Real(35584), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(35968), size: Real(1) }, Varnode { space: Unk, offset: Real(35712), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(35840), size: Real(1) }, Varnode { space: Unk, offset: Real(35968), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(36096), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(36224), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(36096), size: Real(1) }, Varnode { space: Unk, offset: Real(36224), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(36352), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(36480), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(36352), size: Real(1) }, Varnode { space: Unk, offset: Real(36480), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(36608), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(36736), size: Real(1) }, Varnode { space: Unk, offset: Real(35328), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(36608), size: Real(1) }, Varnode { space: Unk, offset: Real(36736), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(35584), size: Real(1) })"
+                );
+            }
+            Self::Variant62(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(54784), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(35072), size: Real(1) }, Varnode { space: Unk, offset: Real(54784), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(35328), size: Real(1) }, Varnode { space: Unk, offset: Real(35072), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSright(Varnode { space: Unk, offset: Real(35584), size: Real(1) }, Varnode { space: Unk, offset: Real(35072), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(35840), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(35712), size: Real(1) }, Varnode { space: Unk, offset: Real(35584), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(35968), size: Real(1) }, Varnode { space: Unk, offset: Real(35712), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(35840), size: Real(1) }, Varnode { space: Unk, offset: Real(35968), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(36096), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(36224), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(36096), size: Real(1) }, Varnode { space: Unk, offset: Real(36224), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(36352), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(36480), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(36352), size: Real(1) }, Varnode { space: Unk, offset: Real(36480), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(36608), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(36736), size: Real(1) }, Varnode { space: Unk, offset: Real(35328), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(36608), size: Real(1) }, Varnode { space: Unk, offset: Real(36736), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(54784), size: Real(1) }, Varnode { space: Unk, offset: Real(35584), size: Real(1) })"
+                );
+                println!("\t{}", "Unk");
+            }
+            Self::Variant63(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(36864), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(36992), size: Real(1) }, Varnode { space: Unk, offset: Real(36864), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(37120), size: Real(1) }, Varnode { space: Unk, offset: Real(36992), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(37248), size: Real(1) }, Varnode { space: Unk, offset: Real(36864), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(37504), size: Real(1) }, Varnode { space: Unk, offset: Real(37120), size: Real(1) }, Varnode { space: Unk, offset: Real(37248), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(37760), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(37632), size: Real(1) }, Varnode { space: Unk, offset: Real(37504), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(37888), size: Real(1) }, Varnode { space: Unk, offset: Real(37632), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(37760), size: Real(1) }, Varnode { space: Unk, offset: Real(37888), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(38016), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(38144), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(38016), size: Real(1) }, Varnode { space: Unk, offset: Real(38144), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(38272), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(38400), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(38272), size: Real(1) }, Varnode { space: Unk, offset: Real(38400), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(38528), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(38656), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(38528), size: Real(1) }, Varnode { space: Unk, offset: Real(38656), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(37504), size: Real(1) })"
+                );
+            }
+            Self::Variant64(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(55040), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(36864), size: Real(1) }, Varnode { space: Unk, offset: Real(55040), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(36992), size: Real(1) }, Varnode { space: Unk, offset: Real(36864), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(37120), size: Real(1) }, Varnode { space: Unk, offset: Real(36992), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(37248), size: Real(1) }, Varnode { space: Unk, offset: Real(36864), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(37504), size: Real(1) }, Varnode { space: Unk, offset: Real(37120), size: Real(1) }, Varnode { space: Unk, offset: Real(37248), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(37760), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(37632), size: Real(1) }, Varnode { space: Unk, offset: Real(37504), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(37888), size: Real(1) }, Varnode { space: Unk, offset: Real(37632), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(37760), size: Real(1) }, Varnode { space: Unk, offset: Real(37888), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(38016), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(38144), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(38016), size: Real(1) }, Varnode { space: Unk, offset: Real(38144), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(38272), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(38400), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(38272), size: Real(1) }, Varnode { space: Unk, offset: Real(38400), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(38528), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(38656), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(38528), size: Real(1) }, Varnode { space: Unk, offset: Real(38656), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(55040), size: Real(1) }, Varnode { space: Unk, offset: Real(37504), size: Real(1) })"
+                );
+                println!("\t{}", "Unk");
+            }
+            Self::Variant65(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(38784), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(39040), size: Real(1) }, Varnode { space: Unk, offset: Real(38784), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(39296), size: Real(1) }, Varnode { space: Unk, offset: Real(38784), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(39552), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(39424), size: Real(1) }, Varnode { space: Unk, offset: Real(39296), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(39680), size: Real(1) }, Varnode { space: Unk, offset: Real(39424), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(39552), size: Real(1) }, Varnode { space: Unk, offset: Real(39680), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(39808), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(39936), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(39808), size: Real(1) }, Varnode { space: Unk, offset: Real(39936), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(40064), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(40192), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(40064), size: Real(1) }, Varnode { space: Unk, offset: Real(40192), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(40320), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(40448), size: Real(1) }, Varnode { space: Unk, offset: Real(39040), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(40320), size: Real(1) }, Varnode { space: Unk, offset: Real(40448), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(39296), size: Real(1) })"
+                );
+            }
+            Self::Variant66(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(55296), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(38784), size: Real(1) }, Varnode { space: Unk, offset: Real(55296), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(39040), size: Real(1) }, Varnode { space: Unk, offset: Real(38784), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(39296), size: Real(1) }, Varnode { space: Unk, offset: Real(38784), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(39552), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(39424), size: Real(1) }, Varnode { space: Unk, offset: Real(39296), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(39680), size: Real(1) }, Varnode { space: Unk, offset: Real(39424), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(39552), size: Real(1) }, Varnode { space: Unk, offset: Real(39680), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(39808), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(39936), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(39808), size: Real(1) }, Varnode { space: Unk, offset: Real(39936), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(40064), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(40192), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(40064), size: Real(1) }, Varnode { space: Unk, offset: Real(40192), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(40320), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(40448), size: Real(1) }, Varnode { space: Unk, offset: Real(39040), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(40320), size: Real(1) }, Varnode { space: Unk, offset: Real(40448), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(55296), size: Real(1) }, Varnode { space: Unk, offset: Real(39296), size: Real(1) })"
+                );
+                println!("\t{}", "Unk");
+            }
+            Self::Variant67(op0, op1) => {
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(40832), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(41088), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(40832), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(41344), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(41216), size: Real(1) }, Varnode { space: Unk, offset: Real(41088), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(41472), size: Real(1) }, Varnode { space: Unk, offset: Real(41216), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(41344), size: Real(1) }, Varnode { space: Unk, offset: Real(41472), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(41600), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(41728), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(41600), size: Real(1) }, Varnode { space: Unk, offset: Real(41728), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(41856), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(41984), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(41856), size: Real(1) }, Varnode { space: Unk, offset: Real(41984), size: Real(1) })"
+                );
+            }
+            Self::Variant68(op0, op1) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(55552), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(40832), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(41088), size: Real(1) }, Varnode { space: Unk, offset: Real(55552), size: Real(1) }, Varnode { space: Unk, offset: Real(40832), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(41344), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(41216), size: Real(1) }, Varnode { space: Unk, offset: Real(41088), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(41472), size: Real(1) }, Varnode { space: Unk, offset: Real(41216), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(41344), size: Real(1) }, Varnode { space: Unk, offset: Real(41472), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(41600), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(41728), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(41600), size: Real(1) }, Varnode { space: Unk, offset: Real(41728), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(41856), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(41984), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(41856), size: Real(1) }, Varnode { space: Unk, offset: Real(41984), size: Real(1) })"
+                );
+            }
+            Self::Variant69(op0, op1) => {
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(42240), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNegate(Varnode { space: Unk, offset: Real(42496), size: Real(1) }, Varnode { space: Unk, offset: Real(42240), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(42496), size: Real(1) })"
+                );
+            }
+            Self::Variant70(op0, op1) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(55808), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(42240), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNegate(Varnode { space: Unk, offset: Real(42496), size: Real(1) }, Varnode { space: Unk, offset: Real(42240), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(55808), size: Real(1) }, Varnode { space: Unk, offset: Real(55808), size: Real(1) }, Varnode { space: Unk, offset: Real(42496), size: Real(1) })"
+                );
+                println!("\t{}", "Unk");
+            }
+            Self::Variant71(op0, op1) => {
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(43136), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(43136), size: Real(1) })"
+                );
+            }
+            Self::Variant72(op0, op1) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(56064), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(43136), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(56064), size: Real(1) }, Varnode { space: Unk, offset: Real(56064), size: Real(1) }, Varnode { space: Unk, offset: Real(43136), size: Real(1) })"
+                );
+                println!("\t{}", "Unk");
+            }
+            Self::Variant73(op0) => {
+                println!("\t{}", "Unk");
+                println!("\t{}", "Unk");
+            }
+            Self::Variant74(op0) => {
+                println!("\t{}", "Unk");
+            }
+            Self::Variant75(op0) => {
+                println!("\t{}", "Unk");
+                println!("\t{}", "Unk");
+            }
+            Self::Variant76(op0) => {
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(2), size: Real(2) })"
+                );
+                println!("\t{}", "Unk");
+                println!("\t{}", "Unk");
+            }
+            Self::Variant77() => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(8), size: Real(2) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(10), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(2), size: Real(2) })"
+                );
+                println!("\t{}", "Unk");
+            }
+            Self::Variant78() => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(8), size: Real(2) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(10), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(2), size: Real(2) })"
+                );
+                println!("\t{}", "Unk");
+                println!("\t{}", "Unk");
+            }
+            Self::Variant79(op0, op1) => {
+                println!("\t{}", "Unk");
+                println!("\t{}", "Unk");
+                println!("\t{}", "Unk");
+            }
+            Self::Variant80(op0, op1) => {
+                println!("\t{}", "Unk");
+                println!("\t{}", "Unk");
+                println!("\t{}", "Unk");
+            }
+            Self::Variant81(op0, op1) => {
+                println!("\t{}", "Unk");
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "BoolNegate(Varnode { space: Unk, offset: Real(56320), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(2), size: Real(2) })"
+                );
+                println!("\t{}", "Unk");
+                println!("\t{}", "Unk");
+            }
+            Self::Variant82(op0) => {
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "BoolNegate(Varnode { space: Unk, offset: Real(56448), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Real(8), size: Real(2) }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(10), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(2), size: Real(2) })"
+                );
+                println!("\t{}", "Unk");
+            }
+            Self::Variant83(op0) => {
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(2), size: Real(2) })"
+                );
+                println!("\t{}", "Unk");
+                println!("\t{}", "Unk");
+            }
+            Self::Variant84() => {
+                println!("\t{}", "Unk");
+            }
+            Self::Variant85() => {
+                println!("\t{}", "Unk");
+            }
+            Self::Variant86() => {
+                println!("\t{}", "Unk");
+            }
+            Self::Variant87() => {
+                println!("\t{}", "Unk");
+            }
+            Self::Variant88() => {
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(56832), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(56960), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(56832), size: Real(1) }, Varnode { space: Unk, offset: Real(56960), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(57088), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(57216), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(57088), size: Real(1) }, Varnode { space: Unk, offset: Real(57216), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(57728), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(57344), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(57472), size: Real(1) }, Varnode { space: Unk, offset: Real(57344), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "BoolNegate(Varnode { space: Unk, offset: Real(57600), size: Real(1) }, Varnode { space: Unk, offset: Real(57472), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(57856), size: Real(1) }, Varnode { space: Unk, offset: Real(57600), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(57728), size: Real(1) }, Varnode { space: Unk, offset: Real(57856), size: Real(1) })"
+                );
+            }
+            Self::Variant89() => {
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(57984), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(58112), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(57984), size: Real(1) }, Varnode { space: Unk, offset: Real(58112), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(58240), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(58368), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(58240), size: Real(1) }, Varnode { space: Unk, offset: Real(58368), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(58496), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(58624), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(58496), size: Real(1) }, Varnode { space: Unk, offset: Real(58624), size: Real(1) })"
+                );
+            }
+            Self::Variant90() => {}
+            Self::Variant91() => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(58752), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(58880), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(59008), size: Real(1) }, Varnode { space: Unk, offset: Real(58880), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(59136), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(59264), size: Real(1) }, Varnode { space: Unk, offset: Real(59136), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(59392), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(59520), size: Real(1) }, Varnode { space: Unk, offset: Real(59392), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(59904), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(58752), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntCarry(Varnode { space: Unk, offset: Real(60160), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(58752), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(60416), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntEqual(Varnode { space: Unk, offset: Real(60288), size: Real(1) }, Varnode { space: Unk, offset: Real(59904), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(60544), size: Real(1) }, Varnode { space: Unk, offset: Real(60288), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(60416), size: Real(1) }, Varnode { space: Unk, offset: Real(60544), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(60672), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(60800), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(60672), size: Real(1) }, Varnode { space: Unk, offset: Real(60800), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(61824), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(60928), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(61056), size: Real(1) }, Varnode { space: Unk, offset: Real(60928), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(61184), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(61312), size: Real(1) }, Varnode { space: Unk, offset: Real(61184), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "BoolNegate(Varnode { space: Unk, offset: Real(61440), size: Real(1) }, Varnode { space: Unk, offset: Real(61312), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "BoolAnd(Varnode { space: Unk, offset: Real(61568), size: Real(1) }, Varnode { space: Unk, offset: Real(61440), size: Real(1) }, Varnode { space: Unk, offset: Real(60160), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "BoolOr(Varnode { space: Unk, offset: Real(61696), size: Real(1) }, Varnode { space: Unk, offset: Real(61056), size: Real(1) }, Varnode { space: Unk, offset: Real(61568), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(61952), size: Real(1) }, Varnode { space: Unk, offset: Real(61696), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(61824), size: Real(1) }, Varnode { space: Unk, offset: Real(61952), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(59904), size: Real(1) })"
+                );
+            }
+            Self::Variant92() => {
+                println!(
+                    "\t{}",
+                    "IntNegate(Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(62208), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(62336), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(62208), size: Real(1) }, Varnode { space: Unk, offset: Real(62336), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(62464), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(62592), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(62464), size: Real(1) }, Varnode { space: Unk, offset: Real(62592), size: Real(1) })"
+                );
+            }
+            Self::Variant93(op0, op1) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+            }
+            Self::Variant94(op0, op1) => {
+                println!("\t{}", "Unk");
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(10), size: Real(2) })"
+                );
+            }
+            Self::Variant95(op0, op1) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+            }
+            Self::Variant96(op0, op1, op2) => {
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(62848), size: Real(2) }, Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Unk, size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(62976), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(63104), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(62976), size: Real(1) }, Varnode { space: Unk, offset: Real(63104), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(63232), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(63360), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(63232), size: Real(1) }, Varnode { space: Unk, offset: Real(63360), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(64128), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(63488), size: Real(1) }, Varnode { space: Unk, offset: Real(10), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(63616), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(63744), size: Real(1) }, Varnode { space: Unk, offset: Real(63488), size: Real(1) }, Varnode { space: Unk, offset: Real(63616), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(63872), size: Real(1) }, Varnode { space: Unk, offset: Real(63744), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(64000), size: Real(1) }, Varnode { space: Unk, offset: Real(63872), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(64256), size: Real(1) }, Varnode { space: Unk, offset: Real(64000), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(64128), size: Real(1) }, Varnode { space: Unk, offset: Real(64256), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(64512), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntCarry(Varnode { space: Unk, offset: Real(64384), size: Real(1) }, Varnode { space: Unk, offset: Real(10), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(64640), size: Real(1) }, Varnode { space: Unk, offset: Real(64384), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(64512), size: Real(1) }, Varnode { space: Unk, offset: Real(64640), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(6), size: Real(2) }, Varnode { space: Unk, offset: Real(62848), size: Real(2) })"
+                );
+            }
+            Self::Variant97(op0, op1, op2, op3) => {
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(64896), size: Real(2) }, Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Unk, size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(65024), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(65152), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(65024), size: Real(1) }, Varnode { space: Unk, offset: Real(65152), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(65280), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(65408), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(65280), size: Real(1) }, Varnode { space: Unk, offset: Real(65408), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(66176), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(65536), size: Real(1) }, Varnode { space: Unk, offset: Real(10), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(65664), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(65792), size: Real(1) }, Varnode { space: Unk, offset: Real(65536), size: Real(1) }, Varnode { space: Unk, offset: Real(65664), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(65920), size: Real(1) }, Varnode { space: Unk, offset: Real(65792), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(66048), size: Real(1) }, Varnode { space: Unk, offset: Real(65920), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(66304), size: Real(1) }, Varnode { space: Unk, offset: Real(66048), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(66176), size: Real(1) }, Varnode { space: Unk, offset: Real(66304), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(66560), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntCarry(Varnode { space: Unk, offset: Real(66432), size: Real(1) }, Varnode { space: Unk, offset: Real(10), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(66688), size: Real(1) }, Varnode { space: Unk, offset: Real(66432), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(66560), size: Real(1) }, Varnode { space: Unk, offset: Real(66688), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(6), size: Real(2) }, Varnode { space: Unk, offset: Real(64896), size: Real(2) })"
+                );
+            }
+            Self::Variant98(op0) => {
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(2), size: Real(2) })"
+                );
+                println!("\t{}", "Unk");
+            }
+            Self::Variant99(op0) => {
+                println!(
+                    "\t{}",
+                    "Load(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Unk, size: Real(8) }, Varnode { space: Unk, offset: Real(10), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(2), size: Real(2) })"
+                );
+            }
+            Self::Variant100(op0, op1) => {
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(66944), size: Real(2) }, Varnode { space: Unk, offset: Real(6), size: Real(2) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(67072), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(67200), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(67072), size: Real(1) }, Varnode { space: Unk, offset: Real(67200), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(67968), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(67328), size: Real(2) }, Varnode { space: Unk, offset: Real(6), size: Real(2) }, Varnode { space: Unk, offset: Real(4095), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(67456), size: Unk }, Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(4095), size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(67584), size: Real(2) }, Varnode { space: Unk, offset: Real(67328), size: Real(2) }, Varnode { space: Unk, offset: Real(67456), size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(67712), size: Real(2) }, Varnode { space: Unk, offset: Real(67584), size: Real(2) }, Varnode { space: Unk, offset: Real(4096), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(67840), size: Real(1) }, Varnode { space: Unk, offset: Real(67712), size: Real(2) }, Varnode { space: Unk, offset: Real(0), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(68096), size: Real(1) }, Varnode { space: Unk, offset: Real(67840), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(67968), size: Real(1) }, Varnode { space: Unk, offset: Real(68096), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(68352), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntCarry(Varnode { space: Unk, offset: Real(68224), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(2) }, Varnode { space: Unk, offset: Unk, size: Unk })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(68480), size: Real(1) }, Varnode { space: Unk, offset: Real(68224), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(68352), size: Real(1) }, Varnode { space: Unk, offset: Real(68480), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(6), size: Real(2) }, Varnode { space: Unk, offset: Real(66944), size: Real(2) })"
+                );
+            }
+            Self::Variant101(op0, op1) => {
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(68736), size: Real(2) }, Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Unk, size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(68864), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551487), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(68992), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(68864), size: Real(1) }, Varnode { space: Unk, offset: Real(68992), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(69120), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551551), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(69248), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(6), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(69120), size: Real(1) }, Varnode { space: Unk, offset: Real(69248), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(70016), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551583), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(69376), size: Real(1) }, Varnode { space: Unk, offset: Real(10), size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(69504), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(1) }, Varnode { space: Unk, offset: Real(15), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(69632), size: Real(1) }, Varnode { space: Unk, offset: Real(69376), size: Real(1) }, Varnode { space: Unk, offset: Real(69504), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(69760), size: Real(1) }, Varnode { space: Unk, offset: Real(69632), size: Real(1) }, Varnode { space: Unk, offset: Real(16), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntNotEqual(Varnode { space: Unk, offset: Real(69888), size: Real(1) }, Varnode { space: Unk, offset: Real(69760), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(70144), size: Real(1) }, Varnode { space: Unk, offset: Real(69888), size: Real(1) }, Varnode { space: Unk, offset: Real(5), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(70016), size: Real(1) }, Varnode { space: Unk, offset: Real(70144), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(70400), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(18446744073709551599), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntCarry(Varnode { space: Unk, offset: Real(70272), size: Real(1) }, Varnode { space: Unk, offset: Real(10), size: Real(1) }, Varnode { space: Unk, offset: Unk, size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntLeft(Varnode { space: Unk, offset: Real(70528), size: Real(1) }, Varnode { space: Unk, offset: Real(70272), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(70400), size: Real(1) }, Varnode { space: Unk, offset: Real(70528), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(10), size: Real(2) }, Varnode { space: Unk, offset: Real(68736), size: Real(2) })"
+                );
+            }
+            Self::Variant102(op0) => {
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(1), size: Unk })"
+                );
+            }
+            Self::Variant103(op0) => {
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Unk, size: Unk }, Varnode { space: Unk, offset: Real(1), size: Unk })"
+                );
+            }
+        }
     }
 }
 impl std::fmt::Display for Sym0 {
-    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Variant0(op0, op1) => {
@@ -1866,10 +6454,7 @@ impl std::fmt::Display for Sym0 {
     }
 }
 
-#[derive(Debug)]
-#[allow(dead_code)]
 struct Sym4();
-#[allow(dead_code)]
 impl Sym4 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1881,10 +6466,7 @@ impl std::fmt::Display for Sym4 {
     }
 }
 
-#[derive(Debug)]
-#[allow(dead_code)]
 struct Sym5();
-#[allow(dead_code)]
 impl Sym5 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1896,10 +6478,7 @@ impl std::fmt::Display for Sym5 {
     }
 }
 
-#[derive(Debug)]
-#[allow(dead_code)]
 struct Sym6();
-#[allow(dead_code)]
 impl Sym6 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1911,10 +6490,7 @@ impl std::fmt::Display for Sym6 {
     }
 }
 
-#[derive(Debug)]
-#[allow(dead_code)]
 struct Sym7();
-#[allow(dead_code)]
 impl Sym7 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1926,10 +6502,7 @@ impl std::fmt::Display for Sym7 {
     }
 }
 
-#[derive(Debug)]
-#[allow(dead_code)]
 struct Sym8();
-#[allow(dead_code)]
 impl Sym8 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1941,10 +6514,7 @@ impl std::fmt::Display for Sym8 {
     }
 }
 
-#[derive(Debug)]
-#[allow(dead_code)]
 struct Sym9();
-#[allow(dead_code)]
 impl Sym9 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1956,10 +6526,7 @@ impl std::fmt::Display for Sym9 {
     }
 }
 
-#[derive(Debug)]
-#[allow(dead_code)]
 struct Sym10();
-#[allow(dead_code)]
 impl Sym10 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1971,10 +6538,7 @@ impl std::fmt::Display for Sym10 {
     }
 }
 
-#[derive(Debug)]
-#[allow(dead_code)]
 struct Sym11();
-#[allow(dead_code)]
 impl Sym11 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -1986,10 +6550,7 @@ impl std::fmt::Display for Sym11 {
     }
 }
 
-#[derive(Debug)]
-#[allow(dead_code)]
 struct Sym12();
-#[allow(dead_code)]
 impl Sym12 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -2001,10 +6562,7 @@ impl std::fmt::Display for Sym12 {
     }
 }
 
-#[derive(Debug)]
-#[allow(dead_code)]
 struct Sym13();
-#[allow(dead_code)]
 impl Sym13 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -2016,10 +6574,7 @@ impl std::fmt::Display for Sym13 {
     }
 }
 
-#[derive(Debug)]
-#[allow(dead_code)]
 struct Sym14();
-#[allow(dead_code)]
 impl Sym14 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -2031,10 +6586,7 @@ impl std::fmt::Display for Sym14 {
     }
 }
 
-#[derive(Debug)]
-#[allow(dead_code)]
 struct Sym15();
-#[allow(dead_code)]
 impl Sym15 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -2046,10 +6598,7 @@ impl std::fmt::Display for Sym15 {
     }
 }
 
-#[derive(Debug)]
-#[allow(dead_code)]
 struct Sym16();
-#[allow(dead_code)]
 impl Sym16 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -2061,10 +6610,7 @@ impl std::fmt::Display for Sym16 {
     }
 }
 
-#[derive(Debug)]
-#[allow(dead_code)]
 struct Sym17();
-#[allow(dead_code)]
 impl Sym17 {
     fn decode(_: &[u8]) -> Option<Self> {
         Some(Self())
@@ -2076,7 +6622,6 @@ impl std::fmt::Display for Sym17 {
     }
 }
 
-#[derive(Debug)]
 enum Sym21 {
     Variant0(Sym7),
     Variant1(Sym6),
@@ -2088,7 +6633,7 @@ enum Sym21 {
 }
 impl Sym21 {
     fn decode(buf: &[u8]) -> Option<Self> {
-        match (buf[0usize] >> 0u8 & 7u8).into() {
+        match (buf[0usize] >> 0u8 & 7u8) {
             0u8 => Some(Self::Variant0(Sym7::decode(buf)?)),
             1u8 => Some(Self::Variant1(Sym6::decode(buf)?)),
             2u8 => Some(Self::Variant2(Sym9::decode(buf)?)),
@@ -2114,7 +6659,6 @@ impl std::fmt::Display for Sym21 {
     }
 }
 
-#[derive(Debug)]
 enum Sym24 {
     Variant0(Sym7),
     Variant1(Sym6),
@@ -2126,7 +6670,7 @@ enum Sym24 {
 }
 impl Sym24 {
     fn decode(buf: &[u8]) -> Option<Self> {
-        match (buf[0usize] >> 3u8 & 7u8).into() {
+        match (buf[0usize] >> 3u8 & 7u8) {
             0u8 => Some(Self::Variant0(Sym7::decode(buf)?)),
             1u8 => Some(Self::Variant1(Sym6::decode(buf)?)),
             2u8 => Some(Self::Variant2(Sym9::decode(buf)?)),
@@ -2152,7 +6696,6 @@ impl std::fmt::Display for Sym24 {
     }
 }
 
-#[derive(Debug)]
 enum Sym26 {
     Variant0(Sym13),
     Variant1(Sym14),
@@ -2161,7 +6704,7 @@ enum Sym26 {
 }
 impl Sym26 {
     fn decode(buf: &[u8]) -> Option<Self> {
-        match (buf[0usize] >> 4u8 & 3u8).into() {
+        match (buf[0usize] >> 4u8 & 3u8) {
             0u8 => Some(Self::Variant0(Sym13::decode(buf)?)),
             1u8 => Some(Self::Variant1(Sym14::decode(buf)?)),
             2u8 => Some(Self::Variant2(Sym15::decode(buf)?)),
@@ -2181,7 +6724,6 @@ impl std::fmt::Display for Sym26 {
     }
 }
 
-#[derive(Debug)]
 enum Sym27 {
     Variant0(Sym13),
     Variant1(Sym14),
@@ -2190,7 +6732,7 @@ enum Sym27 {
 }
 impl Sym27 {
     fn decode(buf: &[u8]) -> Option<Self> {
-        match (buf[0usize] >> 4u8 & 3u8).into() {
+        match (buf[0usize] >> 4u8 & 3u8) {
             0u8 => Some(Self::Variant0(Sym13::decode(buf)?)),
             1u8 => Some(Self::Variant1(Sym14::decode(buf)?)),
             2u8 => Some(Self::Variant2(Sym15::decode(buf)?)),
@@ -2210,7 +6752,6 @@ impl std::fmt::Display for Sym27 {
     }
 }
 
-#[derive(Debug)]
 enum Sym28 {
     Variant0(Sym13),
     Variant1(Sym14),
@@ -2219,7 +6760,7 @@ enum Sym28 {
 }
 impl Sym28 {
     fn decode(buf: &[u8]) -> Option<Self> {
-        match (buf[0usize] >> 4u8 & 3u8).into() {
+        match (buf[0usize] >> 4u8 & 3u8) {
             0u8 => Some(Self::Variant0(Sym13::decode(buf)?)),
             1u8 => Some(Self::Variant1(Sym14::decode(buf)?)),
             2u8 => Some(Self::Variant2(Sym15::decode(buf)?)),
@@ -2239,7 +6780,6 @@ impl std::fmt::Display for Sym28 {
     }
 }
 
-#[derive(Debug)]
 enum Sym35 {
     Variant0(),
     Variant1(),
@@ -2247,8 +6787,6 @@ enum Sym35 {
     Variant3(),
 }
 impl Sym35 {
-    #[allow(unused_parens)]
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         match (buf[0usize] >> 3u8) & 3u8 {
             0u8 => {
@@ -2266,19 +6804,52 @@ impl Sym35 {
             _ => unreachable!(),
         }
     }
-    #[allow(unused_variables)]
-    #[allow(dead_code)]
     fn pcode(&self, vec: &mut Vec<Pcode>) {
-        println!(
-            "    {}", match self { Self::Variant0() => "INT_RIGHT, BOOL_NEGATE",
-            Self::Variant1() => "INT_RIGHT", Self::Variant2() =>
-            "INT_RIGHT, INT_AND, BOOL_NEGATE", Self::Variant3() => "INT_RIGHT, INT_AND",
+        match self {
+            Self::Variant0() => {
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "BoolNegate(Varnode { space: Unk, offset: Real(256), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) })"
+                );
             }
-        )
+            Self::Variant1() => {
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(512), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(7), size: Real(4) })"
+                );
+            }
+            Self::Variant2() => {
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(640), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(768), size: Real(1) }, Varnode { space: Unk, offset: Real(640), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "BoolNegate(Varnode { space: Unk, offset: Real(1024), size: Real(1) }, Varnode { space: Unk, offset: Real(768), size: Real(1) })"
+                );
+            }
+            Self::Variant3() => {
+                println!(
+                    "\t{}",
+                    "IntRight(Varnode { space: Unk, offset: Real(1152), size: Real(1) }, Varnode { space: Unk, offset: Real(0), size: Real(1) }, Varnode { space: Unk, offset: Real(4), size: Real(4) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAnd(Varnode { space: Unk, offset: Real(1408), size: Real(1) }, Varnode { space: Unk, offset: Real(1152), size: Real(1) }, Varnode { space: Unk, offset: Real(1), size: Real(1) })"
+                );
+            }
+        }
     }
 }
 impl std::fmt::Display for Sym35 {
-    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Variant0() => {
@@ -2301,24 +6872,20 @@ impl std::fmt::Display for Sym35 {
     }
 }
 
-#[derive(Debug)]
 enum Sym36 {
     Variant0(Op37),
 }
 impl Sym36 {
-    #[allow(unused_parens)]
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self::Variant0(Op37::decode(&buf)?))
+        Some(Self::Variant0(Op37::decode(buf)?))
     }
-    #[allow(unused_variables)]
-    #[allow(dead_code)]
     fn pcode(&self, vec: &mut Vec<Pcode>) {
-        println!("    {}", match self { Self::Variant0(op0) => "", })
+        match self {
+            Self::Variant0(op0) => {}
+        }
     }
 }
 impl std::fmt::Display for Sym36 {
-    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Variant0(op0) => {
@@ -2329,36 +6896,30 @@ impl std::fmt::Display for Sym36 {
     }
 }
 
-#[derive(Debug)]
 struct Op37(u8);
 impl Op37 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[0usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[0usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 enum Sym38 {
     Variant0(Op39),
 }
 impl Sym38 {
-    #[allow(unused_parens)]
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self::Variant0(Op39::decode(&buf)?))
+        Some(Self::Variant0(Op39::decode(buf)?))
     }
-    #[allow(unused_variables)]
-    #[allow(dead_code)]
     fn pcode(&self, vec: &mut Vec<Pcode>) {
-        println!("    {}", match self { Self::Variant0(op0) => "", })
+        match self {
+            Self::Variant0(op0) => {}
+        }
     }
 }
 impl std::fmt::Display for Sym38 {
-    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Variant0(op0) => {
@@ -2371,36 +6932,30 @@ impl std::fmt::Display for Sym38 {
     }
 }
 
-#[derive(Debug)]
 struct Op39(u8);
 impl Op39 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[0usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[0usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 enum Sym40 {
     Variant0(Op41),
 }
 impl Sym40 {
-    #[allow(unused_parens)]
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self::Variant0(Op41::decode(&buf)?))
+        Some(Self::Variant0(Op41::decode(buf)?))
     }
-    #[allow(unused_variables)]
-    #[allow(dead_code)]
     fn pcode(&self, vec: &mut Vec<Pcode>) {
-        println!("    {}", match self { Self::Variant0(op0) => "", })
+        match self {
+            Self::Variant0(op0) => {}
+        }
     }
 }
 impl std::fmt::Display for Sym40 {
-    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Variant0(op0) => {
@@ -2413,36 +6968,30 @@ impl std::fmt::Display for Sym40 {
     }
 }
 
-#[derive(Debug)]
 struct Op41(u8);
 impl Op41 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[0usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[0usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 enum Sym42 {
     Variant0(Op44, Op43),
 }
 impl Sym42 {
-    #[allow(unused_parens)]
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self::Variant0(Op44::decode(&buf)?, Op43::decode(&buf)?))
+        Some(Self::Variant0(Op44::decode(buf)?, Op43::decode(buf)?))
     }
-    #[allow(unused_variables)]
-    #[allow(dead_code)]
     fn pcode(&self, vec: &mut Vec<Pcode>) {
-        println!("    {}", match self { Self::Variant0(op0, op1) => "", })
+        match self {
+            Self::Variant0(op0, op1) => {}
+        }
     }
 }
 impl std::fmt::Display for Sym42 {
-    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Variant0(op0, op1) => {
@@ -2453,10 +7002,8 @@ impl std::fmt::Display for Sym42 {
     }
 }
 
-#[derive(Debug)]
 struct Op43();
 impl Op43 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self())
     }
@@ -2465,36 +7012,30 @@ impl Op43 {
     }
 }
 
-#[derive(Debug)]
 struct Op44(u8);
 impl Op44 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[0usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[0usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 enum Sym45 {
     Variant0(Op47, Op46),
 }
 impl Sym45 {
-    #[allow(unused_parens)]
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self::Variant0(Op47::decode(&buf)?, Op46::decode(&buf)?))
+        Some(Self::Variant0(Op47::decode(buf)?, Op46::decode(buf)?))
     }
-    #[allow(unused_variables)]
-    #[allow(dead_code)]
     fn pcode(&self, vec: &mut Vec<Pcode>) {
-        println!("    {}", match self { Self::Variant0(op0, op1) => "", })
+        match self {
+            Self::Variant0(op0, op1) => {}
+        }
     }
 }
 impl std::fmt::Display for Sym45 {
-    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Variant0(op0, op1) => {
@@ -2505,10 +7046,8 @@ impl std::fmt::Display for Sym45 {
     }
 }
 
-#[derive(Debug)]
 struct Op46();
 impl Op46 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self())
     }
@@ -2517,36 +7056,39 @@ impl Op46 {
     }
 }
 
-#[derive(Debug)]
 struct Op47(u8);
 impl Op47 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[0usize] >> 3u8 & 7u8).into()))
+        Some(Self((buf[0usize] >> 3u8 & 7u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 enum Sym48 {
     Variant0(Op49),
 }
 impl Sym48 {
-    #[allow(unused_parens)]
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self::Variant0(Op49::decode(&buf)?))
+        Some(Self::Variant0(Op49::decode(buf)?))
     }
-    #[allow(unused_variables)]
-    #[allow(dead_code)]
     fn pcode(&self, vec: &mut Vec<Pcode>) {
-        println!("    {}", match self { Self::Variant0(op0) => "COPY, INT_ADD", })
+        match self {
+            Self::Variant0(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(2176), size: Real(2) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntAdd(Varnode { space: Unk, offset: Real(6), size: Real(2) }, Varnode { space: Unk, offset: Real(6), size: Real(2) }, Varnode { space: Unk, offset: Real(1), size: Real(2) })"
+                );
+            }
+        }
     }
 }
 impl std::fmt::Display for Sym48 {
-    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Variant0(op0) => {
@@ -2559,10 +7101,8 @@ impl std::fmt::Display for Sym48 {
     }
 }
 
-#[derive(Debug)]
 struct Op49(Sym15);
 impl Op49 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -2571,24 +7111,29 @@ impl Op49 {
     }
 }
 
-#[derive(Debug)]
 enum Sym50 {
     Variant0(Op51),
 }
 impl Sym50 {
-    #[allow(unused_parens)]
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self::Variant0(Op51::decode(&buf)?))
+        Some(Self::Variant0(Op51::decode(buf)?))
     }
-    #[allow(unused_variables)]
-    #[allow(dead_code)]
     fn pcode(&self, vec: &mut Vec<Pcode>) {
-        println!("    {}", match self { Self::Variant0(op0) => "COPY, INT_SUB", })
+        match self {
+            Self::Variant0(op0) => {
+                println!(
+                    "\t{}",
+                    "Copy(Varnode { space: Unk, offset: Real(2560), size: Real(2) }, Varnode { space: Unk, offset: Real(6), size: Real(2) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntSub(Varnode { space: Unk, offset: Real(6), size: Real(2) }, Varnode { space: Unk, offset: Real(6), size: Real(2) }, Varnode { space: Unk, offset: Real(1), size: Real(2) })"
+                );
+            }
+        }
     }
 }
 impl std::fmt::Display for Sym50 {
-    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Variant0(op0) => {
@@ -2601,10 +7146,8 @@ impl std::fmt::Display for Sym50 {
     }
 }
 
-#[derive(Debug)]
 struct Op51(Sym15);
 impl Op51 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -2613,24 +7156,29 @@ impl Op51 {
     }
 }
 
-#[derive(Debug)]
 enum Sym52 {
     Variant0(Op53),
 }
 impl Sym52 {
-    #[allow(unused_parens)]
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self::Variant0(Op53::decode(&buf)?))
+        Some(Self::Variant0(Op53::decode(buf)?))
     }
-    #[allow(unused_variables)]
-    #[allow(dead_code)]
     fn pcode(&self, vec: &mut Vec<Pcode>) {
-        println!("    {}", match self { Self::Variant0(op0) => "INT_ZEXT, INT_OR", })
+        match self {
+            Self::Variant0(op0) => {
+                println!(
+                    "\t{}",
+                    "IntZext(Varnode { space: Unk, offset: Real(2944), size: Real(2) }, Varnode { space: Unk, offset: Real(2), size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(3200), size: Real(2) }, Varnode { space: Unk, offset: Real(65280), size: Real(2) }, Varnode { space: Unk, offset: Real(2944), size: Real(2) })"
+                );
+            }
+        }
     }
 }
 impl std::fmt::Display for Sym52 {
-    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Variant0(op0) => {
@@ -2643,10 +7191,8 @@ impl std::fmt::Display for Sym52 {
     }
 }
 
-#[derive(Debug)]
 struct Op53(Sym6);
 impl Op53 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym6::decode(&buf[0usize..])?))
     }
@@ -2655,24 +7201,29 @@ impl Op53 {
     }
 }
 
-#[derive(Debug)]
 enum Sym54 {
     Variant0(Op55),
 }
 impl Sym54 {
-    #[allow(unused_parens)]
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self::Variant0(Op55::decode(&buf)?))
+        Some(Self::Variant0(Op55::decode(buf)?))
     }
-    #[allow(unused_variables)]
-    #[allow(dead_code)]
     fn pcode(&self, vec: &mut Vec<Pcode>) {
-        println!("    {}", match self { Self::Variant0(op0) => "INT_ZEXT, INT_OR", })
+        match self {
+            Self::Variant0(op0) => {
+                println!(
+                    "\t{}",
+                    "IntZext(Varnode { space: Unk, offset: Real(3584), size: Real(2) }, Varnode { space: Unk, offset: Unk, size: Real(1) })"
+                );
+                println!(
+                    "\t{}",
+                    "IntOr(Varnode { space: Unk, offset: Real(3840), size: Real(2) }, Varnode { space: Unk, offset: Real(65280), size: Real(2) }, Varnode { space: Unk, offset: Real(3584), size: Real(2) })"
+                );
+            }
+        }
     }
 }
 impl std::fmt::Display for Sym54 {
-    #[allow(unused_variables)]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Variant0(op0) => {
@@ -2685,22 +7236,18 @@ impl std::fmt::Display for Sym54 {
     }
 }
 
-#[derive(Debug)]
 struct Op55(u8);
 impl Op55 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[0usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[0usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op60(Sym24);
 impl Op60 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym24::decode(&buf[0usize..])?))
     }
@@ -2709,10 +7256,8 @@ impl Op60 {
     }
 }
 
-#[derive(Debug)]
 struct Op61(Sym21);
 impl Op61 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
@@ -2721,10 +7266,8 @@ impl Op61 {
     }
 }
 
-#[derive(Debug)]
 struct Op62(Sym24);
 impl Op62 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym24::decode(&buf[0usize..])?))
     }
@@ -2733,22 +7276,18 @@ impl Op62 {
     }
 }
 
-#[derive(Debug)]
 struct Op63(u8);
 impl Op63 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[1usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op64(Sym24);
 impl Op64 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym24::decode(&buf[0usize..])?))
     }
@@ -2757,10 +7296,8 @@ impl Op64 {
     }
 }
 
-#[derive(Debug)]
 struct Op65(Sym15);
 impl Op65 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -2769,10 +7306,8 @@ impl Op65 {
     }
 }
 
-#[derive(Debug)]
 struct Op66(Sym15);
 impl Op66 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -2781,10 +7316,8 @@ impl Op66 {
     }
 }
 
-#[derive(Debug)]
 struct Op67(Sym21);
 impl Op67 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
@@ -2793,10 +7326,8 @@ impl Op67 {
     }
 }
 
-#[derive(Debug)]
 struct Op68(Sym15);
 impl Op68 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -2805,22 +7336,18 @@ impl Op68 {
     }
 }
 
-#[derive(Debug)]
 struct Op69(u8);
 impl Op69 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[1usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op70(Sym5);
 impl Op70 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
@@ -2829,10 +7356,8 @@ impl Op70 {
     }
 }
 
-#[derive(Debug)]
 struct Op71(Sym13);
 impl Op71 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym13::decode(&buf[0usize..])?))
     }
@@ -2841,10 +7366,8 @@ impl Op71 {
     }
 }
 
-#[derive(Debug)]
 struct Op72(Sym5);
 impl Op72 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
@@ -2853,10 +7376,8 @@ impl Op72 {
     }
 }
 
-#[derive(Debug)]
 struct Op73(Sym14);
 impl Op73 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym14::decode(&buf[0usize..])?))
     }
@@ -2865,10 +7386,8 @@ impl Op73 {
     }
 }
 
-#[derive(Debug)]
 struct Op74(Sym5);
 impl Op74 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
@@ -2877,10 +7396,8 @@ impl Op74 {
     }
 }
 
-#[derive(Debug)]
 struct Op75(Sym52);
 impl Op75 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym52::decode(&buf[0usize..])?))
     }
@@ -2889,10 +7406,8 @@ impl Op75 {
     }
 }
 
-#[derive(Debug)]
 struct Op76(Sym52);
 impl Op76 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym52::decode(&buf[0usize..])?))
     }
@@ -2901,10 +7416,8 @@ impl Op76 {
     }
 }
 
-#[derive(Debug)]
 struct Op77(Sym5);
 impl Op77 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
@@ -2913,10 +7426,8 @@ impl Op77 {
     }
 }
 
-#[derive(Debug)]
 struct Op78(Sym5);
 impl Op78 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
@@ -2925,10 +7436,8 @@ impl Op78 {
     }
 }
 
-#[derive(Debug)]
 struct Op79(Sym54);
 impl Op79 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym54::decode(&buf[1usize..])?))
     }
@@ -2937,10 +7446,8 @@ impl Op79 {
     }
 }
 
-#[derive(Debug)]
 struct Op80(Sym54);
 impl Op80 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym54::decode(&buf[1usize..])?))
     }
@@ -2949,10 +7456,8 @@ impl Op80 {
     }
 }
 
-#[derive(Debug)]
 struct Op81(Sym5);
 impl Op81 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
@@ -2961,10 +7466,8 @@ impl Op81 {
     }
 }
 
-#[derive(Debug)]
 struct Op82(Sym5);
 impl Op82 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
@@ -2973,10 +7476,8 @@ impl Op82 {
     }
 }
 
-#[derive(Debug)]
 struct Op83(Sym38);
 impl Op83 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym38::decode(&buf[1usize..])?))
     }
@@ -2985,10 +7486,8 @@ impl Op83 {
     }
 }
 
-#[derive(Debug)]
 struct Op84(Sym38);
 impl Op84 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym38::decode(&buf[1usize..])?))
     }
@@ -2997,10 +7496,8 @@ impl Op84 {
     }
 }
 
-#[derive(Debug)]
 struct Op85(Sym5);
 impl Op85 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
@@ -3009,10 +7506,8 @@ impl Op85 {
     }
 }
 
-#[derive(Debug)]
 struct Op86(Sym5);
 impl Op86 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
@@ -3021,10 +7516,8 @@ impl Op86 {
     }
 }
 
-#[derive(Debug)]
 struct Op87(Sym48);
 impl Op87 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym48::decode(&buf[0usize..])?))
     }
@@ -3033,10 +7526,8 @@ impl Op87 {
     }
 }
 
-#[derive(Debug)]
 struct Op88(Sym5);
 impl Op88 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
@@ -3045,10 +7536,8 @@ impl Op88 {
     }
 }
 
-#[derive(Debug)]
 struct Op89(Sym50);
 impl Op89 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym50::decode(&buf[0usize..])?))
     }
@@ -3057,10 +7546,8 @@ impl Op89 {
     }
 }
 
-#[derive(Debug)]
 struct Op90(Sym13);
 impl Op90 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym13::decode(&buf[0usize..])?))
     }
@@ -3069,10 +7556,8 @@ impl Op90 {
     }
 }
 
-#[derive(Debug)]
 struct Op91(Sym5);
 impl Op91 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
@@ -3081,10 +7566,8 @@ impl Op91 {
     }
 }
 
-#[derive(Debug)]
 struct Op92(Sym14);
 impl Op92 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym14::decode(&buf[0usize..])?))
     }
@@ -3093,10 +7576,8 @@ impl Op92 {
     }
 }
 
-#[derive(Debug)]
 struct Op93(Sym5);
 impl Op93 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
@@ -3105,10 +7586,8 @@ impl Op93 {
     }
 }
 
-#[derive(Debug)]
 struct Op94(Sym48);
 impl Op94 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym48::decode(&buf[0usize..])?))
     }
@@ -3117,10 +7596,8 @@ impl Op94 {
     }
 }
 
-#[derive(Debug)]
 struct Op95(Sym5);
 impl Op95 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
@@ -3129,10 +7606,8 @@ impl Op95 {
     }
 }
 
-#[derive(Debug)]
 struct Op96(Sym50);
 impl Op96 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym50::decode(&buf[0usize..])?))
     }
@@ -3141,10 +7616,8 @@ impl Op96 {
     }
 }
 
-#[derive(Debug)]
 struct Op97(Sym5);
 impl Op97 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym5::decode(&buf[0usize..])?))
     }
@@ -3153,10 +7626,8 @@ impl Op97 {
     }
 }
 
-#[derive(Debug)]
 struct Op98(Sym21);
 impl Op98 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
@@ -3165,22 +7636,18 @@ impl Op98 {
     }
 }
 
-#[derive(Debug)]
 struct Op99(u8);
 impl Op99 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[1usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op100(Sym15);
 impl Op100 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3189,10 +7656,8 @@ impl Op100 {
     }
 }
 
-#[derive(Debug)]
 struct Op101(Sym21);
 impl Op101 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
@@ -3201,22 +7666,18 @@ impl Op101 {
     }
 }
 
-#[derive(Debug)]
 struct Op102(u8);
 impl Op102 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[1usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op103(Sym15);
 impl Op103 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3225,10 +7686,8 @@ impl Op103 {
     }
 }
 
-#[derive(Debug)]
 struct Op104(Sym21);
 impl Op104 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
@@ -3237,22 +7696,18 @@ impl Op104 {
     }
 }
 
-#[derive(Debug)]
 struct Op105(u8);
 impl Op105 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[1usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op106(Sym15);
 impl Op106 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3261,10 +7716,8 @@ impl Op106 {
     }
 }
 
-#[derive(Debug)]
 struct Op107(Sym21);
 impl Op107 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
@@ -3273,22 +7726,18 @@ impl Op107 {
     }
 }
 
-#[derive(Debug)]
 struct Op108(u8);
 impl Op108 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[1usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op109(Sym15);
 impl Op109 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3297,10 +7746,8 @@ impl Op109 {
     }
 }
 
-#[derive(Debug)]
 struct Op110(Sym21);
 impl Op110 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
@@ -3309,22 +7756,18 @@ impl Op110 {
     }
 }
 
-#[derive(Debug)]
 struct Op111(u8);
 impl Op111 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[1usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op112(Sym15);
 impl Op112 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3333,10 +7776,8 @@ impl Op112 {
     }
 }
 
-#[derive(Debug)]
 struct Op113(Sym21);
 impl Op113 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
@@ -3345,22 +7786,18 @@ impl Op113 {
     }
 }
 
-#[derive(Debug)]
 struct Op114(u8);
 impl Op114 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[1usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op115(Sym15);
 impl Op115 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3369,10 +7806,8 @@ impl Op115 {
     }
 }
 
-#[derive(Debug)]
 struct Op116(Sym21);
 impl Op116 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
@@ -3381,22 +7816,18 @@ impl Op116 {
     }
 }
 
-#[derive(Debug)]
 struct Op117(u8);
 impl Op117 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[1usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op118(Sym15);
 impl Op118 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3405,10 +7836,8 @@ impl Op118 {
     }
 }
 
-#[derive(Debug)]
 struct Op119(Sym21);
 impl Op119 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[0usize..])?))
     }
@@ -3417,22 +7846,18 @@ impl Op119 {
     }
 }
 
-#[derive(Debug)]
 struct Op120(u8);
 impl Op120 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[1usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op121(Sym15);
 impl Op121 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3441,10 +7866,8 @@ impl Op121 {
     }
 }
 
-#[derive(Debug)]
 struct Op122(Sym24);
 impl Op122 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym24::decode(&buf[0usize..])?))
     }
@@ -3453,10 +7876,8 @@ impl Op122 {
     }
 }
 
-#[derive(Debug)]
 struct Op123(Sym15);
 impl Op123 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3465,10 +7886,8 @@ impl Op123 {
     }
 }
 
-#[derive(Debug)]
 struct Op124(Sym24);
 impl Op124 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym24::decode(&buf[0usize..])?))
     }
@@ -3477,10 +7896,8 @@ impl Op124 {
     }
 }
 
-#[derive(Debug)]
 struct Op125(Sym15);
 impl Op125 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3489,10 +7906,8 @@ impl Op125 {
     }
 }
 
-#[derive(Debug)]
 struct Op126(Sym21);
 impl Op126 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
@@ -3501,10 +7916,8 @@ impl Op126 {
     }
 }
 
-#[derive(Debug)]
 struct Op127(Sym15);
 impl Op127 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3513,10 +7926,8 @@ impl Op127 {
     }
 }
 
-#[derive(Debug)]
 struct Op128(Sym21);
 impl Op128 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
@@ -3525,10 +7936,8 @@ impl Op128 {
     }
 }
 
-#[derive(Debug)]
 struct Op129(Sym15);
 impl Op129 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3537,10 +7946,8 @@ impl Op129 {
     }
 }
 
-#[derive(Debug)]
 struct Op130(Sym21);
 impl Op130 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
@@ -3549,10 +7956,8 @@ impl Op130 {
     }
 }
 
-#[derive(Debug)]
 struct Op131(Sym15);
 impl Op131 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3561,10 +7966,8 @@ impl Op131 {
     }
 }
 
-#[derive(Debug)]
 struct Op132(Sym21);
 impl Op132 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
@@ -3573,10 +7976,8 @@ impl Op132 {
     }
 }
 
-#[derive(Debug)]
 struct Op133(Sym15);
 impl Op133 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3585,10 +7986,8 @@ impl Op133 {
     }
 }
 
-#[derive(Debug)]
 struct Op134(Sym21);
 impl Op134 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
@@ -3597,10 +7996,8 @@ impl Op134 {
     }
 }
 
-#[derive(Debug)]
 struct Op135(Sym15);
 impl Op135 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3609,10 +8006,8 @@ impl Op135 {
     }
 }
 
-#[derive(Debug)]
 struct Op136(Sym21);
 impl Op136 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
@@ -3621,10 +8016,8 @@ impl Op136 {
     }
 }
 
-#[derive(Debug)]
 struct Op137(Sym15);
 impl Op137 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3633,10 +8026,8 @@ impl Op137 {
     }
 }
 
-#[derive(Debug)]
 struct Op138(Sym21);
 impl Op138 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
@@ -3645,10 +8036,8 @@ impl Op138 {
     }
 }
 
-#[derive(Debug)]
 struct Op139(Sym15);
 impl Op139 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3657,10 +8046,8 @@ impl Op139 {
     }
 }
 
-#[derive(Debug)]
 struct Op140(Sym21);
 impl Op140 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
@@ -3669,10 +8056,8 @@ impl Op140 {
     }
 }
 
-#[derive(Debug)]
 struct Op141(Sym15);
 impl Op141 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3681,22 +8066,18 @@ impl Op141 {
     }
 }
 
-#[derive(Debug)]
 struct Op142(u8);
 impl Op142 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 3u8 & 7u8).into()))
+        Some(Self((buf[1usize] >> 3u8 & 7u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op143(Sym21);
 impl Op143 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
@@ -3705,22 +8086,18 @@ impl Op143 {
     }
 }
 
-#[derive(Debug)]
 struct Op144(u8);
 impl Op144 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 3u8 & 7u8).into()))
+        Some(Self((buf[1usize] >> 3u8 & 7u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op145(Sym15);
 impl Op145 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3729,22 +8106,18 @@ impl Op145 {
     }
 }
 
-#[derive(Debug)]
 struct Op146(u8);
 impl Op146 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 3u8 & 7u8).into()))
+        Some(Self((buf[1usize] >> 3u8 & 7u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op147(Sym21);
 impl Op147 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
@@ -3753,22 +8126,18 @@ impl Op147 {
     }
 }
 
-#[derive(Debug)]
 struct Op148(u8);
 impl Op148 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 3u8 & 7u8).into()))
+        Some(Self((buf[1usize] >> 3u8 & 7u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op149(Sym15);
 impl Op149 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3777,22 +8146,18 @@ impl Op149 {
     }
 }
 
-#[derive(Debug)]
 struct Op150(u8);
 impl Op150 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 3u8 & 7u8).into()))
+        Some(Self((buf[1usize] >> 3u8 & 7u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op151(Sym21);
 impl Op151 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym21::decode(&buf[1usize..])?))
     }
@@ -3801,22 +8166,18 @@ impl Op151 {
     }
 }
 
-#[derive(Debug)]
 struct Op152(u8);
 impl Op152 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 3u8 & 7u8).into()))
+        Some(Self((buf[1usize] >> 3u8 & 7u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op153(Sym15);
 impl Op153 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3825,10 +8186,8 @@ impl Op153 {
     }
 }
 
-#[derive(Debug)]
 struct Op154(Sym36);
 impl Op154 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym36::decode(&buf[1usize..])?))
     }
@@ -3837,10 +8196,8 @@ impl Op154 {
     }
 }
 
-#[derive(Debug)]
 struct Op155(Sym15);
 impl Op155 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -3849,10 +8206,8 @@ impl Op155 {
     }
 }
 
-#[derive(Debug)]
 struct Op156(Sym42);
 impl Op156 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym42::decode(&buf[1usize..])?))
     }
@@ -3861,10 +8216,8 @@ impl Op156 {
     }
 }
 
-#[derive(Debug)]
 struct Op157(Sym36);
 impl Op157 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym36::decode(&buf[1usize..])?))
     }
@@ -3873,10 +8226,8 @@ impl Op157 {
     }
 }
 
-#[derive(Debug)]
 struct Op158(Sym35);
 impl Op158 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym35::decode(&buf[0usize..])?))
     }
@@ -3885,10 +8236,8 @@ impl Op158 {
     }
 }
 
-#[derive(Debug)]
 struct Op159(Sym36);
 impl Op159 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym36::decode(&buf[1usize..])?))
     }
@@ -3897,10 +8246,8 @@ impl Op159 {
     }
 }
 
-#[derive(Debug)]
 struct Op160(Sym35);
 impl Op160 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym35::decode(&buf[0usize..])?))
     }
@@ -3909,10 +8256,8 @@ impl Op160 {
     }
 }
 
-#[derive(Debug)]
 struct Op161(Sym42);
 impl Op161 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym42::decode(&buf[1usize..])?))
     }
@@ -3921,10 +8266,8 @@ impl Op161 {
     }
 }
 
-#[derive(Debug)]
 struct Op162(Sym35);
 impl Op162 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym35::decode(&buf[0usize..])?))
     }
@@ -3933,10 +8276,8 @@ impl Op162 {
     }
 }
 
-#[derive(Debug)]
 struct Op163(Sym36);
 impl Op163 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym36::decode(&buf[1usize..])?))
     }
@@ -3945,10 +8286,8 @@ impl Op163 {
     }
 }
 
-#[derive(Debug)]
 struct Op164(Sym35);
 impl Op164 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym35::decode(&buf[0usize..])?))
     }
@@ -3957,10 +8296,8 @@ impl Op164 {
     }
 }
 
-#[derive(Debug)]
 struct Op165(Sym45);
 impl Op165 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym45::decode(&buf[0usize..])?))
     }
@@ -3969,10 +8306,8 @@ impl Op165 {
     }
 }
 
-#[derive(Debug)]
 struct Op166(Sym27);
 impl Op166 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym27::decode(&buf[0usize..])?))
     }
@@ -3981,22 +8316,18 @@ impl Op166 {
     }
 }
 
-#[derive(Debug)]
 struct Op167(u8);
 impl Op167 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[1usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op168(Sym40);
 impl Op168 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym40::decode(&buf[1usize..])?))
     }
@@ -4005,10 +8336,8 @@ impl Op168 {
     }
 }
 
-#[derive(Debug)]
 struct Op169(Sym17);
 impl Op169 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym17::decode(&buf[0usize..])?))
     }
@@ -4017,10 +8346,8 @@ impl Op169 {
     }
 }
 
-#[derive(Debug)]
 struct Op170(Sym17);
 impl Op170 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym17::decode(&buf[0usize..])?))
     }
@@ -4029,10 +8356,8 @@ impl Op170 {
     }
 }
 
-#[derive(Debug)]
 struct Op171(Sym15);
 impl Op171 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -4041,10 +8366,8 @@ impl Op171 {
     }
 }
 
-#[derive(Debug)]
 struct Op172(Sym15);
 impl Op172 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -4053,10 +8376,8 @@ impl Op172 {
     }
 }
 
-#[derive(Debug)]
 struct Op173(Sym17);
 impl Op173 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym17::decode(&buf[0usize..])?))
     }
@@ -4065,22 +8386,18 @@ impl Op173 {
     }
 }
 
-#[derive(Debug)]
 struct Op174(u8);
 impl Op174 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[1usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op175(Sym15);
 impl Op175 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -4089,10 +8406,8 @@ impl Op175 {
     }
 }
 
-#[derive(Debug)]
 struct Op176(Sym17);
 impl Op176 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym17::decode(&buf[0usize..])?))
     }
@@ -4101,10 +8416,8 @@ impl Op176 {
     }
 }
 
-#[derive(Debug)]
 struct Op177();
 impl Op177 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self())
     }
@@ -4113,22 +8426,18 @@ impl Op177 {
     }
 }
 
-#[derive(Debug)]
 struct Op178(u8);
 impl Op178 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[1usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op179(Sym26);
 impl Op179 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym26::decode(&buf[0usize..])?))
     }
@@ -4137,10 +8446,8 @@ impl Op179 {
     }
 }
 
-#[derive(Debug)]
 struct Op180(Sym26);
 impl Op180 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym26::decode(&buf[0usize..])?))
     }
@@ -4149,10 +8456,8 @@ impl Op180 {
     }
 }
 
-#[derive(Debug)]
 struct Op181(Sym15);
 impl Op181 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym15::decode(&buf[0usize..])?))
     }
@@ -4161,10 +8466,8 @@ impl Op181 {
     }
 }
 
-#[derive(Debug)]
 struct Op182(Sym28);
 impl Op182 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym28::decode(&buf[0usize..])?))
     }
@@ -4173,10 +8476,8 @@ impl Op182 {
     }
 }
 
-#[derive(Debug)]
 struct Op183(Sym17);
 impl Op183 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym17::decode(&buf[0usize..])?))
     }
@@ -4185,22 +8486,18 @@ impl Op183 {
     }
 }
 
-#[derive(Debug)]
 struct Op184(u8);
 impl Op184 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
-        Some(Self((buf[1usize] >> 0u8 & 255u8).into()))
+        Some(Self((buf[1usize] >> 0u8 & 255u8)))
     }
     fn write(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "0x{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
 struct Op185(Sym28);
 impl Op185 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym28::decode(&buf[0usize..])?))
     }
@@ -4209,10 +8506,8 @@ impl Op185 {
     }
 }
 
-#[derive(Debug)]
 struct Op186(Sym28);
 impl Op186 {
-    #[allow(unused_variables)]
     fn decode(buf: &[u8]) -> Option<Self> {
         Some(Self(Sym28::decode(&buf[0usize..])?))
     }

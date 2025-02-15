@@ -9,8 +9,8 @@ fn main() {
         if let Some(out) = decode(&buf) {
             println!("{:x} {}", i, out);
 
-            // let mut vec = Vec::new();
-            // out.pcode(&mut vec);
+            let mut vec = Vec::new();
+            out.pcode(&mut vec);
             // println!("{:?}", vec);
         } else {
             // println!("{:x}", i);
