@@ -54,7 +54,7 @@ fn gen_decision(decision: &Decision, constructors: &Vec<Constructor>) -> TokenSt
                     let decode_ops = constructors[*id as usize].operands.iter().map(|op| {
                         let op_name = format_ident!("Op{}", op);
                         quote! {
-                            #op_name::decode(&buf)?
+                            #op_name::decode(buf)?
                         }
                     });
 
@@ -92,7 +92,7 @@ fn gen_tokenfield(tokenfield: &TokenField, off: u8) -> TokenStream {
     let mask: u8 = ((end - start) >> shift).try_into().unwrap();
     // println!("{} {} {} {:08b}", startbit, endbit, shift, mask);
     quote! {
-        (buf[#offset] >> #shift & #mask).into() // TODO
+        (buf[#offset] >> #shift & #mask) // TODO
     }
 }
 
@@ -121,7 +121,7 @@ fn gen_subtable(subtable: &Subtable, symtab: &SymbolTable, idx: usize) -> TokenS
         let decode_ops = subtable.constructors[0].operands.iter().map(|op| {
             let op_name = format_ident!("Op{}", op);
             quote! {
-                #op_name::decode(&buf)?
+                #op_name::decode(buf)?
             }
         });
         quote! {
@@ -138,6 +138,7 @@ fn gen_subtable(subtable: &Subtable, symtab: &SymbolTable, idx: usize) -> TokenS
             let operand_bindings =
                 (0..constructor.operands.len()).map(|i| format_ident!("op{}", i));
 
+            // TODO: coalesce prints
             let writes = constructor.prints.iter().map(|print| {
                 match print {
                     Print::Print(piece) => quote! {
@@ -193,20 +194,15 @@ fn gen_subtable(subtable: &Subtable, symtab: &SymbolTable, idx: usize) -> TokenS
         });
 
     quote! {
-        #[derive(Debug)]
         enum #name {
             #(#enum_variants)*
         }
 
         impl #name {
-            #[allow(unused_parens)] // TODO
-            #[allow(unused_variables)]
             fn decode(buf: &[u8]) -> Option<Self> {
                 #decode_body
             }
 
-            #[allow(unused_variables)]
-            #[allow(dead_code)]
             fn pcode(&self, vec: &mut Vec<Pcode>) {
                 println!("    {}", match self {
                     #(#pcode_cases)*
@@ -215,7 +211,6 @@ fn gen_subtable(subtable: &Subtable, symtab: &SymbolTable, idx: usize) -> TokenS
         }
 
         impl std::fmt::Display for #name {
-            #[allow(unused_variables)]
             fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
                 match self {
                     #(#fmt_cases)*
@@ -292,11 +287,9 @@ fn gen_operand(op: &Operand, idx: usize) -> TokenStream {
     };
 
     quote! {
-        #[derive(Debug)]
         struct #name(#struct_body);
 
         impl #name {
-            #[allow(unused_variables)]
             fn decode(buf: &[u8]) -> Option<Self> {
                 Some(Self(#decode_arg))
             }
@@ -312,11 +305,8 @@ fn gen_varnode(text: &str, idx: usize) -> TokenStream {
     let name = format_ident!("Sym{}", idx);
 
     quote! {
-        #[derive(Debug)]
-        #[allow(dead_code)]
         struct #name();
 
-        #[allow(dead_code)]
         impl #name {
             fn decode(_: &[u8]) -> Option<Self> {
                 Some(Self())
@@ -378,7 +368,6 @@ fn gen_varlist(varlist: &Varlist, idx: usize) -> TokenStream {
     let tokenfield = gen_tokenfield(&varlist.tokenfield, 0);
 
     quote! {
-        #[derive(Debug)]
         enum #name {
             #(#enum_body)*
         }
@@ -404,14 +393,17 @@ fn gen_varlist(varlist: &Varlist, idx: usize) -> TokenStream {
 
 pub(crate) fn emit(sleigh: Sleigh) -> Result<(), Box<dyn std::error::Error>> {
     let tokens = quote! {
-        #[derive(Debug)]
+        #![allow(unused_variables)]
+        #![allow(dead_code)]
+        #![allow(unused_parens)]
+        #![allow(clippy::identity_op)]
+        #![allow(clippy::double_parens)]
+        #![allow(clippy::ptr_arg)] // TODO
         pub(crate) struct Pcode();
-
-        #[derive(Debug)]
         pub(crate) struct Insn(Sym0);
 
         pub(crate) fn decode(buf: &[u8]) -> Option<Insn> {
-            Sym0::decode(buf).map(|st| Insn(st))
+            Sym0::decode(buf).map(Insn)
         }
 
         impl Insn {

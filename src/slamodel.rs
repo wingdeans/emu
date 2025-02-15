@@ -63,7 +63,7 @@ pub(crate) enum Expr {
     Minus(Box<Expr>),
     Const(u64),
     InsnEnd,
-    Operand(u8), // TODO
+    Operand(u8),
 }
 
 #[derive(Debug)]
@@ -243,20 +243,22 @@ fn model_tokenfield(tokenfield: &Sla) -> TokenField {
 fn parse_exprs<const C: usize>(expr: &Sla, args: &mut Vec<(u8, u8, u8)>) -> [Box<Expr>; C] {
     expr.els
         .iter()
-        .map(|e| Box::new(match e.eid {
-            EId::OPERAND_EXP => {
-                let idx = args.len().try_into().unwrap();
-                args.push((
-                    e.get_int(AId::TABLE),
-                    e.get_int(AId::CT),
-                    e.get_int(AId::INDEX),
-                ));
-                Expr::Operand(idx)
-            }
-            EId::INTB => Expr::Const(e.get_int(AId::VAL)),
-            EId::END_EXP => Expr::InsnEnd,
-            _ => unreachable!(),
-        }))
+        .map(|e| {
+            Box::new(match e.eid {
+                EId::OPERAND_EXP => {
+                    let idx = args.len().try_into().unwrap();
+                    args.push((
+                        e.get_int(AId::TABLE),
+                        e.get_int(AId::CT),
+                        e.get_int(AId::INDEX),
+                    ));
+                    Expr::Operand(idx)
+                }
+                EId::INTB => Expr::Const(e.get_int(AId::VAL)),
+                EId::END_EXP => Expr::InsnEnd,
+                _ => unreachable!(),
+            })
+        })
         .collect::<Vec<_>>()
         .try_into()
         .unwrap()
