@@ -1,6 +1,4 @@
 use crate::pcodeop::PcodeOp;
-use proc_macro2::TokenStream;
-use quote::quote;
 
 //   1 BOOL_AND: XXX
 //   6 BOOL_NEGATE: XX
@@ -150,18 +148,6 @@ pub(crate) enum Const {
     OtherSpace,
     UniqueSpace,
     Space(u8),
-}
-
-macro_rules! create_pcode_tokens {
-    {$($toks:tt)*} => {
-        // $($toks)*
-
-        pub(crate) fn pcode_tokens() -> TokenStream {
-            quote! {
-                $($toks)*
-            }
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy)]
