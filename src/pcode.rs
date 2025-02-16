@@ -1,3 +1,7 @@
+use crate::pcodeop::PcodeOp;
+use proc_macro2::TokenStream;
+use quote::quote;
+
 //   1 BOOL_AND: XXX
 //   6 BOOL_NEGATE: XX
 //   1 BOOL_OR: XXX
@@ -133,46 +137,43 @@
 //   3 STORE 3        : CONST_SPACEID  CONST_NEXT    CONST_REAL
 //  14 STORE 3        : CONST_SPACEID  CONST_REAL    CONST_REAL
 
-#[derive(Debug)]
-pub(crate) enum Pcode {
-    BoolAnd(Varnode, Varnode, Varnode),
-    BoolNegate(Varnode, Varnode),
-    // BOOL_OR,
-    // BRANCH,
-    // BRANCHIND,
-    // CALL,
-    // CALLOTHER,
-    // CBRANCH,
-    // COPY,
-    // INT_ADD,
-    // INT_AND,
-    // INT_CARRY,
-    // INT_EQUAL,
-    // INT_LEFT,
-    // INT_LESS,
-    // INT_NEGATE,
-    // INT_NOTEQUAL,
-    // INT_OR,
-    // INT_RIGHT,
-    // INT_SUB,
-    // INT_XOR,
-    // LOAD,
-    // MULTIEQUAL,
-    // RETURN,
-    // STORE,
-    Unk, // TODO
-}
-
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum Const {
     Real(u64),
     Null,
     Unk, // TODO
+    // handle
+    HandleSpace(u8),
+    HandleOffset(u8),
+    HandleSize(u8),
+    // spaces
+    OtherSpace,
+    UniqueSpace,
+    Space(u8),
+}
+
+macro_rules! create_pcode_tokens {
+    {$($toks:tt)*} => {
+        // $($toks)*
+
+        pub(crate) fn pcode_tokens() -> TokenStream {
+            quote! {
+                $($toks)*
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct Varnode {
+pub(crate) struct VarnodeTpl {
     pub(crate) space: Const,
     pub(crate) offset: Const,
     pub(crate) size: Const,
+}
+
+#[derive(Debug)]
+pub(crate) enum Pcode {
+    Unary(PcodeOp, VarnodeTpl, VarnodeTpl),
+    Binary(PcodeOp, VarnodeTpl, VarnodeTpl, VarnodeTpl),
+    Unk,
 }

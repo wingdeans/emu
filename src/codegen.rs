@@ -1,3 +1,4 @@
+use crate::pcode::{Pcode, VarnodeTpl};
 use crate::slamodel::{
     Constructor, Decision, Expr, Mask, OpExpr, Operand, Print, Sleigh, Subtable, Sym, SymbolTable,
     TokenField, Varlist,
@@ -96,6 +97,16 @@ fn gen_tokenfield(tokenfield: &TokenField, off: u8) -> TokenStream {
     }
 }
 
+fn gen_varnode_tpl(_: &VarnodeTpl) -> TokenStream {
+    quote! {
+        Varnode {
+            space: 0,
+            offset: 0,
+            size: 0,
+        }
+    }
+}
+
 // TOPLEVEL
 
 fn gen_subtable(subtable: &Subtable, symtab: &SymbolTable, idx: usize) -> TokenStream {
@@ -172,26 +183,58 @@ fn gen_subtable(subtable: &Subtable, symtab: &SymbolTable, idx: usize) -> TokenS
             }
         });
 
-    let pcode_cases = subtable
-        .constructors
-        .iter()
-        .enumerate()
-        .map(|(id, constructor)| {
-            let variant = format_ident!("Variant{}", id);
-            let operand_bindings =
-                (0..constructor.operands.len()).map(|i| format_ident!("op{}", i));
+    let pcode = if idx == 0 {
+        let pcode_cases = subtable
+            .constructors
+            .iter()
+            .enumerate()
+            .map(|(id, constructor)| {
+                let variant = format_ident!("Variant{}", id);
+                let operand_bindings =
+                    (0..constructor.operands.len()).map(|i| format_ident!("op{}", i));
 
-            let op = constructor
-                .construct_tpl
-                .iter()
-                .map(|op_tpl| format!("{:?}", op_tpl))
-                .collect::<Vec<_>>()
-                .join(", ");
+                let pcode_body = constructor.construct_tpl.iter().map(|op_tpl| match op_tpl {
+                    Pcode::Unary(op, a, b) => {
+                        let op = format_ident!("{}", op.to_string());
+                        let a = gen_varnode_tpl(a);
+                        let b = gen_varnode_tpl(b);
+                        quote! {
+                            vec.push(Pcode::#op(#a, #b))
+                        }
+                    }
+                    Pcode::Binary(op, a, b, c) => {
+                        let op = format_ident!("{}", op.to_string());
+                        let a = gen_varnode_tpl(a);
+                        let b = gen_varnode_tpl(b);
+                        let c = gen_varnode_tpl(c);
+                        quote! {
+                            vec.push(Pcode::#op(#a, #b, #c))
+                        }
+                    }
+                    Pcode::Unk => quote! {
+                        vec.push(Pcode::Unk)
+                    },
+                });
 
-            quote! {
-                Self::#variant(#(#operand_bindings),*) => #op,
+                quote! {
+                    Self::#variant(#(#operand_bindings),*) => {
+                        #(#pcode_body;)*
+                    },
+                }
+            });
+
+        Some(quote! {
+            fn pcode(&self) -> Vec<Pcode> {
+                let mut vec = Vec::new();
+                match self {
+                    #(#pcode_cases)*
+                }
+                vec
             }
-        });
+        })
+    } else {
+        None
+    };
 
     quote! {
         enum #name {
@@ -203,11 +246,7 @@ fn gen_subtable(subtable: &Subtable, symtab: &SymbolTable, idx: usize) -> TokenS
                 #decode_body
             }
 
-            fn pcode(&self, vec: &mut Vec<Pcode>) {
-                println!("    {}", match self {
-                    #(#pcode_cases)*
-                })
-            }
+            #pcode
         }
 
         impl std::fmt::Display for #name {
@@ -399,7 +438,6 @@ pub(crate) fn emit(sleigh: Sleigh) -> Result<(), Box<dyn std::error::Error>> {
         #![allow(clippy::identity_op)]
         #![allow(clippy::double_parens)]
         #![allow(clippy::ptr_arg)] // TODO
-        pub(crate) struct Pcode();
         pub(crate) struct Insn(Sym0);
 
         pub(crate) fn decode(buf: &[u8]) -> Option<Insn> {
@@ -407,8 +445,8 @@ pub(crate) fn emit(sleigh: Sleigh) -> Result<(), Box<dyn std::error::Error>> {
         }
 
         impl Insn {
-            pub(crate) fn pcode(&self, vec: &mut Vec<Pcode>) {
-                self.0.pcode(vec)
+            pub(crate) fn pcode(&self) -> Vec<Pcode> {
+                self.0.pcode()
             }
         }
 
@@ -416,6 +454,50 @@ pub(crate) fn emit(sleigh: Sleigh) -> Result<(), Box<dyn std::error::Error>> {
             fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
                 self.0.fmt(f)
             }
+        }
+
+        type Const = u64;
+
+        #[derive(Debug)]
+        pub(crate) struct Varnode {
+            pub(crate) space: Const,
+            pub(crate) offset: Const,
+            pub(crate) size: Const,
+        }
+
+        #[derive(Debug)]
+        pub(crate) enum Pcode {
+            // 2-element
+            BoolNegate(Varnode, Varnode),
+            Copy(Varnode, Varnode),
+            IntNegate(Varnode, Varnode),
+            IntZext(Varnode, Varnode),
+            // 3-element
+            BoolAnd(Varnode, Varnode, Varnode),
+            BoolOr(Varnode, Varnode, Varnode),
+            IntAdd(Varnode, Varnode, Varnode),
+            IntAnd(Varnode, Varnode, Varnode),
+            IntCarry(Varnode, Varnode, Varnode),
+            IntEqual(Varnode, Varnode, Varnode),
+            IntLeft(Varnode, Varnode, Varnode),
+            IntLess(Varnode, Varnode, Varnode),
+            IntNotequal(Varnode, Varnode, Varnode),
+            IntOr(Varnode, Varnode, Varnode),
+            IntRight(Varnode, Varnode, Varnode),
+            IntSright(Varnode, Varnode, Varnode),
+            IntSub(Varnode, Varnode, Varnode),
+            IntXor(Varnode, Varnode, Varnode),
+            Load(Varnode, Varnode, Varnode),
+            // other
+            // BRANCH,
+            // BRANCHIND,
+            // CALL,
+            // CALLOTHER,
+            // CBRANCH,
+            // MULTIEQUAL,
+            // RETURN,
+            // STORE,
+            Unk, // TODO
         }
     };
     println!("{}", prettyplease::unparse(&syn::parse2(tokens)?));

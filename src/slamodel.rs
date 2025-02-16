@@ -1,4 +1,4 @@
-use crate::pcode::{Const, Pcode, Varnode};
+use crate::pcode::{Const, Pcode, VarnodeTpl};
 use crate::pcodeop::PcodeOp;
 use crate::slaformat::{AId, EId};
 use crate::slaparser::{Attribute, Sla};
@@ -103,6 +103,13 @@ pub(crate) enum Sym {
 }
 
 #[derive(Debug)]
+pub(crate) enum Space {
+    Other,
+    Unique,
+    Space,
+}
+
+#[derive(Debug)]
 pub(crate) struct SymbolTable {
     pub(crate) syms: Vec<Sym>,
     pub(crate) sym_names: Vec<String>,
@@ -110,6 +117,7 @@ pub(crate) struct SymbolTable {
 
 #[derive(Debug)]
 pub(crate) struct Sleigh {
+    pub(crate) spaces: Vec<Space>,
     pub(crate) symtab: SymbolTable,
 }
 
@@ -119,15 +127,21 @@ fn model_const_tpl(tpl: &Sla) -> Const {
     match tpl.eid {
         EId::CONST_HANDLE => {
             let sel = tpl.get_int::<u8>(AId::S);
+            let val = tpl.get_int::<u8>(AId::VAL);
             match sel {
-                0 => Const::Unk,
-                1 => Const::Unk,
-                2 => Const::Unk,
+                0 => Const::HandleSpace(val),
+                1 => Const::HandleOffset(val),
+                2 => Const::HandleSize(val),
                 3 => todo!(),
                 _ => unreachable!(),
             }
         }
-        EId::CONST_SPACEID => Const::Unk,
+        EId::CONST_SPACEID => {
+            let Attribute::BasicAddr(addr) = tpl.attrs[&AId::SPACE] else {
+                unreachable!();
+            };
+            Const::Space(addr.try_into().unwrap())
+        }
         EId::CONST_REAL => Const::Real(tpl.get_int(AId::VAL)),
         EId::CONST_NEXT => Const::Unk,
         EId::CONST_CURSPACE => Const::Unk,
@@ -136,16 +150,16 @@ fn model_const_tpl(tpl: &Sla) -> Const {
     }
 }
 
-fn model_varnode_tpl(tpl: &Sla) -> Varnode {
+fn model_varnode_tpl(tpl: &Sla) -> VarnodeTpl {
     assert_eq!(tpl.els.len(), 3);
-    Varnode {
+    VarnodeTpl {
         space: model_const_tpl(&tpl.els[0]),
         offset: model_const_tpl(&tpl.els[1]),
         size: model_const_tpl(&tpl.els[2]),
     }
 }
 
-fn model_pcode(pcode: &Sla) -> Vec<Option<Varnode>> {
+fn model_pcode(pcode: &Sla) -> Vec<Option<VarnodeTpl>> {
     pcode
         .els
         .iter()
@@ -162,25 +176,37 @@ fn model_op_tpl(tpl: &Sla) -> Pcode {
         unreachable!("{}", tpl);
     };
 
-    fn model_pcode2<F: Fn(Varnode, Varnode) -> Pcode>(tpl: &Sla, f: F) -> Pcode {
-        match model_pcode(tpl)[..] {
-            [Some(a), Some(b)] => f(a, b),
-            ref unk => unreachable!("{:?}", unk),
-        }
-    }
-    fn model_pcode3<F: Fn(Varnode, Varnode, Varnode) -> Pcode>(tpl: &Sla, f: F) -> Pcode {
-        match model_pcode(tpl)[..] {
-            [Some(a), Some(b), Some(c)] => f(a, b, c),
-            ref unk => unreachable!("{:?}", unk),
-        }
-    }
-
     match pcode {
-        PcodeOp::BOOL_AND => model_pcode3(tpl, Pcode::BoolAnd),
-        PcodeOp::BOOL_NEGATE => model_pcode2(tpl, Pcode::BoolNegate),
+        // 2-element
+        PcodeOp::BOOL_NEGATE | PcodeOp::COPY | PcodeOp::INT_NEGATE | PcodeOp::INT_ZEXT => {
+            match model_pcode(tpl)[..] {
+                [Some(a), Some(b)] => Pcode::Unary(pcode, a, b),
+                ref unk => unreachable!("{:?}", unk),
+            }
+        }
+        // 3-element
+        PcodeOp::BOOL_AND
+        | PcodeOp::BOOL_OR
+        | PcodeOp::INT_ADD
+        | PcodeOp::INT_AND
+        | PcodeOp::INT_CARRY
+        | PcodeOp::INT_EQUAL
+        | PcodeOp::INT_LEFT
+        | PcodeOp::INT_LESS
+        | PcodeOp::INT_NOTEQUAL
+        | PcodeOp::INT_OR
+        | PcodeOp::INT_RIGHT
+        | PcodeOp::INT_SRIGHT
+        | PcodeOp::INT_SUB
+        | PcodeOp::INT_XOR
+        | PcodeOp::LOAD => match model_pcode(tpl)[..] {
+            [Some(a), Some(b), Some(c)] => Pcode::Binary(pcode, a, b, c),
+            ref unk => unreachable!("{:?}", unk),
+        },
+        // other
         _ => {
             model_pcode(tpl);
-            // unreachable!("{}", tpl)
+            // unreachable!("{}", tpl) // TODO
             Pcode::Unk
         }
     }
@@ -371,6 +397,20 @@ fn model_varlist(varlist: &Sla) -> Sym {
     Sym::Varlist(Varlist { tokenfield, vars })
 }
 
+// SPACES
+fn model_spaces(spaces: &Sla) -> Vec<Space> {
+    spaces
+        .els
+        .iter()
+        .map(|s| match s.eid {
+            EId::SPACE_OTHER => Space::Other,
+            EId::SPACE_UNIQUE => Space::Unique,
+            EId::SPACE => Space::Space,
+            _ => unreachable!(),
+        })
+        .collect()
+}
+
 // SYMBOL TABLE
 
 fn model_symtab(symtab: &Sla) -> SymbolTable {
@@ -416,7 +456,8 @@ impl SymbolTable {
 
 impl Sleigh {
     pub(crate) fn new(sleigh: Sla) -> Self {
+        let spaces = model_spaces(sleigh.get_el(EId::SPACES));
         let symtab = model_symtab(sleigh.get_el(EId::SYMBOL_TABLE));
-        Sleigh { symtab }
+        Sleigh { spaces, symtab }
     }
 }
