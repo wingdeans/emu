@@ -23,17 +23,16 @@ macro_rules! create_pcode {
 
         impl std::fmt::Display for PcodeOp {
             fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                let s = match self {
+                let name = match self {
                     $(Self::$name => stringify!($name),)*
                 };
                 // SCREAMING_SNAKE_CASE -> PascalCase
-                let s = s.split("_").map(|seg| {
-                    let mut chars = seg.chars();
-                    std::iter::once(chars.next().unwrap())
-                        .chain(chars.flat_map(|c| c.to_lowercase()))
-                        .collect()
-                }).collect::<Vec<String>>().join("");
-                write!(f, "{}", s)
+                let pascal = name.split("_").map(|seg| {
+                    let mut seg = seg.to_string();
+                    seg[1..].make_ascii_lowercase();
+                    seg
+                }).collect::<Vec<_>>().join("");
+                write!(f, "{}", pascal)
             }
         }
     }
