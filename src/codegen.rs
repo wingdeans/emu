@@ -430,77 +430,79 @@ fn gen_varlist(varlist: &Varlist, idx: usize) -> TokenStream {
     }
 }
 
-pub(crate) fn emit(sleigh: Sleigh) -> Result<(), Box<dyn std::error::Error>> {
-    let tokens = quote! {
-        #![allow(unused_variables)]
-        #![allow(dead_code)]
-        #![allow(unused_parens)]
-        #![allow(clippy::identity_op)]
-        #![allow(clippy::double_parens)]
-        #![allow(clippy::ptr_arg)] // TODO
-        pub(crate) struct Insn(Sym0);
+pub(crate) fn emit(sleigh: Sleigh) {
+    println!(
+        "{}",
+        stringify! {
+            #![allow(unused_variables)]
+            #![allow(dead_code)]
+            #![allow(unused_parens)]
+            #![allow(clippy::identity_op)]
+            #![allow(clippy::double_parens)]
+            #![allow(clippy::ptr_arg)] // TODO
+            pub(crate) struct Insn(Sym0);
 
-        pub(crate) fn decode(buf: &[u8]) -> Option<Insn> {
-            Sym0::decode(buf).map(Insn)
-        }
+            pub(crate) fn decode(buf: &[u8]) -> Option<Insn> {
+                Sym0::decode(buf).map(Insn)
+            }
 
-        impl Insn {
-            pub(crate) fn pcode(&self) -> Vec<Pcode> {
-                self.0.pcode()
+            impl Insn {
+                pub(crate) fn pcode(&self) -> Vec<Pcode> {
+                    self.0.pcode()
+                }
+            }
+
+            impl std::fmt::Display for Insn {
+                fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                    self.0.fmt(f)
+                }
+            }
+
+            type Const = u64;
+
+            #[derive(Debug)]
+            pub(crate) struct Varnode {
+                pub(crate) space: Const,
+                pub(crate) offset: Const,
+                pub(crate) size: Const,
+            }
+
+            #[derive(Debug)]
+            pub(crate) enum Pcode {
+                // 2-element
+                BoolNegate(Varnode, Varnode),
+                Copy(Varnode, Varnode),
+                IntNegate(Varnode, Varnode),
+                IntZext(Varnode, Varnode),
+                // 3-element
+                BoolAnd(Varnode, Varnode, Varnode),
+                BoolOr(Varnode, Varnode, Varnode),
+                IntAdd(Varnode, Varnode, Varnode),
+                IntAnd(Varnode, Varnode, Varnode),
+                IntCarry(Varnode, Varnode, Varnode),
+                IntEqual(Varnode, Varnode, Varnode),
+                IntLeft(Varnode, Varnode, Varnode),
+                IntLess(Varnode, Varnode, Varnode),
+                IntNotequal(Varnode, Varnode, Varnode),
+                IntOr(Varnode, Varnode, Varnode),
+                IntRight(Varnode, Varnode, Varnode),
+                IntSright(Varnode, Varnode, Varnode),
+                IntSub(Varnode, Varnode, Varnode),
+                IntXor(Varnode, Varnode, Varnode),
+                Load(Varnode, Varnode, Varnode),
+                // other
+                // BRANCH,
+                // BRANCHIND,
+                // CALL,
+                // CALLOTHER,
+                // CBRANCH,
+                // MULTIEQUAL,
+                // RETURN,
+                // STORE,
+                Unk, // TODO
             }
         }
-
-        impl std::fmt::Display for Insn {
-            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                self.0.fmt(f)
-            }
-        }
-
-        type Const = u64;
-
-        #[derive(Debug)]
-        pub(crate) struct Varnode {
-            pub(crate) space: Const,
-            pub(crate) offset: Const,
-            pub(crate) size: Const,
-        }
-
-        #[derive(Debug)]
-        pub(crate) enum Pcode {
-            // 2-element
-            BoolNegate(Varnode, Varnode),
-            Copy(Varnode, Varnode),
-            IntNegate(Varnode, Varnode),
-            IntZext(Varnode, Varnode),
-            // 3-element
-            BoolAnd(Varnode, Varnode, Varnode),
-            BoolOr(Varnode, Varnode, Varnode),
-            IntAdd(Varnode, Varnode, Varnode),
-            IntAnd(Varnode, Varnode, Varnode),
-            IntCarry(Varnode, Varnode, Varnode),
-            IntEqual(Varnode, Varnode, Varnode),
-            IntLeft(Varnode, Varnode, Varnode),
-            IntLess(Varnode, Varnode, Varnode),
-            IntNotequal(Varnode, Varnode, Varnode),
-            IntOr(Varnode, Varnode, Varnode),
-            IntRight(Varnode, Varnode, Varnode),
-            IntSright(Varnode, Varnode, Varnode),
-            IntSub(Varnode, Varnode, Varnode),
-            IntXor(Varnode, Varnode, Varnode),
-            Load(Varnode, Varnode, Varnode),
-            // other
-            // BRANCH,
-            // BRANCHIND,
-            // CALL,
-            // CALLOTHER,
-            // CBRANCH,
-            // MULTIEQUAL,
-            // RETURN,
-            // STORE,
-            Unk, // TODO
-        }
-    };
-    println!("{}", prettyplease::unparse(&syn::parse2(tokens)?));
+    );
 
     for (i, sym) in sleigh.symtab.syms.iter().enumerate() {
         let tokens = match sym {
@@ -510,8 +512,6 @@ pub(crate) fn emit(sleigh: Sleigh) -> Result<(), Box<dyn std::error::Error>> {
             Sym::Varlist(varlist) => gen_varlist(varlist, i),
             _ => continue,
         };
-        println!("{}", prettyplease::unparse(&syn::parse2(tokens)?));
+        println!("{}", tokens);
     }
-
-    Ok(())
 }

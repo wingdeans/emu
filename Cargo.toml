@@ -8,9 +8,7 @@ edition = "2021"
 [dependencies]
 miniz_oxide = { version = "0.8.3", features = ["std"] }
 proc-macro2 = "1.0.93"
-syn = "2.0.98"
 quote = "1.0.38"
-prettyplease = "0.2.29"
 
 # Faster builds
 
