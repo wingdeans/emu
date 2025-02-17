@@ -75,18 +75,12 @@ impl Header {
     }
 
     pub fn rom_bank_size(&self) -> Result<usize> {
-        match self.rom_size {
-            0..=4 => Ok(1024 * 16),
-            _ => Err(Error::UnrecognizedCartridgeHeaderField(format!(
-                "unrecognized rom size: 0x{:02x}",
-                self.rom_size
-            ))),
-        }
+        Ok(self.rom_byte_size()? / (self.rom_bank_count()? as usize))
     }
 
     pub fn rom_bank_count(&self) -> Result<u32> {
         match self.rom_size {
-            0..=4 => Ok(2_u32.pow(self.rom_size as u32)),
+            0..=4 => Ok(2_u32.pow(self.rom_size as u32 + 1)),
             _ => Err(Error::UnrecognizedCartridgeHeaderField(format!(
                 "unrecognized rom size: 0x{:02x}",
                 self.rom_size

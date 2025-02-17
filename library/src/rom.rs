@@ -2,10 +2,7 @@ use crate::{
     cartridge::Header,
     error::{Error, Result},
 };
-use std::{
-    fs::File,
-    io::{prelude::*, SeekFrom},
-};
+use std::{fs::File, io::prelude::*};
 
 pub struct Rom {
     banks: Vec<Vec<u8>>,
@@ -16,13 +13,18 @@ impl Rom {
         let count = header.rom_bank_count()?;
         let size = header.rom_bank_size()?;
 
-        file.seek(SeekFrom::Start(0))
+        file.rewind()
             .map_err(|e| Error::CartridgeLoadFailure(e.to_string()))?;
 
-        let mut banks = vec![vec![0u8; size as usize]; count as usize];
-        for i in 0..count {
-            file.read_exact(&mut banks[i as usize])
-                .map_err(|e| Error::CartridgeLoadFailure(format!("{:?}", e)))?;
+        let mut banks = Vec::<Vec<u8>>::with_capacity(count as usize);
+
+        for _ in 0..count {
+            let mut bank = vec![0u8; size];
+
+            file.read_exact(&mut bank)
+                .map_err(|e| Error::CartridgeLoadFailure(e.to_string()))?;
+
+            banks.push(bank);
         }
 
         Ok(Self { banks })
