@@ -1,4 +1,4 @@
-use crate::pcode::{Const, Pcode, VarnodeTpl};
+use crate::pcode::{Offset, Pcode, Size, Space, VarnodeTpl};
 use crate::pcodeop::PcodeOp;
 use crate::slaformat::{AId, EId};
 use crate::slaparser::{Attribute, Sla};
@@ -102,12 +102,14 @@ pub(crate) enum Sym {
     Varnode,
 }
 
+/*
 #[derive(Debug)]
 pub(crate) enum Space {
     Other,
     Unique,
     Space,
 }
+ */
 
 #[derive(Debug)]
 pub(crate) struct SymbolTable {
@@ -117,12 +119,13 @@ pub(crate) struct SymbolTable {
 
 #[derive(Debug)]
 pub(crate) struct Sleigh {
-    pub(crate) spaces: Vec<Space>,
+    // pub(crate) spaces: Vec<Space>,
     pub(crate) symtab: SymbolTable,
 }
 
 // CONSTRUCTOR
 
+/*
 fn model_const_tpl(tpl: &Sla) -> Const {
     match tpl.eid {
         EId::CONST_HANDLE => {
@@ -149,13 +152,71 @@ fn model_const_tpl(tpl: &Sla) -> Const {
         _ => unreachable!("{}", tpl),
     }
 }
+ */
 
-fn model_varnode_tpl(tpl: &Sla) -> VarnodeTpl {
-    assert_eq!(tpl.els.len(), 3);
+fn model_varnode_tpl(vn: &Sla) -> VarnodeTpl {
+    assert_eq!(vn.els.len(), 3);
+
+    let space = {
+        let tpl = &vn.els[0];
+        match tpl.eid {
+            EId::CONST_HANDLE => {
+                let sel = tpl.get_int::<u8>(AId::S);
+                assert_eq!(0, sel);
+                let val = tpl.get_int::<u8>(AId::VAL);
+                Space::Handle(val)
+            }
+            EId::CONST_SPACEID => {
+                let Attribute::BasicAddr(addr) = tpl.attrs[&AId::SPACE] else {
+                    unreachable!();
+                };
+                Space::Space(addr.try_into().unwrap())
+            }
+            EId::CONST_CURSPACE => Space::Curr,
+            _ => unreachable!("{}", tpl),
+        }
+    };
+
+    let offset = {
+        let tpl = &vn.els[1];
+        match tpl.eid {
+            EId::CONST_HANDLE => {
+                let sel = tpl.get_int::<u8>(AId::S);
+                assert_eq!(1, sel);
+                let val = tpl.get_int::<u8>(AId::VAL);
+                Offset::Handle(val)
+            }
+            EId::CONST_REAL => Offset::Real(tpl.get_int(AId::VAL)),
+            EId::CONST_SPACEID => {
+                let Attribute::BasicAddr(addr) = tpl.attrs[&AId::SPACE] else {
+                    unreachable!();
+                };
+                Offset::Space(addr.try_into().unwrap())
+            }
+            EId::CONST_NEXT => Offset::Next,
+            _ => unreachable!("{}", tpl),
+        }
+    };
+
+    let size = {
+        let tpl = &vn.els[2];
+        match tpl.eid {
+            EId::CONST_HANDLE => {
+                let sel = tpl.get_int::<u8>(AId::S);
+                assert_eq!(2, sel);
+                let val = tpl.get_int::<u8>(AId::VAL);
+                Size::Handle(val)
+            }
+            EId::CONST_REAL => Size::Real(tpl.get_int(AId::VAL)),
+            EId::CONST_CURSPACE_SIZE => Size::Curr,
+            _ => unreachable!("{}", tpl),
+        }
+    };
+
     VarnodeTpl {
-        space: model_const_tpl(&tpl.els[0]),
-        offset: model_const_tpl(&tpl.els[1]),
-        size: model_const_tpl(&tpl.els[2]),
+        space,
+        offset,
+        size,
     }
 }
 
@@ -204,10 +265,30 @@ fn model_op_tpl(tpl: &Sla) -> Pcode {
             ref unk => unreachable!("{:?}", unk),
         },
         // other
+        PcodeOp::STORE => match model_pcode(tpl)[..] {
+            [None, Some(a), Some(b), Some(c)] => Pcode::Store(a, b, c),
+            ref unk => unreachable!("{:?}", unk),
+        },
+        PcodeOp::BRANCH | PcodeOp::BRANCHIND | PcodeOp::CALL | PcodeOp::RETURN => {
+            match model_pcode(tpl)[..] {
+                [None, Some(a)] => Pcode::Single(pcode, a),
+                ref unk => unreachable!("{:?}", unk),
+            }
+        }
+        PcodeOp::CBRANCH => match model_pcode(tpl)[..] {
+            [None, Some(a), Some(b)] => Pcode::Cbranch(a, b),
+            ref unk => unreachable!("{:?}", unk),
+        },
+        PcodeOp::CALLOTHER => {
+            let mut args = model_pcode(tpl);
+            let dst = args[0];
+            let args = args[1..].iter().map(|a| a.unwrap()).collect();
+            Pcode::Callother(dst, args)
+        }
+        PcodeOp::MULTIEQUAL => Pcode::Multiequal,
         _ => {
             model_pcode(tpl);
-            // unreachable!("{}", tpl) // TODO
-            Pcode::Unk
+            unreachable!("{}", tpl)
         }
     }
 }
@@ -398,6 +479,7 @@ fn model_varlist(varlist: &Sla) -> Sym {
 }
 
 // SPACES
+/*
 fn model_spaces(spaces: &Sla) -> Vec<Space> {
     spaces
         .els
@@ -410,6 +492,7 @@ fn model_spaces(spaces: &Sla) -> Vec<Space> {
         })
         .collect()
 }
+ */
 
 // SYMBOL TABLE
 
@@ -456,8 +539,8 @@ impl SymbolTable {
 
 impl Sleigh {
     pub(crate) fn new(sleigh: Sla) -> Self {
-        let spaces = model_spaces(sleigh.get_el(EId::SPACES));
+        // let spaces = model_spaces(sleigh.get_el(EId::SPACES));
         let symtab = model_symtab(sleigh.get_el(EId::SYMBOL_TABLE));
-        Sleigh { spaces, symtab }
+        Sleigh { symtab }
     }
 }

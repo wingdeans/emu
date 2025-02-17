@@ -1,34 +1,34 @@
 use crate::pcodeop::PcodeOp;
 
-//   1 BOOL_AND: XXX
-//   6 BOOL_NEGATE: XX
-//   1 BOOL_OR: XXX
-//   1 BRANCHIND: OX
-//   2 BRANCH: OX
-//   2 CALLOTHER: OX
-//   3 CALLOTHER: OXX
-//   1 CALLOTHER: XXXXXX
-//   3 CALL: OX
-//   4 CBRANCH: OXX
-//  85 COPY: XX
-//  38 INT_ADD: XXX
-// 320 INT_AND: XXX
-//  14 INT_CARRY: XXX
-//  51 INT_EQUAL: XXX
-// 242 INT_LEFT: XXX
-//   9 INT_LESS: XXX
-//   3 INT_NEGATE: XX
-//  19 INT_NOTEQUAL: XXX
-// 241 INT_OR: XXX
-//  40 INT_RIGHT: XXX
-//   2 INT_SRIGHT: XXX
-//  32 INT_SUB: XXX
-//   3 INT_XOR: XXX
-//   2 INT_ZEXT: XX
-//  28 LOAD: XXX
-//  22 MULTIEQUAL: OX
-//   3 RETURN: OX
-//  20 STORE: OXXX
+//   1 BOOL_AND     : XXX
+//   6 BOOL_NEGATE  : XX
+//   1 BOOL_OR      : XXX
+//   1 BRANCHIND    : OX
+//   2 BRANCH       : OX
+//   2 CALLOTHER    : OX
+//   3 CALLOTHER    : OXX
+//   1 CALLOTHER    : XXXXXX
+//   3 CALL         : OX
+//   4 CBRANCH      : OXX
+//  85 COPY         : XX
+//  38 INT_ADD      : XXX
+// 320 INT_AND      : XXX
+//  14 INT_CARRY    : XXX
+//  51 INT_EQUAL    : XXX
+// 242 INT_LEFT     : XXX
+//   9 INT_LESS     : XXX
+//   3 INT_NEGATE   : XX
+//  19 INT_NOTEQUAL : XXX
+// 241 INT_OR       : XXX
+//  40 INT_RIGHT    : XXX
+//   2 INT_SRIGHT   : XXX
+//  32 INT_SUB      : XXX
+//   3 INT_XOR      : XXX
+//   2 INT_ZEXT     : XX
+//  28 LOAD         : XXX
+//  22 MULTIEQUAL   : OX
+//   3 RETURN       : OX
+//  20 STORE        : OXXX
 
 //   1 BOOL_AND 0     : CONST_SPACEID  CONST_REAL    CONST_REAL
 //   1 BOOL_AND 1     : CONST_SPACEID  CONST_REAL    CONST_REAL
@@ -136,30 +136,41 @@ use crate::pcodeop::PcodeOp;
 //  14 STORE 3        : CONST_SPACEID  CONST_REAL    CONST_REAL
 
 #[derive(Debug, Clone, Copy)]
-pub(crate) enum Const {
-    Real(u64),
-    Null,
-    Unk, // TODO
-    // handle
-    HandleSpace(u8),
-    HandleOffset(u8),
-    HandleSize(u8),
-    // spaces
-    OtherSpace,
-    UniqueSpace,
+pub(crate) enum Space {
     Space(u8),
+    Handle(u8),
+    Curr,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum Offset {
+    Real(u64),
+    Handle(u8),
+    Space(u8),
+    Next,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum Size {
+    Real(u32),
+    Handle(u8),
+    Curr,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct VarnodeTpl {
-    pub(crate) space: Const,
-    pub(crate) offset: Const,
-    pub(crate) size: Const,
+    pub(crate) space: Space,
+    pub(crate) offset: Offset,
+    pub(crate) size: Size,
 }
 
 #[derive(Debug)]
 pub(crate) enum Pcode {
     Unary(PcodeOp, VarnodeTpl, VarnodeTpl),
     Binary(PcodeOp, VarnodeTpl, VarnodeTpl, VarnodeTpl),
-    Unk,
+    Store(VarnodeTpl, VarnodeTpl, VarnodeTpl),
+    Single(PcodeOp, VarnodeTpl),
+    Cbranch(VarnodeTpl, VarnodeTpl),
+    Callother(Option<VarnodeTpl>, Vec<VarnodeTpl>),
+    Multiequal,
 }

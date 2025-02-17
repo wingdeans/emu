@@ -1,4 +1,4 @@
-use crate::pcode::{Pcode, VarnodeTpl};
+use crate::pcode::{Offset, Pcode, Size, Space, VarnodeTpl};
 use crate::slamodel::{
     Constructor, Decision, Expr, Mask, OpExpr, Operand, Print, Sleigh, Subtable, Sym, SymbolTable,
     TokenField, Varlist,
@@ -97,12 +97,36 @@ fn gen_tokenfield(tokenfield: &TokenField, off: u8) -> TokenStream {
     }
 }
 
-fn gen_varnode_tpl(_: &VarnodeTpl) -> TokenStream {
+fn gen_space(s: Space) -> TokenStream {
+    match s {
+        Space::Space(x) => quote!(#x),
+        _ => quote!(123), // TODO
+    }
+}
+
+fn gen_offset(o: Offset) -> TokenStream {
+    match o {
+        Offset::Real(x) => quote!(#x),
+        _ => quote!(123), // TODO
+    }
+}
+
+fn gen_size(s: Size) -> TokenStream {
+    match s {
+        Size::Real(x) => quote!(#x),
+        _ => quote!(123), // TODO
+    }
+}
+
+fn gen_varnode_tpl(v: &VarnodeTpl) -> TokenStream {
+    let space = gen_space(v.space);
+    let offset = gen_offset(v.offset);
+    let size = gen_size(v.size);
     quote! {
         Varnode {
-            space: 0,
-            offset: 0,
-            size: 0,
+            space: #space,
+            offset: #offset,
+            size: #size,
         }
     }
 }
@@ -199,7 +223,7 @@ fn gen_subtable(subtable: &Subtable, symtab: &SymbolTable, idx: usize) -> TokenS
                         let a = gen_varnode_tpl(a);
                         let b = gen_varnode_tpl(b);
                         quote! {
-                            vec.push(Pcode::#op(#a, #b))
+                            vec.push(Pcode::#op(#a, #b));
                         }
                     }
                     Pcode::Binary(op, a, b, c) => {
@@ -208,17 +232,45 @@ fn gen_subtable(subtable: &Subtable, symtab: &SymbolTable, idx: usize) -> TokenS
                         let b = gen_varnode_tpl(b);
                         let c = gen_varnode_tpl(c);
                         quote! {
-                            vec.push(Pcode::#op(#a, #b, #c))
+                            vec.push(Pcode::#op(#a, #b, #c));
                         }
                     }
-                    Pcode::Unk => quote! {
-                        vec.push(Pcode::Unk)
+                    Pcode::Store(a, b, c) => {
+                        let a = gen_varnode_tpl(a);
+                        let b = gen_varnode_tpl(b);
+                        let c = gen_varnode_tpl(c);
+                        quote! {
+                            vec.push(Pcode::Store(#a, #b, #c));
+                        }
+                    }
+                    Pcode::Single(op, a) => {
+                        let op = format_ident!("{}", op.to_string());
+                        let a = gen_varnode_tpl(a);
+                        quote! {
+                            vec.push(Pcode::#op(#a));
+                        }
+                    }
+                    Pcode::Cbranch(a, b) => {
+                        let a = gen_varnode_tpl(a);
+                        let b = gen_varnode_tpl(b);
+                        quote! {
+                            vec.push(Pcode::Cbranch(#a, #b));
+                        }
+                    }
+                    Pcode::Callother(_, _) => {
+                        // TODO
+                        quote! {
+                            vec.push(Pcode::Callother);
+                        }
+                    }
+                    Pcode::Multiequal => quote! {
+                        vec.push(Pcode::Multiequal);
                     },
                 });
 
                 quote! {
                     Self::#variant(#(#operand_bindings),*) => {
-                        #(#pcode_body;)*
+                        #(#pcode_body)*
                     },
                 }
             });
@@ -458,13 +510,11 @@ pub(crate) fn emit(sleigh: Sleigh) {
                 }
             }
 
-            type Const = u64;
-
             #[derive(Debug)]
             pub(crate) struct Varnode {
-                pub(crate) space: Const,
-                pub(crate) offset: Const,
-                pub(crate) size: Const,
+                pub(crate) space: u8,
+                pub(crate) offset: u64,
+                pub(crate) size: u32,
             }
 
             #[derive(Debug)]
@@ -490,16 +540,17 @@ pub(crate) fn emit(sleigh: Sleigh) {
                 IntSub(Varnode, Varnode, Varnode),
                 IntXor(Varnode, Varnode, Varnode),
                 Load(Varnode, Varnode, Varnode),
+                // store
+                Store(Varnode, Varnode, Varnode),
+                // single
+                Branch(Varnode),
+                Branchind(Varnode),
+                Call(Varnode),
+                Return(Varnode),
                 // other
-                // BRANCH,
-                // BRANCHIND,
-                // CALL,
-                // CALLOTHER,
-                // CBRANCH,
-                // MULTIEQUAL,
-                // RETURN,
-                // STORE,
-                Unk, // TODO
+                Cbranch(Varnode, Varnode),
+                Callother, // TODO
+                Multiequal, // TODO
             }
         }
     );
