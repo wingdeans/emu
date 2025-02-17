@@ -1,3 +1,6 @@
+mod display;
+
+use crate::display::Display;
 use cpu::cpu::{Cpu, Result as CpuResult};
 use eframe::{
     egui::{self, Button, Label, Layout, RichText, Window},
@@ -21,6 +24,7 @@ struct State {
     control_open: bool,
     memory_editor_open: bool,
     registers_open: bool,
+    display_open: bool,
 }
 
 struct App {
@@ -29,6 +33,7 @@ struct App {
     state: State,
     last_execute: Option<CpuResult<u32>>,
     system: Rc<RefCell<System>>,
+    display: Rc<RefCell<Display>>,
 }
 
 impl App {
@@ -47,6 +52,7 @@ impl App {
                 control_open: true,
                 memory_editor_open: true,
                 registers_open: true,
+                display_open: true,
             },
             last_execute: None,
             system,
@@ -67,6 +73,7 @@ impl App {
         Window::new("Control")
             .open(&mut self.state.control_open)
             .collapsible(false)
+            .resizable(false)
             .show(ctx, |ui| {
                 ui.with_layout(Layout::left_to_right(egui::Align::LEFT), |ui| {
                     ui.set_width(300.0);
@@ -126,6 +133,14 @@ impl App {
                     });
             });
     }
+
+    fn draw_display(&mut self, ctx: &egui::Context) {
+        Window::new("Display")
+            .open(&mut self.state.display_open)
+            .collapsible(false)
+            .resizable(false)
+            .show(ctx, |ui| {});
+    }
 }
 
 impl eframe::App for App {
@@ -135,11 +150,13 @@ impl eframe::App for App {
                 ui.toggle_value(&mut self.state.control_open, "Control");
                 ui.toggle_value(&mut self.state.registers_open, "Registers");
                 ui.toggle_value(&mut self.state.memory_editor_open, "Memory Editor");
+                ui.toggle_value(&mut self.state.display_open, "Display");
             });
         });
 
         self.draw_control(ctx);
         self.draw_memory_editor(ctx);
         self.draw_registers(ctx);
+        self.draw_display(ctx);
     }
 }
