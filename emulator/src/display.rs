@@ -1,14 +1,25 @@
-use eframe::egui::{Color32, ColorImage, ImageData, TextureHandle};
+use eframe::egui::{Color32, ColorImage, Context, ImageData, TextureHandle};
 use library::surface::{self, Surface};
 use std::sync::Arc;
 
 pub struct Display {
     image: ColorImage,
-    texture: TextureHandle,
+    texture: Option<TextureHandle>,
 }
 
 impl Display {
-    pub fn new(texture: TextureHandle) -> Self {
+    pub fn draw(&mut self, ctx: &Context) {
+        if self.texture.is_none() {}
+
+        texture.set(
+            ImageData::Color(Arc::new(self.image.clone())),
+            Default::default(),
+        );
+    }
+}
+
+impl Default for Display {
+    fn default() -> Display {
         Self {
             image: ColorImage::new(
                 [
@@ -17,19 +28,8 @@ impl Display {
                 ],
                 Color32::BLACK,
             ),
-            texture,
+            texture: None,
         }
-    }
-
-    pub fn redraw(&mut self) {
-        self.texture.set(
-            ImageData::Color(Arc::new(self.image.clone())),
-            Default::default(),
-        );
-    }
-
-    pub fn texture(&self) -> &TextureHandle {
-        &self.texture
     }
 }
 

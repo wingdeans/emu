@@ -56,6 +56,7 @@ impl App {
             },
             last_execute: None,
             system,
+            display: Default::default(),
         }
     }
 }
@@ -139,7 +140,9 @@ impl App {
             .open(&mut self.state.display_open)
             .collapsible(false)
             .resizable(false)
-            .show(ctx, |ui| {});
+            .show(ctx, |ui| {
+                self.display.borrow_mut().draw(ui);
+            });
     }
 }
 

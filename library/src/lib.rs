@@ -4,5 +4,6 @@ pub mod error;
 pub mod io;
 pub mod mbc;
 pub mod rom;
+pub mod surface;
 pub mod system;
 pub mod wram;
