@@ -14,7 +14,7 @@ pub struct Mapping {
     pub(crate) dstlen: u32,
 }
 
-pub(crate) struct GBLoader(Vec<u8>);
+pub(crate) struct GBLoader(pub(crate) Vec<u8>);
 
 impl GBLoader {
     pub(crate) fn new(path: &str) -> Result<Self, GBLoadError> {

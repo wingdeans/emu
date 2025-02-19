@@ -1,6 +1,7 @@
 #include "loadimage.hh"
 #include "sleigh.hh"
 
+#include <iostream> // TODO
 #include <cassert>
 
 struct String;
@@ -34,12 +35,29 @@ struct AssemblyRaw : public ghidra::AssemblyEmit {
     }
 };
 
+// TODO
+void print_vardata(std::ostream &s, ghidra::VarnodeData &data) {
+    s << '(' << data.space->getName() << ',';
+    data.space->printOffset(s,data.offset);
+    s << ',' << std::dec << data.size << ')' << " ";
+}
+
 struct PcodeRaw : public ghidra::PcodeEmit {
+    uint8_t opc;
     virtual void dump(const ghidra::Address &addr,
                       ghidra::OpCode opc,
                       ghidra::VarnodeData *outvar,
                       ghidra::VarnodeData *vars,
                       ghidra::int4 isize) {
+        this->opc = opc;
+        std::cout << ghidra::get_opname(opc) << " ";
+        if (outvar != nullptr) {
+            print_vardata(std::cout, *outvar);
+        }
+        for (int i = 0; i < isize; ++i) {
+            print_vardata(std::cout, vars[i]);
+        }
+        std::cout << std::endl;
     }
 };
 
@@ -81,11 +99,13 @@ extern "C" {
         *out_body = s->asmRaw.body;
         s->asmRaw.mnem = s->asmRaw.body = nullptr;
     }
-    void sleigh_pcode(Sleigh *s, uint8_t *buf, size_t len, size_t addr) {
+    uint32_t sleigh_pcode(Sleigh *s, uint8_t *buf, size_t len, size_t addr) {
         ghidra::Address address(s->sleigh.getDefaultCodeSpace(), addr);
         s->loader.len = len;
         s->loader.buf = buf;
-        s->sleigh.oneInstruction(s->pcodeRaw, address);
+        uint32_t insnLen = s->sleigh.oneInstruction(s->pcodeRaw, address);
         s->loader.buf = nullptr;
+
+        return insnLen;
     }
 }

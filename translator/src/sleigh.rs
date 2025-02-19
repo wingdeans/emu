@@ -1,7 +1,7 @@
-use core::ffi::c_char;
+use core::ffi::{c_char, c_void};
 
 mod ffi {
-    use core::ffi::c_char;
+    use core::ffi::{c_char, c_void};
 
     #[repr(C)]
     pub(super) struct Sleigh {
@@ -17,10 +17,15 @@ mod ffi {
             len: usize,
             addr: usize,
             // out
-            out_mnem: *mut *mut String,
-            out_body: *mut *mut String,
+            out_mnem: *mut *mut c_void,
+            out_body: *mut *mut c_void,
         );
-        pub(super) fn sleigh_pcode(sleigh: *mut Sleigh, buf: *const u8, len: usize, addr: usize);
+        pub(super) fn sleigh_pcode(
+            sleigh: *mut Sleigh,
+            buf: *const u8,
+            len: usize,
+            addr: usize,
+        ) -> u32;
     }
 
     #[no_mangle]
@@ -56,14 +61,14 @@ impl Sleigh {
                 buf.as_ptr(),
                 len,
                 addr,
-                &mut mnem as *mut *mut String,
-                &mut body as *mut *mut String,
+                (&mut mnem as *mut *mut String) as *mut *mut c_void,
+                (&mut body as *mut *mut String) as *mut *mut c_void,
             );
             (*Box::from_raw(mnem), *Box::from_raw(body))
         }
     }
 
-    pub fn pcode(&self, buf: &[u8], addr: usize) {
+    pub fn pcode(&self, buf: &[u8], addr: usize) -> u32 {
         assert_ne!(0, buf.len());
         let len = std::cmp::min(16, buf.len());
         unsafe { ffi::sleigh_pcode(self.0, buf.as_ptr(), len, addr) }
