@@ -1,12 +1,22 @@
 #include "loadimage.hh"
 #include "sleigh.hh"
 
-#include <iostream> // TODO
 #include <cassert>
 
 struct String;
+struct PcodeVec;
+
+struct Varnode {
+    uint32_t addr;
+    uint32_t size;
+    uint64_t offset;
+};
 
 extern "C" String *rust_str(const char *buf, size_t len);
+extern "C" void rust_push_pcode(PcodeVec *vec,
+                                uint8_t opc,
+                                Varnode *vars,
+                                uint32_t size);
 
 struct BufLoadImage : public ghidra::LoadImage {
     uint8_t *buf;
@@ -35,29 +45,30 @@ struct AssemblyRaw : public ghidra::AssemblyEmit {
     }
 };
 
-// TODO
-void print_vardata(std::ostream &s, ghidra::VarnodeData &data) {
-    s << '(' << data.space->getName() << ',';
-    data.space->printOffset(s,data.offset);
-    s << ',' << std::dec << data.size << ')' << " ";
-}
-
 struct PcodeRaw : public ghidra::PcodeEmit {
-    uint8_t opc;
+    PcodeVec *vec;
     virtual void dump(const ghidra::Address &addr,
                       ghidra::OpCode opc,
                       ghidra::VarnodeData *outvar,
                       ghidra::VarnodeData *vars,
                       ghidra::int4 isize) {
-        this->opc = opc;
-        std::cout << ghidra::get_opname(opc) << " ";
+        Varnode varnodes[isize + 1];
         if (outvar != nullptr) {
-            print_vardata(std::cout, *outvar);
+            Varnode &vn = varnodes[0];
+            vn.addr = outvar->space->getIndex();
+            vn.size = outvar->size;
+            vn.offset = outvar->offset;
+        } else {
+            varnodes[0].addr = -1;
         }
-        for (int i = 0; i < isize; ++i) {
-            print_vardata(std::cout, vars[i]);
+        for (int i = 0; i < isize; i ++) {
+            ghidra::VarnodeData &data = vars[i];
+            Varnode &vn = varnodes[i + 1];
+            vn.addr = data.space->getIndex();
+            vn.size = data.size;
+            vn.offset = data.offset;
         }
-        std::cout << std::endl;
+        rust_push_pcode(vec, opc, varnodes, isize + 1);
     }
 };
 
@@ -87,7 +98,7 @@ extern "C" {
     void sleigh_free(Sleigh *sleigh) {
         delete sleigh;
     }
-    void sleigh_disassemble(Sleigh *s, uint8_t *buf, size_t len, size_t addr,
+    void sleigh_disassemble(Sleigh *s, uint8_t *buf, size_t len, uint64_t addr,
                             String **out_mnem, String **out_body) {
         ghidra::Address address(s->sleigh.getDefaultCodeSpace(), addr);
         s->loader.len = len;
@@ -99,13 +110,14 @@ extern "C" {
         *out_body = s->asmRaw.body;
         s->asmRaw.mnem = s->asmRaw.body = nullptr;
     }
-    uint32_t sleigh_pcode(Sleigh *s, uint8_t *buf, size_t len, size_t addr) {
+    uint32_t sleigh_pcode(Sleigh *s, uint8_t *buf, size_t len, uint64_t addr, PcodeVec *vec) {
         ghidra::Address address(s->sleigh.getDefaultCodeSpace(), addr);
         s->loader.len = len;
         s->loader.buf = buf;
+        s->pcodeRaw.vec = vec;
         uint32_t insnLen = s->sleigh.oneInstruction(s->pcodeRaw, address);
         s->loader.buf = nullptr;
-
+        s->pcodeRaw.vec = nullptr;
         return insnLen;
     }
 }
