@@ -1,8 +1,11 @@
 #include "loadimage.hh"
 #include "sleigh.hh"
 
-#include <iostream> // TODO
 #include <cassert>
+
+struct String;
+
+extern "C" String *rust_str(const char *buf, size_t len);
 
 struct BufLoadImage : public ghidra::LoadImage {
     uint8_t *buf;
@@ -21,10 +24,13 @@ struct BufLoadImage : public ghidra::LoadImage {
 };
 
 struct AssemblyRaw : public ghidra::AssemblyEmit {
+    String *mnem;
+    String *body;
     virtual void dump(const ghidra::Address &addr,
                       const std::string &mnem,
                       const std::string &body) {
-        std::cout << mnem << "\t" << body << std::endl;
+        this->mnem = rust_str(mnem.data(), mnem.size());
+        this->body = rust_str(body.data(), body.size());
     }
 };
 
@@ -63,12 +69,17 @@ extern "C" {
     void sleigh_free(Sleigh *sleigh) {
         delete sleigh;
     }
-    void sleigh_disassemble(Sleigh *s, uint8_t *buf, size_t len, size_t addr) {
+    void sleigh_disassemble(Sleigh *s, uint8_t *buf, size_t len, size_t addr,
+                            String **out_mnem, String **out_body) {
         ghidra::Address address(s->sleigh.getDefaultCodeSpace(), addr);
         s->loader.len = len;
         s->loader.buf = buf;
         s->sleigh.printAssembly(s->asmRaw, address);
         s->loader.buf = nullptr;
+
+        *out_mnem = s->asmRaw.mnem;
+        *out_body = s->asmRaw.body;
+        s->asmRaw.mnem = s->asmRaw.body = nullptr;
     }
     void sleigh_pcode(Sleigh *s, uint8_t *buf, size_t len, size_t addr) {
         ghidra::Address address(s->sleigh.getDefaultCodeSpace(), addr);

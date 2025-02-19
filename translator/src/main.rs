@@ -1,17 +1,17 @@
 mod gbloader;
-mod loader;
 mod sleigh;
 
 use crate::gbloader::GBLoader;
-use crate::loader::Loader;
 use crate::sleigh::Sleigh;
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let sleigh = Sleigh::new("sm83.sla");
 
-    let loader = GBLoader::new("../../roms/roms/porklike-gb.gb").unwrap();
-    let mappings = loader.mappings().unwrap();
-    println!("{:#x?}", mappings);
+    let loader = GBLoader::new("../../roms/roms/porklike-gb.gb")?;
+    let mappings = loader.mappings()?;
 
-    sleigh.disassemble(&[0, 0, 0, 0]);
+    let (a, b) = sleigh.disassemble(&[0, 0, 0, 0], 0);
+    println!("{} {}", a, b);
+
+    Ok(())
 }
