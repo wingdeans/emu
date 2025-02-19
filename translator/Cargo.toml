@@ -2,7 +2,9 @@
 name = "emu-translator"
 version = "0.1.0"
 edition = "2021"
-include = ["src/sleigh.cc"]
+
+[dependencies]
+thiserror = "2"
 
 [build-dependencies]
 cc = "1.2.14"
