@@ -141,7 +141,7 @@ impl App {
             .collapsible(false)
             .resizable(false)
             .show(ctx, |ui| {
-                self.display.borrow_mut().draw(ui);
+                self.display.borrow_mut().draw(ctx, ui);
             });
     }
 }
