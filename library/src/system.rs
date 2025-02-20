@@ -1,8 +1,8 @@
 use crate::{
-    bus::Bus,
+    bus::{Addressable, Bus},
     cartridge::Cartridge,
     io::IO,
-    memory::{BankedMemory, Memory},
+    memory::{Access, Memory, MemoryBank},
 };
 use std::{cell::RefCell, rc::Rc};
 
@@ -19,47 +19,57 @@ pub const HRAM_END: u16 = 0xffff;
 pub const HRAM_SIZE: usize = (HRAM_END - HRAM_BEGIN) as usize;
 
 pub struct System {
-    cartridge: Cartridge,
     bus: Bus,
 }
 
 impl System {
     pub fn new(cartridge: Cartridge) -> Self {
-        let bus = Bus::default();
+        let mut bus = Bus::default();
 
         let vram = Rc::new(RefCell::new(Memory::new(
-            VRAM_BEGIN, VRAM_END, VRAM_SIZE, true, true,
+            VRAM_BEGIN..VRAM_END,
+            VRAM_SIZE,
+            Access::ReadWrite,
         )));
 
         let wram_0 = Rc::new(RefCell::new(Memory::new(
-            WRAM_0_BEGIN,
-            WRAM_0_END,
+            WRAM_0_BEGIN..WRAM_0_END,
             WRAM_SIZE,
-            true,
-            true,
+            Access::ReadWrite,
         )));
 
-        let wram_x = Rc::new(RefCell::new(BankedMemory::new(
-            WRAM_X_BEGIN,
-            WRAM_X_END,
+        let wram_x = Rc::new(RefCell::new(MemoryBank::new(
+            WRAM_X_BEGIN..WRAM_X_END,
             WRAM_SIZE,
             7,
-            true,
-            true,
+            Access::ReadWrite,
         )));
 
         let hram = Rc::new(RefCell::new(Memory::new(
-            HRAM_BEGIN, HRAM_END, HRAM_SIZE, true, true,
+            HRAM_BEGIN..HRAM_END,
+            HRAM_SIZE,
+            Access::ReadWrite,
         )));
 
-        let io = Rc::new(RefCell::new(IO::new(wram_x)));
+        let io = Rc::new(RefCell::new(IO::new(Rc::clone(&wram_x))));
 
+        bus.add(Rc::new(RefCell::new(cartridge)));
         bus.add(vram);
         bus.add(wram_0);
         bus.add(wram_x);
         bus.add(hram);
         bus.add(io);
 
-        Self { cartridge, bus }
+        Self { bus }
+    }
+}
+
+impl Addressable for System {
+    fn read(&mut self, addr: u16) -> Option<u8> {
+        self.bus.read(addr)
+    }
+
+    fn write(&mut self, addr: u16, value: u8) -> Option<()> {
+        self.bus.write(addr, value)
     }
 }

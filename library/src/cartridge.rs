@@ -1,8 +1,8 @@
 use crate::{
     bus::Addressable,
     error::{Error, Result},
-    mbc::{mbc1::Mbc1, mbc_none::MbcNone},
-    rom::Rom,
+    mbc::mbc_none::MbcNone,
+    rom,
 };
 use std::{cell::RefCell, fs::File, io::prelude::*, path::Path, ptr, rc::Rc};
 
@@ -15,7 +15,6 @@ pub const CHECKSUM_END: usize = 0x14d;
 
 pub enum Mapper {
     NoMbc,
-    Mbc1,
 }
 
 #[repr(packed)]
@@ -41,7 +40,6 @@ pub struct Header {
 
 pub struct Cartridge {
     header: Header,
-    rom: Rc<Rom>,
     mapper: Rc<RefCell<dyn Addressable>>,
 }
 
@@ -115,7 +113,6 @@ impl Header {
 
         match self.cartridge_type {
             0 => Ok(NoMbc),
-            0x01..=0x03 => Ok(Mbc1),
             _ => Err(Error::UnrecognizedCartridgeHeaderField(format!(
                 "unrecognized cartridge type: 0x{:02x}",
                 self.cartridge_type
@@ -133,29 +130,24 @@ impl Cartridge {
             .map_err(|e| Error::CartridgeLoadFailure(e.to_string()))?;
         let header = Header::from(&buffer)?;
 
-        let rom = Rc::new(Rom::from_file(&header, &mut file)?);
+        let rom = Rc::new(RefCell::new(rom::from_file(&header, &mut file)?));
 
         let mapper = match header.mapper()? {
-            Mapper::NoMbc => Rc::new(RefCell::new(MbcNone::new(&header, Rc::clone(&rom))?))
-                as Rc<RefCell<dyn Addressable>>,
-            Mapper::Mbc1 => Rc::new(RefCell::new(Mbc1::new(&header, Rc::clone(&rom))?))
-                as Rc<RefCell<dyn Addressable>>,
+            Mapper::NoMbc => {
+                Rc::new(RefCell::new(MbcNone::new(&header, rom)?)) as Rc<RefCell<dyn Addressable>>
+            }
         };
 
-        Ok(Self {
-            header,
-            rom,
-            mapper,
-        })
+        Ok(Self { header, mapper })
     }
 }
 
 impl Addressable for Cartridge {
-    fn read(&mut self, addr: u16) -> Option<Result<u8>> {
+    fn read(&mut self, addr: u16) -> Option<u8> {
         self.mapper.borrow_mut().read(addr)
     }
 
-    fn write(&mut self, addr: u16, value: u8) -> Option<Result<()>> {
+    fn write(&mut self, addr: u16, value: u8) -> Option<()> {
         self.mapper.borrow_mut().write(addr, value)
     }
 }

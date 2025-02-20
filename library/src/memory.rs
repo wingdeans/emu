@@ -1,41 +1,66 @@
-use crate::bus::Addressable;
+use crate::bus::{Addressable, Mapped};
+use std::ops::Range;
+use std::{cell::RefCell, rc::Rc};
 
-pub struct Memory {
-    begin: u16,
-    end: u16,
-    readable: bool,
-    writable: bool,
-    mem: Vec<u8>,
+pub enum Access {
+    ReadOnly,
+    WriteOnly,
+    ReadWrite,
 }
 
-impl Memory {
-    pub fn new(begin: u16, end: u16, size: usize, readable: bool, writable: bool) -> Self {
-        Memory {
-            begin,
-            end,
-            readable,
-            writable,
-            mem: vec![0u8; size],
+impl Access {
+    pub fn readable(&self) -> bool {
+        match self {
+            Self::ReadOnly | Self::ReadWrite => true,
+            _ => false,
         }
     }
 
-    pub fn range(&self) -> (u16, u16) {
-        (self.begin, self.end)
+    pub fn writable(&self) -> bool {
+        match self {
+            Self::WriteOnly | Self::ReadWrite => true,
+            _ => false,
+        }
+    }
+}
+
+pub struct Memory {
+    range: Range<u16>,
+    access: Access,
+    data: Vec<u8>,
+}
+
+impl Memory {
+    pub fn new(range: Range<u16>, size: usize, access: Access) -> Self {
+        Memory {
+            range,
+            access,
+            data: vec![0u8; size],
+        }
+    }
+
+    pub fn data(&self) -> &[u8] {
+        &self.data
+    }
+
+    pub fn data_mut(&mut self) -> &mut [u8] {
+        &mut self.data
     }
 }
 
 impl Addressable for Memory {
     fn read(&mut self, addr: u16) -> Option<u8> {
-        if self.readable && self.mem.len() > 0 && addr >= self.begin && addr < self.end {
-            Some(Ok(self.mem[((addr - self.begin) as usize) % self.mem.len()]));
+        if self.access.readable() && self.data.len() != 0 && self.range.contains(&addr) {
+            Some(self.data[((addr - self.range.start) as usize) % self.data.len()])
         } else {
             None
         }
     }
 
     fn write(&mut self, addr: u16, value: u8) -> Option<()> {
-        if self.writable && self.mem.len() > 0 && addr >= self.begin && addr < self.end {
-            self.mem[((addr - self.begin) as usize) % self.mem.len()] = value;
+        if self.access.writable() && self.data.len() != 0 && self.range.contains(&addr) {
+            let a = ((addr - self.range.start) as usize) % self.data.len();
+            self.data[a] = value;
             Some(())
         } else {
             None
@@ -43,44 +68,44 @@ impl Addressable for Memory {
     }
 }
 
-pub struct MemoryView {
-    begin: u16,
-    end: u16,
-    memory: Rc<RefCell<Memory>>,
+impl Mapped for Memory {
+    fn range(&self) -> &Range<u16> {
+        &self.range
+    }
+
+    fn size(&self) -> usize {
+        self.data.len()
+    }
 }
 
-impl Addressable for MemoryView {}
-
 pub struct MemoryBank {
-    begin: u16,
-    end: u16,
+    range: Range<u16>,
+    size: usize,
     index: u32,
-    banks: Vec<Memory>,
+    banks: Vec<Rc<RefCell<Memory>>>,
 }
 
 impl MemoryBank {
-    pub fn new(
-        begin: u16,
-        end: u16,
-        bank_size: usize,
-        bank_count: u32,
-        readable: bool,
-        writable: bool,
-    ) -> Self {
+    pub fn new(range: Range<u16>, bank_size: usize, bank_count: u32, access: Access) -> Self {
+        let banks = vec![
+            Rc::new(RefCell::new(Memory::new(range.clone(), bank_size, access)));
+            bank_count as usize
+        ];
+
         Self {
-            begin,
-            end,
+            range,
+            size: bank_size,
             index: 0,
-            banks: vec![Memory::new(begin, end, bank_size, readable, writable); bank_count],
+            banks,
         }
     }
 
-    pub fn bank(&mut self, bank: u32) -> &mut Memory {
-        self.banks[bank as usize]
+    pub fn bank(&self, bank: u32) -> &Rc<RefCell<Memory>> {
+        &self.banks[bank as usize]
     }
 
     pub fn select(&mut self, bank: u32) {
-        self.index = std::cmp::min(bank, self.banks.len());
+        self.index = std::cmp::min(bank, self.banks.len() as u32 - 1);
     }
 
     pub fn selected(&self) -> u32 {
@@ -90,10 +115,22 @@ impl MemoryBank {
 
 impl Addressable for MemoryBank {
     fn read(&mut self, addr: u16) -> Option<u8> {
-        self.banks[self.index].read(addr)
+        self.banks[self.index as usize].borrow_mut().read(addr)
     }
 
     fn write(&mut self, addr: u16, value: u8) -> Option<()> {
-        self.banks[self.index].write(addr, value)
+        self.banks[self.index as usize]
+            .borrow_mut()
+            .write(addr, value)
+    }
+}
+
+impl Mapped for MemoryBank {
+    fn range(&self) -> &Range<u16> {
+        &self.range
+    }
+
+    fn size(&self) -> usize {
+        self.size
     }
 }

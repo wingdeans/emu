@@ -8,7 +8,7 @@ use eframe::{
 };
 use egui_extras::{Column, TableBuilder};
 use egui_memory_editor::MemoryEditor;
-use library::{bus::Bus, cartridge::Cartridge, system::System};
+use library::{bus::Addressable, cartridge::Cartridge, system::System};
 use std::{cell::RefCell, env, path::Path, rc::Rc};
 
 fn main() -> eframe::Result {
@@ -46,7 +46,7 @@ impl App {
         let system = Rc::new(RefCell::new(System::new(cartridge)));
 
         Self {
-            cpu: Cpu::new(Rc::clone(&system) as Rc<RefCell<dyn Bus>>),
+            cpu: Cpu::new(Rc::clone(&system) as Rc<RefCell<dyn Addressable>>),
             memory_editor: MemoryEditor::new().with_address_range("All", 0..0xffff),
             state: State {
                 control_open: true,
@@ -86,7 +86,8 @@ impl App {
                     }
 
                     if ui.add_sized([25.0, 25.0], Button::new("↺")).clicked() {
-                        self.cpu = Cpu::new(Rc::clone(&self.system) as Rc<RefCell<dyn Bus>>);
+                        self.cpu =
+                            Cpu::new(Rc::clone(&self.system) as Rc<RefCell<dyn Addressable>>);
                         self.last_execute = None;
                     }
 
@@ -102,7 +103,7 @@ impl App {
             ctx,
             &mut self.state.memory_editor_open,
             &mut self.system,
-            |bus, addr| bus.borrow_mut().read(addr as u16).ok(),
+            |bus, addr| bus.borrow_mut().read(addr as u16),
             |bus, addr, value| _ = bus.borrow_mut().write(addr as u16, value),
         );
     }

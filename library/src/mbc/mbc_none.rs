@@ -1,5 +1,10 @@
-use crate::{bus::Addressable, cartridge::Header, error::Result, memory::Memory, rom::Rom};
-use std::rc::Rc;
+use crate::{
+    bus::{Addressable, Bus, Mapped, View},
+    cartridge::Header,
+    error::Result,
+    memory::{Access, Memory, MemoryBank},
+};
+use std::{cell::RefCell, rc::Rc};
 
 pub const ROM_BEGIN: u16 = 0x0000;
 pub const ROM_END: u16 = 0x8000;
@@ -7,45 +12,31 @@ pub const RAM_BEGIN: u16 = 0xa000;
 pub const RAM_END: u16 = 0xc000;
 
 pub struct MbcNone {
-    rom_bank_size: usize,
-    rom: Rc<Rom>,
-    ram: Memory,
+    bus: Bus,
 }
 
 impl MbcNone {
-    pub fn new(header: &Header, rom: Rc<Rom>) -> Result<Self> {
-        Ok(Self {
-            rom_bank_size: header.rom_bank_size()?,
-            rom,
-            ram: Memory::new(RAM_BEGIN, RAM_END, header.ram_byte_size()?, true, true),
-        })
+    pub fn new(header: &Header, rom: Rc<RefCell<MemoryBank>>) -> Result<Self> {
+        let ram = Rc::new(RefCell::new(Memory::new(
+            RAM_BEGIN..RAM_END,
+            header.ram_byte_size()?,
+            Access::ReadWrite,
+        )));
+
+        let mut bus = Bus::default();
+        bus.add(View::of(rom as Rc<RefCell<dyn Mapped>>, ROM_BEGIN..ROM_END));
+        bus.add(ram);
+
+        Ok(Self { bus })
     }
 }
 
 impl Addressable for MbcNone {
     fn read(&mut self, addr: u16) -> Option<u8> {
-        match addr {
-            ROM_BEGIN..ROM_END => {
-                let bank = self
-                    .rom
-                    .bank(((addr as usize) / self.rom_bank_size) as u32)?;
-                Some(bank[(addr as usize) % bank.len()])
-            }
-            _ => self.ram.read(addr),
-        }
+        self.bus.read(addr)
     }
 
     fn write(&mut self, addr: u16, value: u8) -> Option<()> {
-        let lo = (addr & 0x7fff) as usize;
-
-        match addr {
-            RAM_BEGIN..RAM_END if self.ram.len() != 0 => {
-                let index = (lo as usize) % self.ram.len();
-                self.ram[index] = value
-            }
-            _ => return self.ram.write(addr, value),
-        }
-
-        Some(())
+        self.bus.write(addr, value)
     }
 }

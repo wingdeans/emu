@@ -8,4 +8,3 @@ pub mod palette;
 pub mod rom;
 pub mod surface;
 pub mod system;
-pub mod wram;
