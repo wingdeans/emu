@@ -1,61 +1,65 @@
-use crate::{bus::Bus, cartridge::Cartridge, error::Result, io::IO, wram::Wram};
+use crate::{
+    bus::Bus,
+    cartridge::Cartridge,
+    io::IO,
+    memory::{BankedMemory, Memory},
+};
 use std::{cell::RefCell, rc::Rc};
 
 pub const VRAM_BEGIN: u16 = 0x8000;
 pub const VRAM_END: u16 = 0xa000;
 pub const VRAM_SIZE: usize = (VRAM_END - VRAM_BEGIN) as usize;
-pub const WRAM_BEGIN: u16 = 0xc000;
-pub const WRAM_END: u16 = 0xe000;
-pub const WRAM_SIZE: usize = (WRAM_END - WRAM_BEGIN) as usize;
-pub const IO_BEGIN: u16 = 0xff00;
-pub const IO_END: u16 = 0xff80;
+pub const WRAM_0_BEGIN: u16 = 0xc000;
+pub const WRAM_0_END: u16 = 0xe000;
+pub const WRAM_X_BEGIN: u16 = 0xc000;
+pub const WRAM_X_END: u16 = 0xe000;
+pub const WRAM_SIZE: usize = (WRAM_X_END - WRAM_X_BEGIN) as usize;
 pub const HRAM_BEGIN: u16 = 0xff80;
 pub const HRAM_END: u16 = 0xffff;
 pub const HRAM_SIZE: usize = (HRAM_END - HRAM_BEGIN) as usize;
 
 pub struct System {
     cartridge: Cartridge,
-    vram: Vec<u8>,
-    wram: Rc<RefCell<Wram>>,
-    io: IO,
-    hram: [u8; HRAM_SIZE],
+    bus: Bus,
 }
 
 impl System {
     pub fn new(cartridge: Cartridge) -> Self {
-        let wram: Rc<RefCell<Wram>> = Default::default();
+        let bus = Bus::default();
 
-        Self {
-            cartridge,
-            vram: vec![0u8; VRAM_SIZE],
-            wram: Rc::clone(&wram),
-            io: IO::new(wram),
-            hram: [0; HRAM_SIZE],
-        }
-    }
-}
+        let vram = Rc::new(RefCell::new(Memory::new(
+            VRAM_BEGIN, VRAM_END, VRAM_SIZE, true, true,
+        )));
 
-#[allow(non_contiguous_range_endpoints)]
-impl Bus for System {
-    fn read(&mut self, addr: u16) -> Result<u8> {
-        match addr {
-            VRAM_BEGIN..VRAM_END => Ok(self.vram[(addr & 0x1ff) as usize]),
-            WRAM_BEGIN..WRAM_END => self.wram.borrow_mut().read(addr),
-            IO_BEGIN..IO_END => self.io.read(addr),
-            HRAM_BEGIN..HRAM_END => Ok(self.hram[(addr - HRAM_BEGIN) as usize]),
-            _ => self.cartridge.read(addr),
-        }
-    }
+        let wram_0 = Rc::new(RefCell::new(Memory::new(
+            WRAM_0_BEGIN,
+            WRAM_0_END,
+            WRAM_SIZE,
+            true,
+            true,
+        )));
 
-    fn write(&mut self, addr: u16, value: u8) -> Result<()> {
-        match addr {
-            VRAM_BEGIN..VRAM_END => self.vram[(addr & 0x1ff) as usize] = value,
-            WRAM_BEGIN..WRAM_END => self.wram.borrow_mut().write(addr, value)?,
-            IO_BEGIN..IO_END => self.io.write(addr, value)?,
-            HRAM_BEGIN..HRAM_END => self.hram[(addr - HRAM_BEGIN) as usize] = value,
-            _ => self.cartridge.write(addr, value)?,
-        }
+        let wram_x = Rc::new(RefCell::new(BankedMemory::new(
+            WRAM_X_BEGIN,
+            WRAM_X_END,
+            WRAM_SIZE,
+            7,
+            true,
+            true,
+        )));
 
-        Ok(())
+        let hram = Rc::new(RefCell::new(Memory::new(
+            HRAM_BEGIN, HRAM_END, HRAM_SIZE, true, true,
+        )));
+
+        let io = Rc::new(RefCell::new(IO::new(wram_x)));
+
+        bus.add(vram);
+        bus.add(wram_0);
+        bus.add(wram_x);
+        bus.add(hram);
+        bus.add(io);
+
+        Self { cartridge, bus }
     }
 }

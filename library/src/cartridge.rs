@@ -1,5 +1,5 @@
 use crate::{
-    bus::Bus,
+    bus::Addressable,
     error::{Error, Result},
     mbc::{mbc1::Mbc1, mbc_none::MbcNone},
     rom::Rom,
@@ -42,7 +42,7 @@ pub struct Header {
 pub struct Cartridge {
     header: Header,
     rom: Rc<Rom>,
-    mapper: Rc<RefCell<dyn Bus>>,
+    mapper: Rc<RefCell<dyn Addressable>>,
 }
 
 impl Header {
@@ -137,10 +137,9 @@ impl Cartridge {
 
         let mapper = match header.mapper()? {
             Mapper::NoMbc => Rc::new(RefCell::new(MbcNone::new(&header, Rc::clone(&rom))?))
-                as Rc<RefCell<dyn Bus>>,
-            Mapper::Mbc1 => {
-                Rc::new(RefCell::new(Mbc1::new(&header, Rc::clone(&rom))?)) as Rc<RefCell<dyn Bus>>
-            }
+                as Rc<RefCell<dyn Addressable>>,
+            Mapper::Mbc1 => Rc::new(RefCell::new(Mbc1::new(&header, Rc::clone(&rom))?))
+                as Rc<RefCell<dyn Addressable>>,
         };
 
         Ok(Self {
@@ -151,12 +150,12 @@ impl Cartridge {
     }
 }
 
-impl Bus for Cartridge {
-    fn read(&mut self, addr: u16) -> Result<u8> {
+impl Addressable for Cartridge {
+    fn read(&mut self, addr: u16) -> Option<Result<u8>> {
         self.mapper.borrow_mut().read(addr)
     }
 
-    fn write(&mut self, addr: u16, value: u8) -> Result<()> {
+    fn write(&mut self, addr: u16, value: u8) -> Option<Result<()>> {
         self.mapper.borrow_mut().write(addr, value)
     }
 }

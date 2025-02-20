@@ -1,9 +1,4 @@
-use crate::{
-    bus::Bus,
-    cartridge::Header,
-    error::{Error, Result},
-    rom::Rom,
-};
+use crate::{bus::Addressable, cartridge::Header, error::Result, memory::Memory, rom::Rom};
 use std::rc::Rc;
 
 pub const ROM_BEGIN: u16 = 0x0000;
@@ -14,7 +9,7 @@ pub const RAM_END: u16 = 0xc000;
 pub struct MbcNone {
     rom_bank_size: usize,
     rom: Rc<Rom>,
-    ram: Vec<u8>,
+    ram: Memory,
 }
 
 impl MbcNone {
@@ -22,28 +17,25 @@ impl MbcNone {
         Ok(Self {
             rom_bank_size: header.rom_bank_size()?,
             rom,
-            ram: vec![0u8; header.ram_byte_size()?],
+            ram: Memory::new(RAM_BEGIN, RAM_END, header.ram_byte_size()?, true, true),
         })
     }
 }
 
-impl Bus for MbcNone {
-    fn read(&mut self, addr: u16) -> Result<u8> {
+impl Addressable for MbcNone {
+    fn read(&mut self, addr: u16) -> Option<u8> {
         match addr {
             ROM_BEGIN..ROM_END => {
                 let bank = self
                     .rom
                     .bank(((addr as usize) / self.rom_bank_size) as u32)?;
-                Ok(bank[(addr as usize) % bank.len()])
+                Some(bank[(addr as usize) % bank.len()])
             }
-            RAM_BEGIN..RAM_END if self.ram.len() != 0 => {
-                Ok(self.ram[(addr as usize) % self.ram.len()])
-            }
-            _ => Err(Error::MapperReadFailure(addr)),
+            _ => self.ram.read(addr),
         }
     }
 
-    fn write(&mut self, addr: u16, value: u8) -> Result<()> {
+    fn write(&mut self, addr: u16, value: u8) -> Option<()> {
         let lo = (addr & 0x7fff) as usize;
 
         match addr {
@@ -51,9 +43,9 @@ impl Bus for MbcNone {
                 let index = (lo as usize) % self.ram.len();
                 self.ram[index] = value
             }
-            _ => return Err(Error::MapperWriteFailure(addr)),
+            _ => return self.ram.write(addr, value),
         }
 
-        Ok(())
+        Some(())
     }
 }

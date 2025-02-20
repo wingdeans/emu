@@ -8,14 +8,8 @@ pub enum Error {
     UnrecognizedCartridgeHeaderField(String),
     #[error("failed to load cartridge: {0}")]
     CartridgeLoadFailure(String),
-    #[error("failed to read from mapper: 0x{0:04x}")]
-    MapperReadFailure(u16),
-    #[error("failed to write from mapper: 0x{0:04x}")]
-    MapperWriteFailure(u16),
     #[error("out of bound bank access: {0}")]
     OutOfBoundsBank(u32),
-    #[error("invalid IO register access: 0x{0:04x}")]
-    InvalidIOAccess(u16),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

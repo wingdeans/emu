@@ -3,6 +3,7 @@ pub mod cartridge;
 pub mod error;
 pub mod io;
 pub mod mbc;
+pub mod memory;
 pub mod palette;
 pub mod rom;
 pub mod surface;
