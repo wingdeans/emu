@@ -132,7 +132,7 @@ pub(crate) enum Pcode {
 
     Branch(Var),
     CBranch(Var, Var),
-    BranchInd,
+    BranchInd(Var),
 
     Call(Var),
     CallInd,
@@ -140,16 +140,16 @@ pub(crate) enum Pcode {
     Return,
 
     IntEQ(Var, Var, Var),
-    IntNEQ,
+    IntNEQ(Var, Var, Var),
     IntSLT,
     IntSLE,
-    IntLT,
+    IntLT(Var, Var, Var),
     IntLE,
     IntZext(Var, Var),
     IntSext,
     IntAdd(Var, Var, Var),
     IntSub(Var, Var, Var),
-    IntCarry,
+    IntCarry(Var, Var, Var),
     IntSCarry,
     IntSBorrow,
     Int2comp,

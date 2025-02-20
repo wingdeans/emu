@@ -104,6 +104,10 @@ pub(crate) mod ffi {
                 let_match![None, Some(target), Some(cond)];
                 vec.push(Pcode::CBranch(target, cond))
             }
+            PcodeOp::BRANCHIND => {
+                let_match![None, Some(target)];
+                vec.push(Pcode::BranchInd(target))
+            }
             PcodeOp::CALL => {
                 let_match![None, Some(target)];
                 vec.push(Pcode::Call(target))
@@ -115,9 +119,12 @@ pub(crate) mod ffi {
             PcodeOp::CALLOTHER => vec.push(Pcode::CallOther),
             // int
             PcodeOp::INT_EQUAL => binary!(Pcode::IntEQ),
+            PcodeOp::INT_NOTEQUAL => binary!(Pcode::IntNEQ),
+            PcodeOp::INT_LESS => binary!(Pcode::IntLT),
             PcodeOp::INT_ZEXT => unary!(Pcode::IntZext),
             PcodeOp::INT_ADD => binary!(Pcode::IntAdd),
             PcodeOp::INT_SUB => binary!(Pcode::IntSub),
+            PcodeOp::INT_CARRY => binary!(Pcode::IntCarry),
             PcodeOp::INT_XOR => binary!(Pcode::IntXor),
             PcodeOp::INT_AND => binary!(Pcode::IntAnd),
             PcodeOp::INT_OR => binary!(Pcode::IntOr),
