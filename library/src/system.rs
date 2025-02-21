@@ -3,6 +3,7 @@ use crate::{
     cartridge::Cartridge,
     io::IO,
     memory::{Access, Memory, MemoryBank},
+    palette::Palette,
 };
 use std::{cell::RefCell, rc::Rc};
 
@@ -20,6 +21,7 @@ pub const HRAM_SIZE: usize = (HRAM_END - HRAM_BEGIN) as usize;
 
 pub struct System {
     bus: Bus,
+    palette: Rc<RefCell<Palette>>,
 }
 
 impl System {
@@ -52,6 +54,7 @@ impl System {
         )));
 
         let io = Rc::new(RefCell::new(IO::new(Rc::clone(&wram_x))));
+        let palette: Rc<RefCell<Palette>> = Default::default();
 
         bus.add(Rc::new(RefCell::new(cartridge)));
         bus.add(vram);
@@ -59,8 +62,17 @@ impl System {
         bus.add(wram_x);
         bus.add(hram);
         bus.add(io);
+        bus.add(Rc::clone(&palette) as Rc<RefCell<dyn Addressable>>);
 
-        Self { bus }
+        Self { bus, palette }
+    }
+
+    pub fn bus_mut(&mut self) -> &mut Bus {
+        &mut self.bus
+    }
+
+    pub fn palette_ref(&self) -> &Rc<RefCell<Palette>> {
+        &self.palette
     }
 }
 

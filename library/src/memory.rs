@@ -2,6 +2,7 @@ use crate::bus::{Addressable, Mapped};
 use std::ops::Range;
 use std::{cell::RefCell, rc::Rc};
 
+#[derive(Clone)]
 pub enum Access {
     ReadOnly,
     WriteOnly,
@@ -88,10 +89,16 @@ pub struct MemoryBank {
 
 impl MemoryBank {
     pub fn new(range: Range<u16>, bank_size: usize, bank_range: Range<u8>, access: Access) -> Self {
-        let banks = vec![
-            Rc::new(RefCell::new(Memory::new(range.clone(), bank_size, access)));
-            (bank_range.end - bank_range.start) as usize
-        ];
+        let mut banks =
+            Vec::<Rc<RefCell<Memory>>>::with_capacity((bank_range.end - bank_range.start) as usize);
+
+        for _ in bank_range.start..bank_range.end {
+            banks.push(Rc::new(RefCell::new(Memory::new(
+                range.clone(),
+                bank_size,
+                access.clone(),
+            ))));
+        }
 
         Self {
             range,

@@ -8,7 +8,12 @@ use eframe::{
 };
 use egui_extras::{Column, TableBuilder};
 use egui_memory_editor::MemoryEditor;
-use library::{bus::Addressable, cartridge::Cartridge, system::System};
+use library::{
+    bus::Addressable,
+    cartridge::Cartridge,
+    palette::{Color, ColorID},
+    system::System,
+};
 use std::{cell::RefCell, env, path::Path, rc::Rc};
 
 fn main() -> eframe::Result {
@@ -25,6 +30,7 @@ struct State {
     memory_editor_open: bool,
     registers_open: bool,
     display_open: bool,
+    palette_open: bool,
 }
 
 struct App {
@@ -53,6 +59,7 @@ impl App {
                 memory_editor_open: true,
                 registers_open: true,
                 display_open: true,
+                palette_open: true,
             },
             last_execute: None,
             system,
@@ -145,6 +152,38 @@ impl App {
                 self.display.borrow_mut().draw(ctx, ui);
             });
     }
+
+    fn draw_palette(&mut self, ctx: &egui::Context) {
+        Window::new("Palette")
+            .open(&mut self.state.palette_open)
+            .collapsible(false)
+            .resizable(false)
+            .show(ctx, |ui| {
+                ui.set_width(210.0);
+
+                let swatch = |ui: &mut egui::Ui, name: &str, col: Color| {
+                    let (rect, response) =
+                        ui.allocate_exact_size(egui::vec2(40.0, 40.0), egui::Sense::hover());
+
+                    ui.painter()
+                        .rect_filled(rect, 0.0, Color32::from_rgb(col.0, col.1, col.2));
+
+                    response.on_hover_text(name);
+                };
+
+                let system = self.system.borrow();
+                let palette = system.palette_ref().borrow();
+
+                ui.collapsing("Monochrome", |ui| {
+                    ui.horizontal(|ui| {
+                        swatch(ui, "BGP0", palette.get_bgp(ColorID::ID0));
+                        swatch(ui, "BGP1", palette.get_bgp(ColorID::ID1));
+                        swatch(ui, "BGP2", palette.get_bgp(ColorID::ID2));
+                        swatch(ui, "BGP3", palette.get_bgp(ColorID::ID3));
+                    });
+                });
+            });
+    }
 }
 
 impl eframe::App for App {
@@ -155,6 +194,7 @@ impl eframe::App for App {
                 ui.toggle_value(&mut self.state.registers_open, "Registers");
                 ui.toggle_value(&mut self.state.memory_editor_open, "Memory Editor");
                 ui.toggle_value(&mut self.state.display_open, "Display");
+                ui.toggle_value(&mut self.state.palette_open, "Palette");
             });
         });
 
@@ -162,5 +202,6 @@ impl eframe::App for App {
         self.draw_memory_editor(ctx);
         self.draw_registers(ctx);
         self.draw_display(ctx);
+        self.draw_palette(ctx);
     }
 }
