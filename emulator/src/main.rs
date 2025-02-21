@@ -94,7 +94,12 @@ impl App {
                     }
 
                     if let Some(exe) = &self.last_execute {
-                        ui.label(RichText::new(format!("{:?}", exe)).size(18.0));
+                        match exe {
+                            Ok(cycles) => {
+                                ui.label(RichText::new(format!("Ok: {}", cycles)).size(18.0))
+                            }
+                            Err(e) => ui.label(RichText::new(format!("Err: {}", e)).size(18.0)),
+                        };
                     }
                 });
             });
@@ -154,8 +159,6 @@ impl App {
             .collapsible(false)
             .resizable(false)
             .show(ctx, |ui| {
-                ui.set_width(190.0);
-
                 let swatch = |ui: &mut egui::Ui, name: &str, col: Color| {
                     let (rect, response) =
                         ui.allocate_exact_size(egui::vec2(40.0, 40.0), egui::Sense::hover());
@@ -169,50 +172,56 @@ impl App {
                 let system = self.system.borrow();
                 let palette = system.palette_ref().borrow();
 
-                ui.collapsing("Monochrome", |ui| {
-                    Grid::new("monochrome").spacing([1.0, 1.0]).show(ui, |ui| {
-                        for i in 0..4 {
-                            swatch(ui, &format!("BGP {}", 3 - i), palette.get_bgp(3 - i));
-                        }
-                        ui.end_row();
+                ui.heading("Monochrome");
+                Grid::new("monochrome").spacing([1.0, 1.0]).show(ui, |ui| {
+                    for i in 0..4 {
+                        swatch(ui, &format!("BGP {}", 3 - i), palette.get_bgp(3 - i));
+                    }
+                    ui.end_row();
 
-                        for i in 1..4 {
-                            swatch(ui, &format!("OBP0 {}", 3 - i), palette.get_obp0(3 - i));
-                        }
-                        ui.end_row();
+                    for i in 1..4 {
+                        swatch(ui, &format!("OBP0 {}", 3 - i), palette.get_obp0(3 - i));
+                    }
+                    ui.end_row();
 
-                        for i in 1..4 {
-                            swatch(ui, &format!("OBP1 {}", 3 - i), palette.get_obp1(3 - i));
-                        }
-                        ui.end_row();
-                    });
+                    for i in 1..4 {
+                        swatch(ui, &format!("OBP1 {}", 3 - i), palette.get_obp1(3 - i));
+                    }
+                    ui.end_row();
                 });
 
-                ui.collapsing("Color", |ui| {
-                    ui.heading("Background");
-                    Grid::new("color_bg").spacing([1.0, 1.0]).show(ui, |ui| {
-                        for p in 0..8 {
-                            for c in 1..4 {
-                                swatch(ui, &format!("BG{} {}", p, 3 - c), palette.get_bg(p, 3 - c));
-                            }
+                ui.heading("Color");
+                ui.horizontal(|ui| {
+                    ui.vertical(|ui| {
+                        Grid::new("color_bg").spacing([1.0, 1.0]).show(ui, |ui| {
+                            for p in 0..8 {
+                                for c in 0..4 {
+                                    swatch(
+                                        ui,
+                                        &format!("BG{} {}", p, 3 - c),
+                                        palette.get_bg(p, 3 - c),
+                                    );
+                                }
 
-                            ui.end_row();
-                        }
+                                ui.end_row();
+                            }
+                        });
                     });
 
-                    ui.heading("Object");
-                    Grid::new("color_ob").spacing([1.0, 1.0]).show(ui, |ui| {
-                        for p in 0..8 {
-                            for c in 1..4 {
-                                swatch(
-                                    ui,
-                                    &format!("OBJ{} {}", p, 3 - c),
-                                    palette.get_obj(p, 3 - c),
-                                );
-                            }
+                    ui.vertical(|ui| {
+                        Grid::new("color_ob").spacing([1.0, 1.0]).show(ui, |ui| {
+                            for p in 0..8 {
+                                for c in 1..4 {
+                                    swatch(
+                                        ui,
+                                        &format!("OBJ{} {}", p, 3 - c),
+                                        palette.get_obj(p, 3 - c),
+                                    );
+                                }
 
-                            ui.end_row();
-                        }
+                                ui.end_row();
+                            }
+                        });
                     });
                 });
             });
