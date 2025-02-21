@@ -1,8 +1,8 @@
 use crate::{
-    bus::{Addressable, Bus, Mapped, View},
+    bus::{map_to, Addressable, Bus},
     cartridge::Header,
     error::Result,
-    memory::{Access, Memory, MemoryBank},
+    memory::{Access, Memory},
 };
 use std::{cell::RefCell, rc::Rc};
 
@@ -16,16 +16,21 @@ pub struct MbcNone {
 }
 
 impl MbcNone {
-    pub fn new(header: &Header, rom: Rc<RefCell<MemoryBank>>) -> Result<Self> {
-        let ram = Rc::new(RefCell::new(Memory::new(
-            RAM_BEGIN..RAM_END,
-            header.ram_byte_size()?,
-            Access::ReadWrite,
-        )));
+    pub fn new(header: &Header, rom: Rc<RefCell<Memory>>) -> Result<Self> {
+        let ram_size = header.ram_byte_size()?;
+        let rom_size = header.rom_byte_size()?;
 
         let mut bus = Bus::default();
-        bus.add(View::of(rom as Rc<RefCell<dyn Mapped>>, ROM_BEGIN..ROM_END));
-        bus.add(ram);
+        bus.add(map_to(rom, ROM_BEGIN..ROM_END, rom_size as u16));
+
+        if ram_size != 0 {
+            let ram = Rc::new(RefCell::new(Memory::new(
+                header.ram_byte_size()?,
+                Access::ReadWrite,
+            )));
+
+            bus.add(map_to(ram, RAM_BEGIN..RAM_END, ram_size as u16));
+        }
 
         Ok(Self { bus })
     }

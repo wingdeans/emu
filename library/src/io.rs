@@ -1,14 +1,14 @@
-use crate::{bus::Addressable, memory::MemoryBank};
+use crate::bus::{Addressable, Bank};
 use std::{cell::RefCell, rc::Rc};
 
 pub const WRAM_BANK_SELECT: u16 = 0xff70;
 
 pub struct IO {
-    wram: Rc<RefCell<MemoryBank>>,
+    wram: Rc<RefCell<Bank>>,
 }
 
 impl IO {
-    pub fn new(wram: Rc<RefCell<MemoryBank>>) -> Self {
+    pub fn new(wram: Rc<RefCell<Bank>>) -> Self {
         Self { wram }
     }
 }
@@ -16,7 +16,7 @@ impl IO {
 impl Addressable for IO {
     fn read(&mut self, addr: u16) -> Option<u8> {
         match addr {
-            WRAM_BANK_SELECT => Some((self.wram.borrow().selected() as u8) + 1),
+            WRAM_BANK_SELECT => Some(self.wram.borrow().selected() as u8),
             _ => None,
         }
     }
@@ -26,7 +26,7 @@ impl Addressable for IO {
             WRAM_BANK_SELECT => self
                 .wram
                 .borrow_mut()
-                .select(std::cmp::max(1, value as u32) - 1),
+                .select(std::cmp::max(1, value as u32)),
             _ => return None,
         }
 
