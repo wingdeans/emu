@@ -3,17 +3,12 @@ mod display;
 use crate::display::Display;
 use cpu::cpu::{Cpu, Result as CpuResult};
 use eframe::{
-    egui::{self, Button, Label, Layout, RichText, Window},
+    egui::{self, Button, Grid, Label, Layout, RichText, Window},
     epaint::Color32,
 };
 use egui_extras::{Column, TableBuilder};
 use egui_memory_editor::MemoryEditor;
-use library::{
-    bus::Addressable,
-    cartridge::Cartridge,
-    palette::{Color, ColorID},
-    system::System,
-};
+use library::{bus::Addressable, cartridge::Cartridge, palette::Color, system::System};
 use std::{cell::RefCell, env, path::Path, rc::Rc};
 
 fn main() -> eframe::Result {
@@ -159,7 +154,7 @@ impl App {
             .collapsible(false)
             .resizable(false)
             .show(ctx, |ui| {
-                ui.set_width(210.0);
+                ui.set_width(190.0);
 
                 let swatch = |ui: &mut egui::Ui, name: &str, col: Color| {
                     let (rect, response) =
@@ -175,11 +170,49 @@ impl App {
                 let palette = system.palette_ref().borrow();
 
                 ui.collapsing("Monochrome", |ui| {
-                    ui.horizontal(|ui| {
-                        swatch(ui, "BGP0", palette.get_bgp(ColorID::ID0));
-                        swatch(ui, "BGP1", palette.get_bgp(ColorID::ID1));
-                        swatch(ui, "BGP2", palette.get_bgp(ColorID::ID2));
-                        swatch(ui, "BGP3", palette.get_bgp(ColorID::ID3));
+                    Grid::new("monochrome").spacing([1.0, 1.0]).show(ui, |ui| {
+                        for i in 0..4 {
+                            swatch(ui, &format!("BGP {}", 3 - i), palette.get_bgp(3 - i));
+                        }
+                        ui.end_row();
+
+                        for i in 1..4 {
+                            swatch(ui, &format!("OBP0 {}", 3 - i), palette.get_obp0(3 - i));
+                        }
+                        ui.end_row();
+
+                        for i in 1..4 {
+                            swatch(ui, &format!("OBP1 {}", 3 - i), palette.get_obp1(3 - i));
+                        }
+                        ui.end_row();
+                    });
+                });
+
+                ui.collapsing("Color", |ui| {
+                    ui.heading("Background");
+                    Grid::new("color_bg").spacing([1.0, 1.0]).show(ui, |ui| {
+                        for p in 0..8 {
+                            for c in 1..4 {
+                                swatch(ui, &format!("BG{} {}", p, 3 - c), palette.get_bg(p, 3 - c));
+                            }
+
+                            ui.end_row();
+                        }
+                    });
+
+                    ui.heading("Object");
+                    Grid::new("color_ob").spacing([1.0, 1.0]).show(ui, |ui| {
+                        for p in 0..8 {
+                            for c in 1..4 {
+                                swatch(
+                                    ui,
+                                    &format!("OBJ{} {}", p, 3 - c),
+                                    palette.get_obj(p, 3 - c),
+                                );
+                            }
+
+                            ui.end_row();
+                        }
                     });
                 });
             });
