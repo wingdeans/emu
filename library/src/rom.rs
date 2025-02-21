@@ -12,7 +12,7 @@ pub fn from_file(header: &Header, file: &mut File) -> Result<MemoryBank> {
     file.rewind()
         .map_err(|e| Error::CartridgeLoadFailure(e.to_string()))?;
 
-    let bank = MemoryBank::new(0..0, size, 0..count as u8, Access::ReadOnly);
+    let bank = MemoryBank::new(u16::MIN..u16::MAX, size, 0..count as u8, Access::ReadOnly);
 
     for i in 0..count {
         file.read_exact(bank.bank(i).borrow_mut().data_mut())
