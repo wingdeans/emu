@@ -8,7 +8,14 @@ use eframe::{
 };
 use egui_extras::{Column, TableBuilder};
 use egui_memory_editor::MemoryEditor;
-use library::{bus::Addressable, cartridge::Cartridge, palette::Color, system::System};
+use library::{
+    bus::Addressable,
+    cartridge::Cartridge,
+    clock::Clock,
+    palette::Color,
+    surface::{Surface, SCREEN_HEIGHT, SCREEN_WIDTH},
+    system::System,
+};
 use std::{cell::RefCell, env, path::Path, rc::Rc};
 
 fn main() -> eframe::Result {
@@ -26,6 +33,7 @@ struct State {
     registers_open: bool,
     display_open: bool,
     palette_open: bool,
+    ppu_open: bool,
 }
 
 struct App {
@@ -35,6 +43,7 @@ struct App {
     last_execute: Option<CpuResult<u32>>,
     system: Rc<RefCell<System>>,
     display: Rc<RefCell<Display>>,
+    clock: Rc<RefCell<Clock>>,
 }
 
 impl App {
@@ -42,9 +51,18 @@ impl App {
         let args: Vec<_> = env::args().collect();
         let path = &args[1];
 
+        let display = Rc::new(RefCell::new(Display::default()));
+
         let cartridge =
             Cartridge::load_from_file(Path::new(path)).expect("Failed to load cartridge");
-        let system = Rc::new(RefCell::new(System::new(cartridge)));
+        let system = Rc::new(RefCell::new(System::new(
+            cartridge,
+            Rc::clone(&display) as Rc<RefCell<dyn Surface>>,
+        )));
+
+        let clock = Rc::new(RefCell::new(Clock::new(Rc::clone(
+            system.borrow().ppu_ref(),
+        ))));
 
         Self {
             cpu: Cpu::new(Rc::clone(&system) as Rc<RefCell<dyn Addressable>>),
@@ -55,10 +73,12 @@ impl App {
                 registers_open: true,
                 display_open: true,
                 palette_open: true,
+                ppu_open: true,
             },
             last_execute: None,
             system,
-            display: Default::default(),
+            display,
+            clock,
         }
     }
 }
@@ -85,6 +105,9 @@ impl App {
 
                     if ui.add_sized([25.0, 25.0], Button::new("▶")).clicked() {
                         self.last_execute = Some(self.cpu.execute());
+                        if let Some(Ok(cycles)) = self.last_execute {
+                            self.clock.borrow_mut().clock(cycles);
+                        }
                     }
 
                     if ui.add_sized([25.0, 25.0], Button::new("↺")).clicked() {
@@ -209,12 +232,12 @@ impl App {
                     });
 
                     ui.vertical(|ui| {
-                        Grid::new("color_ob").spacing([1.0, 1.0]).show(ui, |ui| {
+                        Grid::new("color_obp").spacing([1.0, 1.0]).show(ui, |ui| {
                             for p in 0..8 {
                                 for c in 1..4 {
                                     swatch(
                                         ui,
-                                        &format!("OBJ{} {}", p, 3 - c),
+                                        &format!("OBP{} {}", p, 3 - c),
                                         palette.get_obj(p, 3 - c),
                                     );
                                 }
@@ -224,6 +247,48 @@ impl App {
                         });
                     });
                 });
+            });
+    }
+
+    fn draw_ppu(&mut self, ctx: &egui::Context) {
+        Window::new("PPU")
+            .open(&mut self.state.ppu_open)
+            .collapsible(false)
+            .resizable(false)
+            .show(ctx, |ui| {
+                ui.set_width(2.0 * SCREEN_WIDTH as f32);
+                ui.set_height(2.0 * SCREEN_HEIGHT as f32);
+
+                let system = self.system.borrow();
+                let ppu = system.ppu_ref().borrow();
+
+                let x = ppu.get_x();
+                let y = ppu.get_y();
+
+                let (response, painter) =
+                    ui.allocate_painter(ui.available_size(), egui::Sense::hover());
+
+                let rect = response.rect;
+
+                painter.rect_filled(rect, 0.0, egui::Color32::BLACK);
+
+                painter.line_segment(
+                    [
+                        egui::pos2(rect.min.x + (2 * x as u32) as f32, rect.min.y),
+                        egui::pos2(rect.min.x + (2 * x as u32) as f32, rect.max.y),
+                    ],
+                    egui::Stroke::new(1.0, egui::Color32::WHITE),
+                );
+
+                painter.line_segment(
+                    [
+                        egui::pos2(rect.min.x, rect.min.y + (2 * y as u32) as f32),
+                        egui::pos2(rect.max.x, rect.min.y + (2 * y as u32) as f32),
+                    ],
+                    egui::Stroke::new(1.0, egui::Color32::WHITE),
+                );
+
+                response.on_hover_text(format!("({}, {})", x, y));
             });
     }
 }
@@ -237,6 +302,7 @@ impl eframe::App for App {
                 ui.toggle_value(&mut self.state.memory_editor_open, "Memory Editor");
                 ui.toggle_value(&mut self.state.display_open, "Display");
                 ui.toggle_value(&mut self.state.palette_open, "Palette");
+                ui.toggle_value(&mut self.state.ppu_open, "PPU");
             });
         });
 
@@ -245,5 +311,6 @@ impl eframe::App for App {
         self.draw_registers(ctx);
         self.draw_display(ctx);
         self.draw_palette(ctx);
+        self.draw_ppu(ctx);
     }
 }

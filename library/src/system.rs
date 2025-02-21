@@ -4,6 +4,8 @@ use crate::{
     io::IO,
     memory::{Access, Memory},
     palette::Palette,
+    ppu::Ppu,
+    surface::Surface,
 };
 use std::{cell::RefCell, rc::Rc};
 
@@ -22,11 +24,12 @@ pub const HRAM_SIZE: usize = (HRAM_END - HRAM_BEGIN) as usize;
 
 pub struct System {
     bus: Bus,
+    ppu: Rc<RefCell<Ppu>>,
     palette: Rc<RefCell<Palette>>,
 }
 
 impl System {
-    pub fn new(cartridge: Cartridge) -> Self {
+    pub fn new(cartridge: Cartridge, surface: Rc<RefCell<dyn Surface>>) -> Self {
         let mut bus = Bus::default();
 
         let vram = map_to(
@@ -53,6 +56,7 @@ impl System {
         );
 
         let io = Rc::new(RefCell::new(IO::new(Rc::clone(&wram))));
+        let ppu = Rc::new(RefCell::new(Ppu::new(surface)));
         let palette: Rc<RefCell<Palette>> = Default::default();
 
         bus.add(Rc::new(RefCell::new(cartridge)));
@@ -62,12 +66,17 @@ impl System {
         bus.add(hram);
         bus.add(io);
         bus.add(Rc::clone(&palette) as Rc<RefCell<dyn Addressable>>);
+        bus.add(Rc::clone(&ppu) as Rc<RefCell<dyn Addressable>>);
 
-        Self { bus, palette }
+        Self { bus, ppu, palette }
     }
 
     pub fn bus_mut(&mut self) -> &mut Bus {
         &mut self.bus
+    }
+
+    pub fn ppu_ref(&self) -> &Rc<RefCell<Ppu>> {
+        &self.ppu
     }
 
     pub fn palette_ref(&self) -> &Rc<RefCell<Palette>> {

@@ -1,10 +1,12 @@
 pub mod bus;
 pub mod cartridge;
+pub mod clock;
 pub mod error;
 pub mod io;
 pub mod mbc;
 pub mod memory;
 pub mod palette;
+pub mod ppu;
 pub mod rom;
 pub mod surface;
 pub mod system;
