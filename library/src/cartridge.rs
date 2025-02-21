@@ -39,7 +39,6 @@ pub struct Header {
 }
 
 pub struct Cartridge {
-    header: Header,
     mapper: Rc<RefCell<dyn Addressable>>,
 }
 
@@ -138,7 +137,7 @@ impl Cartridge {
             }
         };
 
-        Ok(Self { header, mapper })
+        Ok(Self { mapper })
     }
 }
 

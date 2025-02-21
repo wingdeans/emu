@@ -60,18 +60,14 @@ impl Bus {
 
 impl Addressable for Bus {
     fn read(&mut self, addr: u16) -> Option<u8> {
-        for comp in self.components.iter() {
-            return comp.borrow_mut().read(addr);
-        }
-
-        return None;
+        self.components
+            .iter()
+            .find_map(|comp| comp.borrow_mut().read(addr))
     }
 
     fn write(&mut self, addr: u16, value: u8) -> Option<()> {
-        for comp in self.components.iter() {
-            return comp.borrow_mut().write(addr, value);
-        }
-
-        return None;
+        self.components
+            .iter()
+            .find_map(|comp| comp.borrow_mut().write(addr, value))
     }
 }

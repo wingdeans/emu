@@ -80,20 +80,22 @@ impl Mapped for Memory {
 
 pub struct MemoryBank {
     range: Range<u16>,
+    bank_range: Range<u8>,
     size: usize,
     index: u32,
     banks: Vec<Rc<RefCell<Memory>>>,
 }
 
 impl MemoryBank {
-    pub fn new(range: Range<u16>, bank_size: usize, bank_count: u32, access: Access) -> Self {
+    pub fn new(range: Range<u16>, bank_size: usize, bank_range: Range<u8>, access: Access) -> Self {
         let banks = vec![
             Rc::new(RefCell::new(Memory::new(range.clone(), bank_size, access)));
-            bank_count as usize
+            (bank_range.end - bank_range.start) as usize
         ];
 
         Self {
             range,
+            bank_range,
             size: bank_size,
             index: 0,
             banks,
@@ -105,7 +107,8 @@ impl MemoryBank {
     }
 
     pub fn select(&mut self, bank: u32) {
-        self.index = std::cmp::min(bank, self.banks.len() as u32 - 1);
+        self.index = bank.clamp(self.bank_range.start as u32, self.bank_range.end as u32)
+            - (self.bank_range.start as u32);
     }
 
     pub fn selected(&self) -> u32 {

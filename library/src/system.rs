@@ -41,7 +41,7 @@ impl System {
         let wram_x = Rc::new(RefCell::new(MemoryBank::new(
             WRAM_X_BEGIN..WRAM_X_END,
             WRAM_SIZE,
-            7,
+            1..7,
             Access::ReadWrite,
         )));
 
