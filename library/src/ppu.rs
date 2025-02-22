@@ -33,6 +33,7 @@ impl Ppu {
 
         if self.dots % DOTS_IN_LINE == 0 {
             self.y += 1;
+            self.surface.borrow_mut().flush();
         }
     }
 

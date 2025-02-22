@@ -8,15 +8,20 @@ pub struct Display {
     image: ColorImage,
     texture: Option<TextureHandle>,
     scale: f32,
+    flush: bool,
 }
 
 impl Display {
     pub fn draw(&mut self, ctx: &Context, ui: &mut Ui) {
         if let Some(texture) = &mut self.texture {
-            texture.set(
-                ImageData::Color(Arc::new(self.image.clone())),
-                Default::default(),
-            );
+            if self.flush {
+                texture.set(
+                    ImageData::Color(Arc::new(self.image.clone())),
+                    Default::default(),
+                );
+            }
+
+            self.flush = false;
         } else {
             self.texture =
                 Some(ctx.load_texture("display", self.image.clone(), TextureOptions::default()));
@@ -43,6 +48,7 @@ impl Default for Display {
             ),
             texture: None,
             scale: 2.0,
+            flush: false,
         }
     }
 }
@@ -52,5 +58,9 @@ impl Surface for Display {
         if (0..SCREEN_WIDTH).contains(&x) && (0..SCREEN_HEIGHT).contains(&y) {
             self.image.pixels[(y * SCREEN_WIDTH + x) as usize] = Color32::from_rgb(r, g, b);
         }
+    }
+
+    fn flush(&mut self) {
+        self.flush = true;
     }
 }
