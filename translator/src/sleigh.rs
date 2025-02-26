@@ -13,7 +13,7 @@ pub(crate) mod ffi {
     #[repr(C)]
     #[derive(Debug)]
     struct CVarnode {
-        pub(crate) addr: u32,
+        pub(crate) addr: u8,
         pub(crate) size: u32,
         pub(crate) offset: u64,
     }
@@ -54,13 +54,13 @@ pub(crate) mod ffi {
     extern "C" fn rust_push_pcode(vec: *mut Vec<Pcode>, opc: u8, vars: *mut CVarnode, size: u32) {
         let cvars = unsafe { std::slice::from_raw_parts(vars, size as usize) };
         let vars: Box<[_]> = cvars
-            .into_iter()
+            .iter()
             .map(|cv| {
-                if cv.addr == std::u32::MAX {
+                if cv.addr == 0 {
                     None
                 } else {
                     Some(Var {
-                        addr: cv.addr.try_into().unwrap(),
+                        addr: cv.addr.into(),
                         size: cv.size,
                         offset: cv.offset,
                     })
@@ -113,7 +113,7 @@ pub(crate) mod ffi {
                 vec.push(Pcode::Call(target))
             }
             PcodeOp::RETURN => {
-                let_match![None, Some(target)];
+                let_match![None, Some(_)];
                 vec.push(Pcode::Return)
             }
             PcodeOp::CALLOTHER => vec.push(Pcode::CallOther),
@@ -125,13 +125,17 @@ pub(crate) mod ffi {
             PcodeOp::INT_ADD => binary!(Pcode::IntAdd),
             PcodeOp::INT_SUB => binary!(Pcode::IntSub),
             PcodeOp::INT_CARRY => binary!(Pcode::IntCarry),
+            PcodeOp::INT_NEGATE => unary!(Pcode::IntNegate),
             PcodeOp::INT_XOR => binary!(Pcode::IntXor),
             PcodeOp::INT_AND => binary!(Pcode::IntAnd),
             PcodeOp::INT_OR => binary!(Pcode::IntOr),
             PcodeOp::INT_LEFT => binary!(Pcode::IntLeft),
             PcodeOp::INT_RIGHT => binary!(Pcode::IntRight),
+            PcodeOp::INT_SRIGHT => binary!(Pcode::IntSRight),
             // binary
             PcodeOp::BOOL_NEGATE => unary!(Pcode::BoolNegate),
+            PcodeOp::BOOL_AND => binary!(Pcode::BoolAnd),
+            PcodeOp::BOOL_OR => binary!(Pcode::BoolOr),
             op => todo!("Unhandled Pcode opcode: {:?}", op),
         }
     }
@@ -165,18 +169,20 @@ impl Sleigh {
         }
     }
 
-    pub fn pcode(&self, buf: &[u8], addr: u64, vec: &mut Vec<Pcode>) -> u32 {
+    pub fn pcode(&self, buf: &[u8], addr: u64) -> (Vec<Pcode>, u32) {
         assert_ne!(0, buf.len());
         let len = std::cmp::min(16, buf.len());
-        unsafe {
+        let mut vec = Vec::new();
+        let len = unsafe {
             ffi::sleigh_pcode(
                 self.0,
                 buf.as_ptr(),
                 len,
                 addr,
-                (vec as *mut Vec<Pcode>) as *mut c_void,
+                (&mut vec as *mut Vec<Pcode>) as *mut c_void,
             )
-        }
+        };
+        return (vec, len);
     }
 }
 

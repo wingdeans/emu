@@ -7,7 +7,7 @@ struct String;
 struct PcodeVec;
 
 struct Varnode {
-    uint32_t addr;
+    uint8_t addr;
     uint32_t size;
     uint64_t offset;
 };
@@ -47,6 +47,9 @@ struct AssemblyRaw : public ghidra::AssemblyEmit {
 
 struct PcodeRaw : public ghidra::PcodeEmit {
     PcodeVec *vec;
+
+    uint8_t spaces[8] = {0xFF};
+
     virtual void dump(const ghidra::Address &addr,
                       ghidra::OpCode opc,
                       ghidra::VarnodeData *outvar,
@@ -55,18 +58,30 @@ struct PcodeRaw : public ghidra::PcodeEmit {
         Varnode varnodes[isize + 1];
         if (outvar != nullptr) {
             Varnode &vn = varnodes[0];
-            vn.addr = outvar->space->getIndex();
+            ghidra::int4 idx = outvar->space->getIndex();
+            assert(idx < sizeof(spaces));
+            vn.addr = spaces[idx];
             vn.size = outvar->size;
             vn.offset = outvar->offset;
         } else {
-            varnodes[0].addr = -1;
+            varnodes[0].addr = 0;
         }
         for (int i = 0; i < isize; i ++) {
             ghidra::VarnodeData &data = vars[i];
             Varnode &vn = varnodes[i + 1];
-            vn.addr = data.space->getIndex();
+
+            ghidra::int4 idx;
+            if (i == 0 && (opc == ghidra::CPUI_STORE || opc == ghidra::CPUI_LOAD)) {
+                idx = reinterpret_cast<ghidra::AddrSpace*>(data.offset)->getIndex();
+                vn.offset = 0;
+            } else {
+                idx = data.space->getIndex();
+                vn.offset = data.offset;
+            }
+            assert(idx < sizeof(spaces));
+
+            vn.addr = spaces[idx];
             vn.size = data.size;
-            vn.offset = data.offset;
         }
         rust_push_pcode(vec, opc, varnodes, isize + 1);
     }
@@ -88,6 +103,11 @@ struct Sleigh {
         docStorage.registerTag(root);
 
         sleigh.initialize(docStorage);
+
+        pcodeRaw.spaces[sleigh.getDefaultDataSpace()->getIndex()] = 1; // ram
+        pcodeRaw.spaces[sleigh.getSpaceByName("register")->getIndex()] = 2; // reg
+        pcodeRaw.spaces[sleigh.getConstantSpace()->getIndex()] = 3; // const
+        pcodeRaw.spaces[sleigh.getUniqueSpace()->getIndex()] = 4; // uniq
     }
 };
 

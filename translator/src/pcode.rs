@@ -1,6 +1,7 @@
 macro_rules! create_pcodeop {
     {$($name:ident = $num:literal),*} => {
         #[allow(non_camel_case_types)]
+        #[allow(clippy::upper_case_acronyms)]
         #[derive(Debug)]
         pub(crate) enum PcodeOp {
             $($name = $num,)*
@@ -118,12 +119,33 @@ create_pcodeop! {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub(crate) enum Space {
+    Ram = 1,
+    Reg = 2,
+    Const = 3,
+    Uniq = 4,
+}
+
+impl From<u8> for Space {
+    fn from(n: u8) -> Self {
+        match n {
+            1 => Space::Ram,
+            2 => Space::Reg,
+            3 => Space::Const,
+            4 => Space::Uniq,
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub(crate) struct Var {
-    pub(crate) addr: u8,
+    pub(crate) addr: Space,
     pub(crate) size: u32,
     pub(crate) offset: u64,
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub(crate) enum Pcode {
     Copy(Var, Var),
@@ -153,13 +175,13 @@ pub(crate) enum Pcode {
     IntSCarry,
     IntSBorrow,
     Int2comp,
-    IntNegate,
+    IntNegate(Var, Var),
     IntXor(Var, Var, Var),
     IntAnd(Var, Var, Var),
     IntOr(Var, Var, Var),
     IntLeft(Var, Var, Var),
     IntRight(Var, Var, Var),
-    IntSRight,
+    IntSRight(Var, Var, Var),
     IntMult,
     IntDiv,
     IntSDiv,
@@ -168,6 +190,6 @@ pub(crate) enum Pcode {
 
     BoolNegate(Var, Var),
     BoolXor,
-    BoolAnd,
-    BoolOr,
+    BoolAnd(Var, Var, Var),
+    BoolOr(Var, Var, Var),
 }
