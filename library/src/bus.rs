@@ -48,7 +48,7 @@ impl Addressable for Map {
     fn read(&mut self, addr: u16) -> Option<u8> {
         if self.to.contains(&addr) {
             let address =
-                ((addr - self.to.start) + self.from.start) % (self.from.end - self.from.start);
+                (addr - self.to.start) % (self.from.end - self.from.start) + self.from.start;
             self.elem.borrow_mut().read(address)
         } else {
             None
@@ -58,7 +58,7 @@ impl Addressable for Map {
     fn write(&mut self, addr: u16, value: u8) -> Option<()> {
         if self.to.contains(&addr) {
             let address =
-                ((addr - self.to.start) + self.from.start) % (self.from.end - self.from.start);
+                (addr - self.to.start) % (self.from.end - self.from.start) + self.from.start;
             self.elem.borrow_mut().write(address, value)
         } else {
             None

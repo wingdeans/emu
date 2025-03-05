@@ -1,6 +1,7 @@
 pub mod bus;
 pub mod cartridge;
 pub mod clock;
+pub mod dma;
 pub mod error;
 pub mod io;
 pub mod mbc;

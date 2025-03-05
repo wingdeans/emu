@@ -262,8 +262,7 @@ impl App {
                 let system = self.system.borrow();
                 let ppu = system.ppu_ref().borrow();
 
-                let x = ppu.get_x();
-                let y = ppu.get_y();
+                let y = ppu.get_render_y();
 
                 let (response, painter) =
                     ui.allocate_painter(ui.available_size(), egui::Sense::hover());
@@ -274,21 +273,11 @@ impl App {
 
                 painter.line_segment(
                     [
-                        egui::pos2(rect.min.x + (2 * x as u32) as f32, rect.min.y),
-                        egui::pos2(rect.min.x + (2 * x as u32) as f32, rect.max.y),
-                    ],
-                    egui::Stroke::new(1.0, egui::Color32::WHITE),
-                );
-
-                painter.line_segment(
-                    [
                         egui::pos2(rect.min.x, rect.min.y + (2 * y as u32) as f32),
                         egui::pos2(rect.max.x, rect.min.y + (2 * y as u32) as f32),
                     ],
                     egui::Stroke::new(1.0, egui::Color32::WHITE),
                 );
-
-                response.on_hover_text(format!("({}, {})", x, y));
             });
     }
 }
