@@ -40,10 +40,12 @@ struct App {
     cpu: Cpu,
     memory_editor: MemoryEditor,
     state: State,
+    cartridge: Rc<RefCell<Cartridge>>,
     last_execute: Option<CpuResult<u32>>,
     system: Rc<RefCell<System>>,
     display: Rc<RefCell<Display>>,
     clock: Rc<RefCell<Clock>>,
+    running: bool,
 }
 
 impl App {
@@ -53,10 +55,12 @@ impl App {
 
         let display = Rc::new(RefCell::new(Display::default()));
 
-        let cartridge =
-            Cartridge::load_from_file(Path::new(path)).expect("Failed to load cartridge");
+        let cartridge = Rc::new(RefCell::new(
+            Cartridge::load_from_file(Path::new(path)).expect("Failed to load cartridge"),
+        ));
+
         let system = Rc::new(RefCell::new(System::new(
-            cartridge,
+            Rc::clone(&cartridge),
             Rc::clone(&display) as Rc<RefCell<dyn Surface>>,
         )));
 
@@ -75,10 +79,12 @@ impl App {
                 palette_open: true,
                 ppu_open: true,
             },
+            cartridge,
             last_execute: None,
             system,
             display,
             clock,
+            running: false,
         }
     }
 }
@@ -87,10 +93,14 @@ impl App {
     fn draw_control(&mut self, ctx: &egui::Context) {
         use cpu::cpu::State::*;
 
-        let color = match self.cpu.state() {
-            Stopped => Color32::from_rgb(255, 0, 0),
-            Halted => Color32::from_rgb(255, 255, 0),
-            Running => Color32::from_rgb(0, 255, 0),
+        let color = if self.running {
+            Color32::from_rgb(0, 0, 255)
+        } else {
+            match self.cpu.state() {
+                Stopped => Color32::from_rgb(255, 0, 0),
+                Halted => Color32::from_rgb(255, 255, 0),
+                Running => Color32::from_rgb(0, 255, 0),
+            }
         };
 
         Window::new("Control")
@@ -103,14 +113,21 @@ impl App {
 
                     ui.add_sized([25.0, 25.0], Label::new(RichText::new("⏺").color(color)));
 
-                    if ui.add_sized([25.0, 25.0], Button::new("▶")).clicked() {
-                        self.last_execute = Some(self.cpu.execute());
-                        if let Some(Ok(cycles)) = self.last_execute {
-                            self.clock.borrow_mut().clock(cycles);
-                        }
+                    if ui
+                        .add_enabled(
+                            !self.running,
+                            Button::new("▶").min_size(egui::vec2(25.0, 25.0)),
+                        )
+                        .clicked()
+                    {
+                        self.running = true
                     }
 
                     if ui.add_sized([25.0, 25.0], Button::new("↺")).clicked() {
+                        self.system = Rc::new(RefCell::new(System::new(
+                            Rc::clone(&self.cartridge),
+                            Rc::clone(&self.display) as Rc<RefCell<dyn Surface>>,
+                        )));
                         self.cpu =
                             Cpu::new(Rc::clone(&self.system) as Rc<RefCell<dyn Addressable>>);
                         self.last_execute = None;
@@ -301,5 +318,18 @@ impl eframe::App for App {
         self.draw_display(ctx);
         self.draw_palette(ctx);
         self.draw_ppu(ctx);
+
+        let mut cont = true;
+        while self.running && cont {
+            self.last_execute = Some(self.cpu.execute());
+            if let Some(x) = &self.last_execute {
+                match x {
+                    Ok(y) => cont = !self.clock.borrow_mut().clock(*y),
+                    Err(_) => self.running = false,
+                }
+            }
+        }
+
+        ctx.request_repaint();
     }
 }
