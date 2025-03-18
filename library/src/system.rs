@@ -2,6 +2,7 @@ use crate::{
     bus::{bank, map_to, Addressable, Bus},
     cartridge::Cartridge,
     input::{Input, InputHandler},
+    int::{Interrupt, InterruptHandler},
     io::IO,
     memory::{Access, Memory},
     palette::Palette,
@@ -34,6 +35,7 @@ impl System {
         cartridge: Rc<RefCell<Cartridge>>,
         surface: Rc<RefCell<dyn Surface>>,
         input_handler: Rc<RefCell<dyn InputHandler>>,
+        interrupt_handler: Rc<RefCell<dyn InterruptHandler>>,
     ) -> Self {
         let bus: Rc<RefCell<Bus>> = Default::default();
 
@@ -85,6 +87,7 @@ impl System {
 
         let io = Rc::new(RefCell::new(IO::new(Rc::clone(&wram), vram_bank)));
         let palette: Rc<RefCell<Palette>> = Default::default();
+        let int = Rc::new(RefCell::new(Interrupt::new(interrupt_handler)));
 
         let ppu = Rc::new(RefCell::new(Ppu::new(
             surface,
@@ -92,6 +95,7 @@ impl System {
             vram0,
             vram1,
             Rc::clone(&palette),
+            Rc::clone(&int) as Rc<RefCell<dyn Addressable>>,
         )));
 
         {
@@ -109,6 +113,7 @@ impl System {
             b.add(Rc::clone(&palette) as Rc<RefCell<dyn Addressable>>);
             b.add(Rc::clone(&ppu) as Rc<RefCell<dyn Addressable>>);
             b.add(Rc::new(RefCell::new(Input::new(input_handler))));
+            b.add(int);
         }
 
         Self { bus, ppu, palette }

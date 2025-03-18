@@ -9,10 +9,15 @@ use eframe::{
 use egui_extras::{Column, TableBuilder};
 use egui_memory_editor::MemoryEditor;
 use library::{
-    bus::Addressable, cartridge::Cartridge, clock::Clock, input::InputHandler, palette::Color,
-    surface::Surface, system::System,
+    bus::Addressable, cartridge::Cartridge, clock::Clock, input::InputHandler,
+    int::InterruptHandler, palette::Color, surface::Surface, system::System,
 };
-use std::{cell::RefCell, env, path::Path, rc::Rc};
+use std::{
+    cell::RefCell,
+    env,
+    path::Path,
+    rc::{Rc, Weak},
+};
 
 fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
@@ -21,6 +26,21 @@ fn main() -> eframe::Result {
     };
 
     eframe::run_native("Emulator", options, Box::new(|_| Ok(Box::new(App::new()))))
+}
+
+#[derive(Default)]
+struct CpuInterruptHandler {
+    pub cpu: Weak<RefCell<Cpu>>,
+}
+
+impl InterruptHandler for CpuInterruptHandler {
+    fn ime(&self) -> bool {
+        self.cpu.upgrade().unwrap().borrow().ime
+    }
+
+    fn handle(&mut self, addr: u16) {
+        self.cpu.upgrade().unwrap().borrow_mut().int(addr).unwrap();
+    }
 }
 
 #[derive(Default)]
@@ -79,7 +99,7 @@ struct State {
 }
 
 struct App {
-    cpu: Cpu,
+    cpu: Rc<RefCell<Cpu>>,
     memory_editor: MemoryEditor,
     state: State,
     cartridge: Rc<RefCell<Cartridge>>,
@@ -89,6 +109,7 @@ struct App {
     clock: Rc<RefCell<Clock>>,
     running: bool,
     input: Rc<RefCell<EguiInputHandler>>,
+    int: Rc<RefCell<CpuInterruptHandler>>,
 }
 
 impl App {
@@ -103,19 +124,27 @@ impl App {
         ));
 
         let input = Rc::new(RefCell::new(EguiInputHandler::default()));
+        let int = Rc::new(RefCell::new(CpuInterruptHandler::default()));
 
         let system = Rc::new(RefCell::new(System::new(
             Rc::clone(&cartridge),
             Rc::clone(&display) as Rc<RefCell<dyn Surface>>,
             Rc::clone(&input) as Rc<RefCell<dyn InputHandler>>,
+            Rc::clone(&int) as Rc<RefCell<dyn InterruptHandler>>,
         )));
+
+        let cpu = Rc::new(RefCell::new(Cpu::new(
+            Rc::clone(&system) as Rc<RefCell<dyn Addressable>>
+        )));
+
+        int.borrow_mut().cpu = Rc::downgrade(&cpu);
 
         let clock = Rc::new(RefCell::new(Clock::new(Rc::clone(
             system.borrow().ppu_ref(),
         ))));
 
         Self {
-            cpu: Cpu::new(Rc::clone(&system) as Rc<RefCell<dyn Addressable>>),
+            cpu,
             memory_editor: MemoryEditor::new().with_address_range("All", 0..0xffff),
             state: State {
                 control_open: true,
@@ -132,6 +161,7 @@ impl App {
             clock,
             running: false,
             input,
+            int,
         }
     }
 }
@@ -143,7 +173,7 @@ impl App {
         let color = if self.running {
             Color32::from_rgb(0, 0, 255)
         } else {
-            match self.cpu.state() {
+            match self.cpu.borrow_mut().state() {
                 Stopped => Color32::from_rgb(255, 0, 0),
                 Halted => Color32::from_rgb(255, 255, 0),
                 Running => Color32::from_rgb(0, 255, 0),
@@ -172,11 +202,13 @@ impl App {
                         self.system = Rc::new(RefCell::new(System::new(
                             Rc::clone(&self.cartridge),
                             Rc::clone(&self.display) as Rc<RefCell<dyn Surface>>,
-                            Rc::new(RefCell::new(EguiInputHandler::default()))
-                                as Rc<RefCell<dyn InputHandler>>,
+                            Rc::clone(&self.input) as Rc<RefCell<dyn InputHandler>>,
+                            Rc::clone(&self.int) as Rc<RefCell<dyn InterruptHandler>>,
                         )));
-                        self.cpu =
-                            Cpu::new(Rc::clone(&self.system) as Rc<RefCell<dyn Addressable>>);
+                        self.cpu = Rc::new(RefCell::new(Cpu::new(
+                            Rc::clone(&self.system) as Rc<RefCell<dyn Addressable>>
+                        )));
+                        self.int.borrow_mut().cpu = Rc::downgrade(&self.cpu);
                         self.last_execute = None;
                     }
 
@@ -219,13 +251,14 @@ impl App {
                             });
                         };
 
-                        add("A", format!("0x{:02x}", self.cpu.af >> 8));
-                        add("F", format!("0b{:08b}", self.cpu.af & 0x0f));
-                        add("BC", format!("0x{:04x}", self.cpu.bc));
-                        add("DE", format!("0x{:04x}", self.cpu.de));
-                        add("HL", format!("0x{:04x}", self.cpu.hl));
-                        add("Stack Pointer", format!("0x{:04x}", self.cpu.sp));
-                        add("Program Counter", format!("0x{:04x}", self.cpu.pc));
+                        let cpu = self.cpu.borrow();
+                        add("A", format!("0x{:02x}", cpu.af >> 8));
+                        add("F", format!("0b{:08b}", cpu.af & 0x0f));
+                        add("BC", format!("0x{:04x}", cpu.bc));
+                        add("DE", format!("0x{:04x}", cpu.de));
+                        add("HL", format!("0x{:04x}", cpu.hl));
+                        add("Stack Pointer", format!("0x{:04x}", cpu.sp));
+                        add("Program Counter", format!("0x{:04x}", cpu.pc));
                     });
             });
     }
@@ -394,7 +427,7 @@ impl eframe::App for App {
 
         let mut cont = true;
         while self.running && cont {
-            self.last_execute = Some(self.cpu.execute());
+            self.last_execute = Some(self.cpu.borrow_mut().execute());
             if let Some(x) = &self.last_execute {
                 match x {
                     Ok(y) => cont = !self.clock.borrow_mut().clock(*y),

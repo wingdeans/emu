@@ -1,6 +1,7 @@
 use crate::{
     bus::Addressable,
     dma::Dma,
+    int::{IF_ADDRESS, VBLANK_INT_FLAG},
     palette::Palette,
     surface::{Surface, SCREEN_HEIGHT, SCREEN_WIDTH},
 };
@@ -28,6 +29,7 @@ pub struct Ppu {
     vram0: Rc<RefCell<dyn Addressable>>,
     vram1: Rc<RefCell<dyn Addressable>>,
     palette: Rc<RefCell<Palette>>,
+    int: Rc<RefCell<dyn Addressable>>,
     dma: Dma,
     render_y: u8,
     bg_x: u8,
@@ -44,12 +46,14 @@ impl Ppu {
         vram0: Rc<RefCell<dyn Addressable>>,
         vram1: Rc<RefCell<dyn Addressable>>,
         palette: Rc<RefCell<Palette>>,
+        int: Rc<RefCell<dyn Addressable>>,
     ) -> Self {
         Self {
             surface,
             vram0,
             vram1,
             palette,
+            int,
             dma: Dma::new(bus),
             render_y: 0,
             bg_x: 0,
@@ -158,6 +162,10 @@ impl Ppu {
 
             surface.flush();
             self.dma.scanline();
+        } else if self.render_y == VBLANK_HEIGHT_BEGIN as u8 {
+            let mut int = self.int.borrow_mut();
+            let flags = int.read(IF_ADDRESS).unwrap();
+            int.write(IF_ADDRESS, flags | VBLANK_INT_FLAG).unwrap();
         }
 
         self.render_y = (self.render_y + 1) % (MAX_SCANLINE_HEIGHT as u8 + 1);

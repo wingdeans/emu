@@ -4,6 +4,7 @@ pub mod clock;
 pub mod dma;
 pub mod error;
 pub mod input;
+pub mod int;
 pub mod io;
 pub mod mbc;
 pub mod memory;

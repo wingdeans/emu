@@ -32,6 +32,7 @@ pub struct Cpu {
     pub ime: bool,
     pub state: State,
     addressable: Rc<RefCell<dyn Addressable>>,
+    cycle_queue: u32,
 }
 
 macro_rules! ins {
@@ -92,9 +93,10 @@ impl Cpu {
             hl: 0x000d,
             sp: 0xfffe,
             pc: 0x100,
-            ime: true,
+            ime: false,
             state: State::Running,
             addressable,
+            cycle_queue: 0,
         }
     }
 
@@ -1469,7 +1471,17 @@ impl Cpu {
             Self::decode(ins)?
         };
 
-        func(self, ins)
+        let cycles = self.cycle_queue;
+        self.cycle_queue = 0;
+
+        Ok(func(self, ins)? + cycles)
+    }
+
+    pub fn int(&mut self, addr: u16) -> Result<()> {
+        self.ime = false;
+        self.pc = addr;
+        self.cycle_queue = 5;
+        self.stack_push(self.pc)
     }
 
     pub fn state(&self) -> State {
