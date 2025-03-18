@@ -3,6 +3,7 @@ pub mod cartridge;
 pub mod clock;
 pub mod dma;
 pub mod error;
+pub mod input;
 pub mod io;
 pub mod mbc;
 pub mod memory;

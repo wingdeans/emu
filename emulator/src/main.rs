@@ -9,12 +9,8 @@ use eframe::{
 use egui_extras::{Column, TableBuilder};
 use egui_memory_editor::MemoryEditor;
 use library::{
-    bus::Addressable,
-    cartridge::Cartridge,
-    clock::Clock,
-    palette::Color,
-    surface::{Surface, SCREEN_HEIGHT, SCREEN_WIDTH},
-    system::System,
+    bus::Addressable, cartridge::Cartridge, clock::Clock, input::InputHandler, palette::Color,
+    surface::Surface, system::System,
 };
 use std::{cell::RefCell, env, path::Path, rc::Rc};
 
@@ -25,6 +21,52 @@ fn main() -> eframe::Result {
     };
 
     eframe::run_native("Emulator", options, Box::new(|_| Ok(Box::new(App::new()))))
+}
+
+#[derive(Default)]
+struct EguiInputHandler {
+    pub start: bool,
+    pub select: bool,
+    pub b: bool,
+    pub a: bool,
+    pub up: bool,
+    pub down: bool,
+    pub left: bool,
+    pub right: bool,
+}
+
+impl InputHandler for EguiInputHandler {
+    fn start(&self) -> bool {
+        self.start
+    }
+
+    fn select(&self) -> bool {
+        self.select
+    }
+
+    fn b(&self) -> bool {
+        self.b
+    }
+
+    fn a(&self) -> bool {
+        self.a
+    }
+
+    fn up(&self) -> bool {
+        self.up
+    }
+
+    fn down(&self) -> bool {
+        self.down
+    }
+
+    fn left(&self) -> bool {
+        self.left
+    }
+
+    fn right(&self) -> bool {
+        self.right
+    }
 }
 
 struct State {
@@ -46,6 +88,7 @@ struct App {
     display: Rc<RefCell<Display>>,
     clock: Rc<RefCell<Clock>>,
     running: bool,
+    input: Rc<RefCell<EguiInputHandler>>,
 }
 
 impl App {
@@ -59,9 +102,12 @@ impl App {
             Cartridge::load_from_file(Path::new(path)).expect("Failed to load cartridge"),
         ));
 
+        let input = Rc::new(RefCell::new(EguiInputHandler::default()));
+
         let system = Rc::new(RefCell::new(System::new(
             Rc::clone(&cartridge),
             Rc::clone(&display) as Rc<RefCell<dyn Surface>>,
+            Rc::clone(&input) as Rc<RefCell<dyn InputHandler>>,
         )));
 
         let clock = Rc::new(RefCell::new(Clock::new(Rc::clone(
@@ -85,6 +131,7 @@ impl App {
             display,
             clock,
             running: false,
+            input,
         }
     }
 }
@@ -113,20 +160,20 @@ impl App {
 
                     ui.add_sized([25.0, 25.0], Label::new(RichText::new("⏺").color(color)));
 
-                    if ui
-                        .add_enabled(
-                            !self.running,
-                            Button::new("▶").min_size(egui::vec2(25.0, 25.0)),
-                        )
-                        .clicked()
-                    {
-                        self.running = true
+                    if !self.running && ui.add_sized([25.0, 25.0], Button::new("▶")).clicked() {
+                        self.running = true;
+                    }
+
+                    if self.running && ui.add_sized([25.0, 25.0], Button::new("⏹")).clicked() {
+                        self.running = false;
                     }
 
                     if ui.add_sized([25.0, 25.0], Button::new("↺")).clicked() {
                         self.system = Rc::new(RefCell::new(System::new(
                             Rc::clone(&self.cartridge),
                             Rc::clone(&self.display) as Rc<RefCell<dyn Surface>>,
+                            Rc::new(RefCell::new(EguiInputHandler::default()))
+                                as Rc<RefCell<dyn InputHandler>>,
                         )));
                         self.cpu =
                             Cpu::new(Rc::clone(&self.system) as Rc<RefCell<dyn Addressable>>);
@@ -273,28 +320,54 @@ impl App {
             .collapsible(false)
             .resizable(false)
             .show(ctx, |ui| {
-                ui.set_width(2.0 * SCREEN_WIDTH as f32);
-                ui.set_height(2.0 * SCREEN_HEIGHT as f32);
+                let lcdc = self.system.borrow().ppu_ref().borrow().get_lcdc();
 
-                let system = self.system.borrow();
-                let ppu = system.ppu_ref().borrow();
+                ui.ctx().input(|input| {
+                    let mut handler = self.input.borrow_mut();
+                    handler.start = input.key_down(egui::Key::S);
+                    handler.select = input.key_down(egui::Key::A);
+                    handler.b = input.key_down(egui::Key::Z);
+                    handler.a = input.key_down(egui::Key::X);
+                    handler.up = input.key_down(egui::Key::ArrowUp);
+                    handler.down = input.key_down(egui::Key::ArrowDown);
+                    handler.left = input.key_down(egui::Key::ArrowLeft);
+                    handler.right = input.key_down(egui::Key::ArrowRight);
+                });
 
-                let y = ppu.get_render_y();
+                TableBuilder::new(ui)
+                    .column(Column::exact(100.0))
+                    .column(Column::exact(100.0))
+                    .body(|mut body| {
+                        let mut add = |label: &str, bit: u8| {
+                            body.row(20.0, |mut row| {
+                                row.col(|ui| _ = ui.label(label));
+                                row.col(|ui| {
+                                    _ = ui.add_sized(
+                                        [20.0, 20.0],
+                                        Label::new(RichText::new("⏺").color(if lcdc & bit != 0 {
+                                            Color32::from_rgb(0, 255, 0)
+                                        } else {
+                                            Color32::from_rgb(255, 0, 0)
+                                        })),
+                                    )
+                                });
+                            });
+                        };
 
-                let (response, painter) =
-                    ui.allocate_painter(ui.available_size(), egui::Sense::hover());
+                        add("LCD", 0x80);
+                        add("OBJ", 0x01);
 
-                let rect = response.rect;
-
-                painter.rect_filled(rect, 0.0, egui::Color32::BLACK);
-
-                painter.line_segment(
-                    [
-                        egui::pos2(rect.min.x, rect.min.y + (2 * y as u32) as f32),
-                        egui::pos2(rect.max.x, rect.min.y + (2 * y as u32) as f32),
-                    ],
-                    egui::Stroke::new(1.0, egui::Color32::WHITE),
-                );
+                        body.row(20.0, |mut row| {
+                            row.col(|ui| _ = ui.label("BG"));
+                            row.col(|ui| {
+                                ui.monospace(if lcdc & (1 << 3) != 0 {
+                                    "0x9c00"
+                                } else {
+                                    "0x9800"
+                                });
+                            });
+                        });
+                    });
             });
     }
 }
@@ -330,6 +403,8 @@ impl eframe::App for App {
             }
         }
 
-        ctx.request_repaint();
+        if self.running {
+            ctx.request_repaint();
+        }
     }
 }

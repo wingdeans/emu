@@ -94,7 +94,11 @@ impl Palette {
     }
 
     pub fn get_bg(&self, palette: u8, color: u8) -> Color {
-        self.bg.color(palette * 8 + color * 2)
+        if palette == 0 {
+            self.get_bgp(color)
+        } else {
+            self.bg.color(palette * 8 + color * 2)
+        }
     }
 
     pub fn get_obj(&self, palette: u8, color: u8) -> Color {

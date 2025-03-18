@@ -86,10 +86,10 @@ fn sub8(a: u8, b: u8, c: bool) -> (u8, bool, bool) {
 impl Cpu {
     pub fn new(addressable: Rc<RefCell<dyn Addressable>>) -> Self {
         Self {
-            af: 0,
+            af: 0x1180,
             bc: 0,
-            de: 0,
-            hl: 0,
+            de: 0xff56,
+            hl: 0x000d,
             sp: 0xfffe,
             pc: 0x100,
             ime: true,

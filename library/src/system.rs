@@ -1,6 +1,7 @@
 use crate::{
     bus::{bank, map_to, Addressable, Bus},
     cartridge::Cartridge,
+    input::{Input, InputHandler},
     io::IO,
     memory::{Access, Memory},
     palette::Palette,
@@ -29,13 +30,28 @@ pub struct System {
 }
 
 impl System {
-    pub fn new(cartridge: Cartridge, surface: Rc<RefCell<dyn Surface>>) -> Self {
+    pub fn new(
+        cartridge: Rc<RefCell<Cartridge>>,
+        surface: Rc<RefCell<dyn Surface>>,
+        input_handler: Rc<RefCell<dyn InputHandler>>,
+    ) -> Self {
         let bus: Rc<RefCell<Bus>> = Default::default();
 
         let vram_bank = bank(
             Rc::new(RefCell::new(Memory::new(VRAM_SIZE * 2, Access::ReadWrite))),
             VRAM_SIZE,
             2,
+        );
+
+        let vram0 = map_to(
+            Rc::clone(vram_bank.borrow().bank(0)),
+            VRAM_BEGIN..VRAM_END,
+            VRAM_SIZE as u16,
+        );
+        let vram1 = map_to(
+            Rc::clone(vram_bank.borrow().bank(1)),
+            VRAM_BEGIN..VRAM_END,
+            VRAM_SIZE as u16,
         );
 
         let vram = map_to(
@@ -68,16 +84,19 @@ impl System {
         );
 
         let io = Rc::new(RefCell::new(IO::new(Rc::clone(&wram), vram_bank)));
+        let palette: Rc<RefCell<Palette>> = Default::default();
+
         let ppu = Rc::new(RefCell::new(Ppu::new(
             surface,
             Rc::clone(&bus) as Rc<RefCell<dyn Addressable>>,
-            Rc::clone(&vram),
+            vram0,
+            vram1,
+            Rc::clone(&palette),
         )));
-        let palette: Rc<RefCell<Palette>> = Default::default();
 
         {
             let mut b = bus.borrow_mut();
-            b.add(Rc::new(RefCell::new(cartridge)));
+            b.add(cartridge);
             b.add(vram);
             b.add(wram_0);
             b.add(map_to(
@@ -89,6 +108,7 @@ impl System {
             b.add(io);
             b.add(Rc::clone(&palette) as Rc<RefCell<dyn Addressable>>);
             b.add(Rc::clone(&ppu) as Rc<RefCell<dyn Addressable>>);
+            b.add(Rc::new(RefCell::new(Input::new(input_handler))));
         }
 
         Self { bus, ppu, palette }
