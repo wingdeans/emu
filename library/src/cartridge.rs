@@ -13,6 +13,8 @@ pub const HEADER_SIZE: usize = HEADER_END - HEADER_BEGIN;
 pub const CHECKSUM_BEGIN: usize = 0x134;
 pub const CHECKSUM_END: usize = 0x14d;
 
+pub const CGB_FLAG_ADDRESS: u16 = 0x0143;
+
 pub enum Mapper {
     NoMbc,
 }

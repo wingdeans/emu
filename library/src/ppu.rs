@@ -4,6 +4,7 @@ use crate::{
     int::{IF_ADDRESS, VBLANK_INT_FLAG},
     palette::Palette,
     surface::{Surface, SCREEN_HEIGHT, SCREEN_WIDTH},
+    system::OAM_BEGIN,
 };
 use std::{cell::RefCell, rc::Rc};
 
@@ -28,6 +29,7 @@ pub struct Ppu {
     surface: Rc<RefCell<dyn Surface>>,
     vram0: Rc<RefCell<dyn Addressable>>,
     vram1: Rc<RefCell<dyn Addressable>>,
+    oam: Rc<RefCell<dyn Addressable>>,
     palette: Rc<RefCell<Palette>>,
     int: Rc<RefCell<dyn Addressable>>,
     dma: Dma,
@@ -45,6 +47,7 @@ impl Ppu {
         bus: Rc<RefCell<dyn Addressable>>,
         vram0: Rc<RefCell<dyn Addressable>>,
         vram1: Rc<RefCell<dyn Addressable>>,
+        oam: Rc<RefCell<dyn Addressable>>,
         palette: Rc<RefCell<Palette>>,
         int: Rc<RefCell<dyn Addressable>>,
     ) -> Self {
@@ -52,6 +55,7 @@ impl Ppu {
             surface,
             vram0,
             vram1,
+            oam,
             palette,
             int,
             dma: Dma::new(bus),
@@ -71,8 +75,9 @@ impl Ppu {
         palette: &Palette,
         idx: u8,
         obj: bool,
-        x: u8,
+        x: i16,
         y: u8,
+        attr: u8,
     ) {
         if obj && (self.lcdc & 1) == 0 {
             return;
@@ -94,18 +99,70 @@ impl Ppu {
         let hi = vram.read(addr + 1).unwrap();
 
         for i in 0..TILE_SIZE as u8 {
+            if obj && ((x + i as i16) < 0 || (x + i as i16) >= SCREEN_WIDTH as i16) {
+                continue;
+            }
+
             let col = (if lo & (1 << (7 - i)) != 0 { 1 } else { 0 })
                 | (if (hi & (1 << (7 - i))) != 0 { 2 } else { 0 });
 
-            let color = palette.get_bg(0, col);
+            if obj && col == 0 {
+                continue;
+            }
+
+            let color = if obj && attr & 16 != 0 {
+                palette.get_obp1(col)
+            } else if obj {
+                palette.get_obp0(col)
+            } else {
+                palette.get_bg(0, col)
+            };
 
             surface.set_pixel(
-                (x + i) as u32 % SCREEN_WIDTH,
+                (x as u8 + i) as u32 % SCREEN_WIDTH,
                 self.render_y as u32,
                 color.0,
                 color.1,
                 color.2,
             );
+        }
+    }
+
+    fn draw_obj(
+        &self,
+        surface: &mut dyn Surface,
+        vram: &mut dyn Addressable,
+        oam: &mut dyn Addressable,
+        palette: &Palette,
+    ) {
+        let mut objects = 0;
+        let tall = self.lcdc & 4 != 0;
+
+        for i in 0..40 {
+            let addr = OAM_BEGIN + i * 4;
+            let y = oam.read(addr).unwrap() as i16 - 16;
+
+            if (self.render_y as i16) < y
+                || (!tall && self.render_y as i16 >= y + TILE_SIZE as i16)
+                || (tall && self.render_y as i16 >= y + (TILE_SIZE * 2) as i16)
+                || objects == 10
+            {
+                return;
+            }
+
+            objects += 1;
+
+            let x = oam.read(addr + 1).unwrap() as i16 - 8;
+            let idx = oam.read(addr + 2).unwrap();
+            let attr = oam.read(addr + 3).unwrap();
+
+            let tile = if self.render_y as i16 >= y + TILE_SIZE as i16 {
+                idx + 1
+            } else {
+                idx
+            };
+
+            self.blit_tile(surface, vram, palette, tile, true, x, y as u8, attr);
         }
     }
 
@@ -141,8 +198,9 @@ impl Ppu {
                 palette,
                 tile,
                 false,
-                x as u8,
+                x as i16,
                 tile_y * TILE_SIZE as u8,
+                0,
             );
         }
     }
@@ -156,9 +214,11 @@ impl Ppu {
             let mut surface = self.surface.borrow_mut();
             let mut vram0 = self.vram0.borrow_mut();
             let mut vram1 = self.vram1.borrow_mut();
+            let mut oam = self.oam.borrow_mut();
             let palette = self.palette.borrow();
 
             self.draw_bg(&mut *surface, &mut *vram0, &mut *vram1, &*palette);
+            self.draw_obj(&mut *surface, &mut *vram0, &mut *oam, &*palette);
 
             surface.flush();
             self.dma.scanline();

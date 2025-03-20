@@ -71,16 +71,27 @@ impl Default for CgbPalette {
     }
 }
 
-#[derive(Default)]
 pub struct Palette {
     bgp: u8,
     obp0: u8,
     obp1: u8,
     bg: CgbPalette,
     obj: CgbPalette,
+    compat_mode: bool,
 }
 
 impl Palette {
+    pub fn new(compat_mode: bool) -> Self {
+        Self {
+            bgp: 0,
+            obp0: 0,
+            obp1: 0,
+            bg: Default::default(),
+            obj: Default::default(),
+            compat_mode,
+        }
+    }
+
     pub fn get_bgp(&self, id: u8) -> Color {
         Color::from_monochrome(self.bgp >> ((id % 4) * 2))
     }
@@ -94,7 +105,7 @@ impl Palette {
     }
 
     pub fn get_bg(&self, palette: u8, color: u8) -> Color {
-        if palette == 0 {
+        if self.compat_mode && palette == 0 {
             self.get_bgp(color)
         } else {
             self.bg.color(palette * 8 + color * 2)
@@ -102,7 +113,13 @@ impl Palette {
     }
 
     pub fn get_obj(&self, palette: u8, color: u8) -> Color {
-        self.obj.color(palette * 8 + color * 2)
+        if self.compat_mode && palette == 0 {
+            self.get_obp0(color)
+        } else if self.compat_mode {
+            self.get_obp1(color)
+        } else {
+            self.obj.color(palette * 8 + color * 2)
+        }
     }
 }
 

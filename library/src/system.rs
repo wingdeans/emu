@@ -1,6 +1,6 @@
 use crate::{
     bus::{bank, map_to, Addressable, Bus},
-    cartridge::Cartridge,
+    cartridge::{Cartridge, CGB_FLAG_ADDRESS},
     input::{Input, InputHandler},
     int::{Interrupt, InterruptHandler},
     io::IO,
@@ -23,6 +23,9 @@ pub const WRAM_BANK_COUNT: u32 = 8;
 pub const HRAM_BEGIN: u16 = 0xff80;
 pub const HRAM_END: u16 = 0xffff;
 pub const HRAM_SIZE: usize = (HRAM_END - HRAM_BEGIN) as usize;
+pub const OAM_BEGIN: u16 = 0xfe00;
+pub const OAM_END: u16 = 0xfea0;
+pub const OAM_SIZE: usize = (OAM_END - OAM_BEGIN) as usize;
 
 pub struct System {
     bus: Rc<RefCell<Bus>>,
@@ -62,6 +65,12 @@ impl System {
             VRAM_SIZE as u16,
         );
 
+        let oam = map_to(
+            Rc::new(RefCell::new(Memory::new(OAM_SIZE, Access::ReadWrite))),
+            OAM_BEGIN..OAM_END,
+            OAM_SIZE as u16,
+        );
+
         let wram = bank(
             Rc::new(RefCell::new(Memory::new(
                 WRAM_BANK_SIZE * WRAM_BANK_COUNT as usize,
@@ -85,15 +94,20 @@ impl System {
             HRAM_SIZE as u16,
         );
 
+        let cgb_flag = cartridge.borrow_mut().read(CGB_FLAG_ADDRESS).unwrap();
+
         let io = Rc::new(RefCell::new(IO::new(Rc::clone(&wram), vram_bank)));
-        let palette: Rc<RefCell<Palette>> = Default::default();
         let int = Rc::new(RefCell::new(Interrupt::new(interrupt_handler)));
+        let palette = Rc::new(RefCell::new(Palette::new(
+            cgb_flag != 0x80 && cgb_flag != 0xc0,
+        )));
 
         let ppu = Rc::new(RefCell::new(Ppu::new(
             surface,
             Rc::clone(&bus) as Rc<RefCell<dyn Addressable>>,
             vram0,
             vram1,
+            Rc::clone(&oam),
             Rc::clone(&palette),
             Rc::clone(&int) as Rc<RefCell<dyn Addressable>>,
         )));
@@ -114,6 +128,7 @@ impl System {
             b.add(Rc::clone(&ppu) as Rc<RefCell<dyn Addressable>>);
             b.add(Rc::new(RefCell::new(Input::new(input_handler))));
             b.add(int);
+            b.add(oam);
         }
 
         Self { bus, ppu, palette }
