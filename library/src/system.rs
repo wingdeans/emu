@@ -30,6 +30,7 @@ pub const OAM_SIZE: usize = (OAM_END - OAM_BEGIN) as usize;
 pub struct System {
     bus: Rc<RefCell<Bus>>,
     ppu: Rc<RefCell<Ppu>>,
+    io: Rc<RefCell<IO>>,
     palette: Rc<RefCell<Palette>>,
 }
 
@@ -123,7 +124,7 @@ impl System {
                 WRAM_BANK_SIZE as u16,
             ));
             b.add(hram);
-            b.add(io);
+            b.add(Rc::clone(&io) as Rc<RefCell<dyn Addressable>>);
             b.add(Rc::clone(&palette) as Rc<RefCell<dyn Addressable>>);
             b.add(Rc::clone(&ppu) as Rc<RefCell<dyn Addressable>>);
             b.add(Rc::new(RefCell::new(Input::new(input_handler))));
@@ -131,7 +132,12 @@ impl System {
             b.add(oam);
         }
 
-        Self { bus, ppu, palette }
+        Self {
+            bus,
+            ppu,
+            io,
+            palette,
+        }
     }
 
     pub fn bus_ref(&mut self) -> &Rc<RefCell<Bus>> {
@@ -140,6 +146,10 @@ impl System {
 
     pub fn ppu_ref(&self) -> &Rc<RefCell<Ppu>> {
         &self.ppu
+    }
+
+    pub fn io_ref(&self) -> &Rc<RefCell<IO>> {
+        &self.io
     }
 
     pub fn palette_ref(&self) -> &Rc<RefCell<Palette>> {

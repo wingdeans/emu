@@ -1,4 +1,4 @@
-use crate::ppu::Ppu;
+use crate::{io::IO, ppu::Ppu};
 use std::{
     cell::RefCell,
     rc::Rc,
@@ -10,14 +10,16 @@ const CYCLES_PER_FRAME: u32 = 70224 / 4;
 
 pub struct Clock {
     ppu: Rc<RefCell<Ppu>>,
+    io: Rc<RefCell<IO>>,
     cycles: u32,
     timestamp: Instant,
 }
 
 impl Clock {
-    pub fn new(ppu: Rc<RefCell<Ppu>>) -> Self {
+    pub fn new(ppu: Rc<RefCell<Ppu>>, io: Rc<RefCell<IO>>) -> Self {
         Self {
             ppu,
+            io,
             cycles: 0,
             timestamp: Instant::now(),
         }
@@ -29,6 +31,7 @@ impl Clock {
         }
 
         self.cycles += m_cycles;
+        self.io.borrow_mut().clock(m_cycles);
 
         if self.cycles >= CYCLES_PER_FRAME {
             self.cycles = 0;

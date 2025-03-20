@@ -139,9 +139,10 @@ impl App {
 
         int.borrow_mut().cpu = Rc::downgrade(&cpu);
 
-        let clock = Rc::new(RefCell::new(Clock::new(Rc::clone(
-            system.borrow().ppu_ref(),
-        ))));
+        let clock = Rc::new(RefCell::new(Clock::new(
+            Rc::clone(system.borrow().ppu_ref()),
+            Rc::clone(system.borrow().io_ref()),
+        )));
 
         Self {
             cpu,
