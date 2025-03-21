@@ -110,7 +110,7 @@ impl System {
             vram1,
             Rc::clone(&oam),
             Rc::clone(&palette),
-            Rc::clone(&int) as Rc<RefCell<dyn Addressable>>,
+            Rc::clone(&int),
         )));
 
         {

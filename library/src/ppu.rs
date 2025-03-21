@@ -1,7 +1,7 @@
 use crate::{
     bus::Addressable,
     dma::Dma,
-    int::{IF_ADDRESS, VBLANK_INT_FLAG},
+    int::{Interrupt, STAT_INT_FLAG, VBLANK_INT_FLAG},
     palette::Palette,
     surface::{Surface, SCREEN_HEIGHT, SCREEN_WIDTH},
     system::OAM_BEGIN,
@@ -12,11 +12,13 @@ const VBLANK_HEIGHT_BEGIN: u32 = 144;
 const MAX_SCANLINE_HEIGHT: u32 = 153;
 
 pub const LCD_Y_ADDRESS: u16 = 0xff44;
+pub const LYC_ADDRESS: u16 = 0xff45;
 pub const SCX_ADDRESS: u16 = 0xff43;
 pub const SCY_ADDRESS: u16 = 0xff42;
 pub const WX_ADDRESS: u16 = 0xff4a;
 pub const WY_ADDRESS: u16 = 0xff4b;
 pub const LCDC_ADDRESS: u16 = 0xff40;
+pub const STAT_ADDRESS: u16 = 0xff41;
 pub const BLOCK0_ADDRESS: u16 = 0x8000;
 pub const BLOCK1_ADDRESS: u16 = 0x8800;
 pub const BLOCK2_ADDRESS: u16 = 0x9000;
@@ -31,7 +33,7 @@ pub struct Ppu {
     vram1: Rc<RefCell<dyn Addressable>>,
     oam: Rc<RefCell<dyn Addressable>>,
     palette: Rc<RefCell<Palette>>,
-    int: Rc<RefCell<dyn Addressable>>,
+    int: Rc<RefCell<Interrupt>>,
     dma: Dma,
     render_y: u8,
     bg_x: u8,
@@ -39,6 +41,8 @@ pub struct Ppu {
     wnd_x: u8,
     wnd_y: u8,
     lcdc: u8,
+    stat: u8,
+    lyc: u8,
 }
 
 impl Ppu {
@@ -49,7 +53,7 @@ impl Ppu {
         vram1: Rc<RefCell<dyn Addressable>>,
         oam: Rc<RefCell<dyn Addressable>>,
         palette: Rc<RefCell<Palette>>,
-        int: Rc<RefCell<dyn Addressable>>,
+        int: Rc<RefCell<Interrupt>>,
     ) -> Self {
         Self {
             surface,
@@ -65,6 +69,8 @@ impl Ppu {
             wnd_x: 0,
             wnd_y: 0,
             lcdc: 0x91,
+            stat: 0,
+            lyc: 0,
         }
     }
 
@@ -213,6 +219,10 @@ impl Ppu {
         }
 
         if self.render_y < VBLANK_HEIGHT_BEGIN as u8 {
+            if self.stat & 0x20 != 0 {
+                self.int.borrow_mut().int(STAT_INT_FLAG);
+            }
+
             let mut surface = self.surface.borrow_mut();
             let mut vram0 = self.vram0.borrow_mut();
             let mut vram1 = self.vram1.borrow_mut();
@@ -225,15 +235,26 @@ impl Ppu {
                 self.draw_obj(&mut *surface, &mut *vram0, &mut *oam, &*palette);
             }
 
+            if self.stat & 0x08 != 0 {
+                self.int.borrow_mut().int(STAT_INT_FLAG);
+            }
+
             surface.flush();
             self.dma.scanline();
+            self.dma.oam();
         } else if self.render_y == VBLANK_HEIGHT_BEGIN as u8 {
-            let mut int = self.int.borrow_mut();
-            let flags = int.read(IF_ADDRESS).unwrap();
-            int.write(IF_ADDRESS, flags | VBLANK_INT_FLAG).unwrap();
+            self.int.borrow_mut().int(VBLANK_INT_FLAG);
+
+            if self.stat & 0x10 != 0 {
+                self.int.borrow_mut().int(STAT_INT_FLAG);
+            }
         }
 
         self.render_y = (self.render_y + 1) % (MAX_SCANLINE_HEIGHT as u8 + 1);
+
+        if self.lyc == self.render_y && self.stat & 0x40 != 0 {
+            self.int.borrow_mut().int(STAT_INT_FLAG);
+        }
     }
 
     pub fn get_lcdc(&self) -> u8 {
@@ -245,22 +266,30 @@ impl Addressable for Ppu {
     fn read(&mut self, addr: u16) -> Option<u8> {
         match addr {
             LCD_Y_ADDRESS => Some(self.render_y),
+            LYC_ADDRESS => Some(self.lyc),
             SCX_ADDRESS => Some(self.bg_x),
             SCY_ADDRESS => Some(self.bg_y),
             WX_ADDRESS => Some(self.wnd_x),
             WY_ADDRESS => Some(self.wnd_y),
             LCDC_ADDRESS => Some(self.lcdc),
+            STAT_ADDRESS => Some(
+                (self.stat & !0b111)
+                    | (self.lcdc >> 7)
+                    | (if self.render_y == self.lyc { 4 } else { 0 }),
+            ),
             _ => self.dma.read(addr),
         }
     }
 
     fn write(&mut self, addr: u16, value: u8) -> Option<()> {
         match addr {
+            LYC_ADDRESS => self.lyc = value,
             SCX_ADDRESS => self.bg_x = value,
             SCY_ADDRESS => self.bg_y = value,
             WX_ADDRESS => self.wnd_x = value,
             WY_ADDRESS => self.wnd_y = value,
             LCDC_ADDRESS => self.lcdc = value,
+            STAT_ADDRESS => self.stat = value,
             _ => return self.dma.write(addr, value),
         }
 

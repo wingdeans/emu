@@ -14,6 +14,7 @@ pub struct Dma {
     dma_dst: u16,
     dma_length: usize,
     dma_result: u8,
+    oam_value: Option<u8>,
 }
 
 impl Dma {
@@ -24,6 +25,7 @@ impl Dma {
             dma_dst: 0,
             dma_length: 0,
             dma_result: 0xff,
+            oam_value: None,
         }
     }
 
@@ -66,13 +68,17 @@ impl Dma {
         }
     }
 
-    pub fn oam(&mut self, addr: u8) {
-        let mut bus = self.bus.borrow_mut();
+    pub fn oam(&mut self) {
+        if let Some(addr) = self.oam_value {
+            let mut bus = self.bus.borrow_mut();
 
-        for i in 0..0xa0 {
-            bus.read(((addr as u16) << 8) | i)
-                .map(|value| bus.write(0xfe00 | i, value));
+            for i in 0..0xa0 {
+                bus.read(((addr as u16) << 8) | i)
+                    .map(|value| bus.write(0xfe00 | i, value));
+            }
         }
+
+        self.oam_value = None;
     }
 }
 
@@ -91,7 +97,7 @@ impl Addressable for Dma {
             HDMA3_ADDRESS => self.dma_dst = ((value as u16) << 8) | (self.dma_dst & 0xff),
             HDMA4_ADDRESS => self.dma_dst = (self.dma_dst & 0xff00) | (value as u16 & 0xf0),
             HDMA5_ADDRESS => self.handle(value),
-            OAM_DMA_ADDRESS => self.oam(value),
+            OAM_DMA_ADDRESS => self.oam_value = Some(value),
             _ => return None,
         }
 

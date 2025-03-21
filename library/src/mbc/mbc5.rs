@@ -102,12 +102,12 @@ impl Addressable for Mbc5 {
             ROM_BANK_LO_BEGIN..ROM_BANK_LO_END => {
                 let mut b = self.rom_bank.borrow_mut();
                 let s = b.selected();
-                b.select(s & !0xff | value as u32);
+                b.select((s & !0xff) | value as u32);
             }
             ROM_BANK_HI_BEGIN..ROM_BANK_HI_END => {
                 let mut b = self.rom_bank.borrow_mut();
                 let s = b.selected();
-                b.select(s & 0xff | (((value & 1) as u32) << 8));
+                b.select((s & 0xff) | (((value & 1) as u32) << 8));
             }
             RAM_ENABLE_BEGIN..RAM_ENABLE_END if value == 0x0a => self.ram_enable = true,
             RAM_ENABLE_BEGIN..RAM_ENABLE_END if value == 0x00 => self.ram_enable = false,

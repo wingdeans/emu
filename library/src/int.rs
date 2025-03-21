@@ -4,7 +4,8 @@ use std::{cell::RefCell, rc::Rc};
 pub const IE_ADDRESS: u16 = 0xffff;
 pub const IF_ADDRESS: u16 = 0xff0f;
 
-pub const VBLANK_INT_FLAG: u8 = 0;
+pub const VBLANK_INT_FLAG: u8 = 1;
+pub const STAT_INT_FLAG: u8 = 2;
 
 pub trait InterruptHandler {
     fn ime(&self) -> bool;
@@ -25,6 +26,20 @@ impl Interrupt {
             handler,
         }
     }
+
+    pub fn int(&mut self, value: u8) {
+        self.flag |= value;
+        let mut mask = self.enable & self.flag;
+
+        if mask != 0 && self.handler.borrow().ime() {
+            for i in 0..5 {
+                if mask & (1 << i) != 0 {
+                    mask ^= 1 << i;
+                    self.handler.borrow_mut().handle(0x40 + i * 8);
+                }
+            }
+        }
+    }
 }
 
 impl Addressable for Interrupt {
@@ -41,16 +56,7 @@ impl Addressable for Interrupt {
             IE_ADDRESS => self.enable = value,
             IF_ADDRESS => {
                 self.flag = value;
-                let mut mask = self.enable & self.flag;
-
-                if mask != 0 && self.handler.borrow().ime() {
-                    for i in 0..5 {
-                        if mask & (1 << i) != 0 {
-                            mask ^= 1 << i;
-                            self.handler.borrow_mut().handle(0x40 + i * 8);
-                        }
-                    }
-                }
+                self.int(0);
             }
             _ => return None,
         }
