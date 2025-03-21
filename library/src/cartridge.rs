@@ -1,7 +1,7 @@
 use crate::{
     bus::Addressable,
     error::{Error, Result},
-    mbc::mbc_none::MbcNone,
+    mbc::{mbc5::Mbc5, mbc_none::MbcNone},
     rom,
 };
 use std::{cell::RefCell, fs::File, io::prelude::*, path::Path, ptr, rc::Rc};
@@ -17,6 +17,7 @@ pub const CGB_FLAG_ADDRESS: u16 = 0x0143;
 
 pub enum Mapper {
     NoMbc,
+    Mbc5,
 }
 
 #[repr(packed)]
@@ -114,6 +115,7 @@ impl Header {
 
         match self.cartridge_type {
             0 => Ok(NoMbc),
+            0x1a | 0x1b | 0x1c | 0x1d | 0x1e => Ok(Mbc5),
             _ => Err(Error::UnrecognizedCartridgeHeaderField(format!(
                 "unrecognized cartridge type: 0x{:02x}",
                 self.cartridge_type
@@ -136,6 +138,9 @@ impl Cartridge {
         let mapper = match header.mapper()? {
             Mapper::NoMbc => {
                 Rc::new(RefCell::new(MbcNone::new(&header, rom)?)) as Rc<RefCell<dyn Addressable>>
+            }
+            Mapper::Mbc5 => {
+                Rc::new(RefCell::new(Mbc5::new(&header, rom)?)) as Rc<RefCell<dyn Addressable>>
             }
         };
 
