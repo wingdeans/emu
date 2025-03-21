@@ -147,7 +147,7 @@ impl Ppu {
                 || (tall && self.render_y as i16 >= y + (TILE_SIZE * 2) as i16)
                 || objects == 10
             {
-                return;
+                continue;
             }
 
             objects += 1;
@@ -156,8 +156,10 @@ impl Ppu {
             let idx = oam.read(addr + 2).unwrap();
             let attr = oam.read(addr + 3).unwrap();
 
-            let tile = if self.render_y as i16 >= y + TILE_SIZE as i16 {
-                idx + 1
+            let tile = if tall && self.render_y as i16 >= y + TILE_SIZE as i16 {
+                (idx & 0xfe) + 1
+            } else if tall {
+                idx & 0xfe
             } else {
                 idx
             };
@@ -218,7 +220,10 @@ impl Ppu {
             let palette = self.palette.borrow();
 
             self.draw_bg(&mut *surface, &mut *vram0, &mut *vram1, &*palette);
-            self.draw_obj(&mut *surface, &mut *vram0, &mut *oam, &*palette);
+
+            if self.lcdc & 2 != 0 {
+                self.draw_obj(&mut *surface, &mut *vram0, &mut *oam, &*palette);
+            }
 
             surface.flush();
             self.dma.scanline();

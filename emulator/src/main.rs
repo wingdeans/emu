@@ -392,6 +392,13 @@ impl App {
                         add("OBJ", 0x01);
 
                         body.row(20.0, |mut row| {
+                            row.col(|ui| _ = ui.label("OBJ Size"));
+                            row.col(|ui| {
+                                ui.monospace(if lcdc & 4 != 0 { "8x16" } else { "8x8" });
+                            });
+                        });
+
+                        body.row(20.0, |mut row| {
                             row.col(|ui| _ = ui.label("BG"));
                             row.col(|ui| {
                                 ui.monospace(if lcdc & (1 << 3) != 0 {
