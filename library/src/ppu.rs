@@ -85,7 +85,7 @@ impl Ppu {
         y: u8,
         attr: u8,
     ) {
-        if obj && (self.lcdc & 1) == 0 {
+        if obj && (self.lcdc & 1) == 0 || y > self.render_y {
             return;
         }
 
@@ -125,7 +125,7 @@ impl Ppu {
             };
 
             surface.set_pixel(
-                (x as u8 + i) as u32 % SCREEN_WIDTH,
+                (x + i as i16) as u32 % SCREEN_WIDTH,
                 self.render_y as u32,
                 color.0,
                 color.1,
