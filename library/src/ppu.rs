@@ -239,7 +239,6 @@ impl Ppu {
                 self.int.borrow_mut().int(STAT_INT_FLAG);
             }
 
-            surface.flush();
             self.dma.scanline();
             self.dma.oam();
         } else if self.render_y == VBLANK_HEIGHT_BEGIN as u8 {
@@ -248,6 +247,8 @@ impl Ppu {
             if self.stat & 0x10 != 0 {
                 self.int.borrow_mut().int(STAT_INT_FLAG);
             }
+
+            self.surface.borrow_mut().flush();
         }
 
         self.render_y = (self.render_y + 1) % (MAX_SCANLINE_HEIGHT as u8 + 1);

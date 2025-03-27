@@ -7,6 +7,7 @@ use std::{
 
 const CYCLES_PER_SCANLINE: u32 = (80 + 376) / 4;
 const CYCLES_PER_FRAME: u32 = 70224 / 4;
+const SECONDS_PER_FRAME: f64 = CYCLES_PER_FRAME as f64 / 1_047_500.0f64;
 
 pub struct Clock {
     ppu: Rc<RefCell<Ppu>>,
@@ -34,9 +35,9 @@ impl Clock {
         self.io.borrow_mut().clock(m_cycles);
 
         if self.cycles >= CYCLES_PER_FRAME {
-            self.cycles = 0;
+            self.cycles -= CYCLES_PER_FRAME;
 
-            let frame = Duration::from_secs_f64((self.cycles as f64) / (1_047_500.0f64));
+            let frame = Duration::from_secs_f64(SECONDS_PER_FRAME);
             let elapsed = self.timestamp.elapsed();
 
             if elapsed < frame {
