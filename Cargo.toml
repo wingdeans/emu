@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace]
-members = ["translator", "emulator", "library", "cpu"]
+members = ["translator", "emulator", "library", "cpu", "sdl"]
 
 [dependencies]

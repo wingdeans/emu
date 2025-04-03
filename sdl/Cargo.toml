@@ -1,0 +1,9 @@
+[package]
+name = "sdl"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+library = { path = "../library" }
+cpu = { path = "../cpu" }
+sdl2 = "0.37.0"

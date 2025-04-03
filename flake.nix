@@ -6,7 +6,12 @@
   };
 
   outputs =
-    { nixpkgs, utils, rust-overlay, ... }:
+    {
+      nixpkgs,
+      utils,
+      rust-overlay,
+      ...
+    }:
     utils.lib.eachDefaultSystem (
       system:
       let
@@ -16,6 +21,7 @@
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
             cargo
+            SDL2
           ];
 
           LD_LIBRARY_PATH =
@@ -31,27 +37,29 @@
             ];
         };
 
-        devShells.cranelift = let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [ (import rust-overlay) ];
-          };
-        in
+        devShells.cranelift =
+          let
+            pkgs = import nixpkgs {
+              inherit system;
+              overlays = [ (import rust-overlay) ];
+            };
+          in
           pkgs.mkShell {
             packages = with pkgs; [
-              ((rust-bin.selectLatestNightlyWith
-                (toolchain: toolchain.default)).override {
+              ((rust-bin.selectLatestNightlyWith (toolchain: toolchain.default)).override {
                 extensions = [ "rustc-codegen-cranelift" ];
               })
             ];
 
-            LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [
-              xorg.libX11
-              xorg.libXcursor
-              xorg.libXi
-              libxkbcommon
-              libGL
-            ];
+            LD_LIBRARY_PATH =
+              with pkgs;
+              lib.makeLibraryPath [
+                xorg.libX11
+                xorg.libXcursor
+                xorg.libXi
+                libxkbcommon
+                libGL
+              ];
           };
       }
     );
