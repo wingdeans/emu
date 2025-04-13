@@ -1,4 +1,6 @@
 use crate::bus::Addressable;
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::time::{Duration, Instant};
 
 pub const MASTER_CONTROL_ADDR: u16 = 0xff26;
@@ -13,12 +15,30 @@ pub const NOISE_CHN_TIMER_ADDR: u16 = 0xff20;
 pub const NOISE_CHN_ENVELOPE_ADDR: u16 = 0xff21;
 pub const NOISE_CHN_FREQ_ADDR: u16 = 0xff22;
 pub const NOISE_CHN_CONTROL_ADDR: u16 = 0xff23;
+pub const WAVE_CHN_ENABLE_ADDR: u16 = 0xff1a;
+pub const WAVE_CHN_TIMER_ADDR: u16 = 0xff1b;
+pub const WAVE_CHN_OUTPUT_ADDR: u16 = 0xff1c;
+pub const WAVE_CHN_PER_LO_ADDR: u16 = 0xff1d;
+pub const WAVE_CHN_PER_HI_ADDR: u16 = 0xff1e;
+pub const WAVE_PATTERN_RAM_BEGIN: u16 = 0xff30;
+pub const WAVE_PATTERN_RAM_END: u16 = 0xff40;
+pub const WAVE_PATTERN_RAM_SIZE: usize = (WAVE_PATTERN_RAM_END - WAVE_PATTERN_RAM_BEGIN) as usize;
+
+pub enum Sample {
+    Flat,
+    Tone { frequency: f64 },
+    Square { frequency: f64, duty_cycle: f64 },
+}
+
+pub trait Speaker {
+    fn play(&mut self, sample: Sample, volume: u8);
+}
 
 #[derive(Default)]
 struct PulseChannel<const BASE: u16> {
-    enable: bool,
-    left: bool,
-    right: bool,
+    pub enable: bool,
+    pub left: bool,
+    pub right: bool,
     pace: u8,
     additive: bool,
     step: u8,
@@ -35,7 +55,7 @@ struct PulseChannel<const BASE: u16> {
 }
 
 impl<const BASE: u16> PulseChannel<BASE> {
-    pub fn update(&mut self, delta: Duration) {
+    pub fn update(&mut self, delta: Duration, speaker: &mut dyn Speaker) {
         if !self.enable {
             return;
         }
@@ -53,7 +73,7 @@ impl<const BASE: u16> PulseChannel<BASE> {
 
             while delta > hz {
                 delta -= hz;
-                self.iter();
+                self.iter(speaker);
             }
 
             self.acc1 = delta;
@@ -83,10 +103,9 @@ impl<const BASE: u16> PulseChannel<BASE> {
         }
     }
 
-    fn iter(&mut self) {
+    fn iter(&mut self, speaker: &mut dyn Speaker) {
         let delta = self.period / 2u16.pow(self.step as u32);
 
-        // Didn't want to deal with the unsigned cast, okay?
         self.period = if self.additive {
             self.period + delta
         } else {
@@ -96,6 +115,28 @@ impl<const BASE: u16> PulseChannel<BASE> {
         if self.period > 0x7ff {
             self.enable = false;
         }
+
+        let period = if (self.period & (1 << 10)) != 0 {
+            self.period | 0xf800
+        } else {
+            self.period
+        } as i16;
+
+        let frequency = 131072.0 / (2048.0 - (period as f64));
+
+        speaker.play(
+            Sample::Square {
+                frequency,
+                duty_cycle: match self.duty_cycle & 3 {
+                    0b00 => 0.125,
+                    0b01 => 0.25,
+                    0b10 => 0.50,
+                    0b11 => 0.75,
+                    _ => unreachable!(),
+                },
+            },
+            self.volume,
+        );
     }
 }
 
@@ -169,7 +210,7 @@ struct NoiseChannel {
 }
 
 impl NoiseChannel {
-    pub fn update(&mut self, delta: Duration) {
+    pub fn update(&mut self, delta: Duration, speaker: &mut dyn Speaker) {
         if !self.enable {
             return;
         }
@@ -186,7 +227,7 @@ impl NoiseChannel {
 
             while delta > self.period {
                 delta -= self.period;
-                self.iter();
+                self.iter(speaker);
             }
 
             self.acc1 = delta;
@@ -216,7 +257,7 @@ impl NoiseChannel {
         }
     }
 
-    fn iter(&mut self) {
+    fn iter(&mut self, speaker: &mut dyn Speaker) {
         self.lfsr = (self.lfsr & !(1 << 15)) | (((self.lfsr & 1) ^ ((self.lfsr >> 1) & 1)) << 15);
 
         if self.lfsr_short {
@@ -226,9 +267,7 @@ impl NoiseChannel {
         self.lfsr >>= 1;
 
         if (self.lfsr & 1) != 0 {
-            unimplemented!();
-        } else {
-            unimplemented!();
+            speaker.play(Sample::Flat, self.volume);
         }
     }
 }
@@ -287,15 +326,125 @@ impl Addressable for NoiseChannel {
     }
 }
 
+struct WaveChannel {
+    pub enable: bool,
+    pub left: bool,
+    pub right: bool,
+    length_enable: bool,
+    timer: Option<Instant>,
+    output_level: u8,
+    period_set: u16,
+    period: u16,
+    idx: usize,
+    lo: bool,
+    acc: Duration,
+    ram: [u8; WAVE_PATTERN_RAM_SIZE],
+}
+
+impl WaveChannel {
+    pub fn update(&mut self, delta: Duration, speaker: &mut dyn Speaker) {
+        if !self.enable {
+            return;
+        }
+
+        if let Some(instant) = self.timer {
+            if self.length_enable && instant.checked_duration_since(Instant::now()).is_some() {
+                self.enable = false;
+                self.timer = None;
+            }
+        }
+
+        // when do we iterate?
+    }
+
+    fn iter(&mut self, speaker: &mut dyn Speaker) {
+        let value = self.ram[self.idx];
+        let sample = if self.lo { value & 0x0f } else { value >> 4 };
+
+        let sample = match self.output_level & 3 {
+            0b00 => 0,
+            0b01 => sample,
+            0b10 => sample >> 1,
+            0b11 => sample >> 2,
+            _ => unreachable!(),
+        };
+
+        if self.lo {
+            self.idx += 1;
+
+            if self.idx >= WAVE_PATTERN_RAM_SIZE {
+                self.idx = 0;
+            }
+        }
+
+        self.lo = false;
+
+        let period = if (self.period & (1 << 10)) != 0 {
+            self.period | 0xf800
+        } else {
+            self.period
+        } as i16;
+
+        let frequency = 65536.0 / (2048.0 - (period as f64));
+        speaker.play(Sample::Tone { frequency }, sample);
+    }
+}
+
+impl Addressable for WaveChannel {
+    fn read(&mut self, addr: u16) -> Option<u8> {
+        match addr {
+            WAVE_PATTERN_RAM_BEGIN..WAVE_PATTERN_RAM_END => {
+                Some(self.ram[(addr - WAVE_PATTERN_RAM_BEGIN) as usize])
+            }
+            _ => None,
+        }
+    }
+
+    fn write(&mut self, addr: u16, value: u8) -> Option<()> {
+        match addr {
+            WAVE_PATTERN_RAM_BEGIN..WAVE_PATTERN_RAM_END => {
+                self.ram[(addr - WAVE_PATTERN_RAM_BEGIN) as usize] = value
+            }
+            WAVE_CHN_ENABLE_ADDR => self.enable = (value & 0x80) != 0,
+            WAVE_CHN_TIMER_ADDR => {
+                self.timer.replace(
+                    Instant::now()
+                        + Duration::from_secs_f64((256.0 - (value & 0x3f) as f64) / 256.0),
+                );
+            }
+            WAVE_CHN_OUTPUT_ADDR => self.output_level = (value >> 5) & 3,
+            PULSE_CHN_PER_LO_OFF => self.period_set = (self.period_set & 0xff00) | (value as u16),
+            PULSE_CHN_PER_HI_OFF => {
+                self.period_set = (self.period_set & 0x00ff) | ((value & 7) as u16);
+                self.length_enable = (value & 0x40) != 0;
+
+                if value & 0x80 != 0 {
+                    self.enable = true;
+                    self.idx = 0;
+                    self.period = self.period_set;
+
+                    if self.length_enable {
+                        self.timer = None;
+                    }
+                }
+            }
+            _ => return None,
+        }
+
+        Some(())
+    }
+}
+
 pub struct Apu {
     enable: bool,
     chn_1: PulseChannel<0xff10>,
     chn_2: PulseChannel<0xff15>,
-    chn_3: PulseChannel<0xff10>,
-    chn_4: PulseChannel<0xff10>,
+    chn_3: WaveChannel,
+    chn_4: NoiseChannel,
     left_volume: u8,
     right_volume: u8,
     then: Instant,
+    speaker: Rc<RefCell<dyn Speaker>>,
 }
 
 impl Apu {
@@ -304,7 +453,12 @@ impl Apu {
         let delta = now - self.then;
         self.then = now;
 
-        self.chn_1.update(delta);
+        let mut speaker = self.speaker.borrow_mut();
+
+        self.chn_1.update(delta, &mut *speaker);
+        self.chn_2.update(delta, &mut *speaker);
+        self.chn_3.update(delta, &mut *speaker);
+        self.chn_4.update(delta, &mut *speaker);
     }
 }
 
