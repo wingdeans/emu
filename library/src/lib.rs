@@ -1,3 +1,4 @@
+pub mod apu;
 pub mod bus;
 pub mod cartridge;
 pub mod clock;
@@ -11,5 +12,6 @@ pub mod memory;
 pub mod palette;
 pub mod ppu;
 pub mod rom;
+pub mod serial;
 pub mod surface;
 pub mod system;

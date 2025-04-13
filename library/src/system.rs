@@ -7,6 +7,7 @@ use crate::{
     memory::{Access, Memory},
     palette::Palette,
     ppu::Ppu,
+    serial::Serial,
     surface::Surface,
 };
 use std::{cell::RefCell, rc::Rc};
@@ -130,6 +131,7 @@ impl System {
             b.add(Rc::new(RefCell::new(Input::new(input_handler))));
             b.add(int);
             b.add(oam);
+            b.add(Rc::new(RefCell::new(Serial::default())))
         }
 
         Self {
