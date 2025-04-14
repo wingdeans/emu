@@ -1,6 +1,6 @@
 use crate::{
     bus::Addressable,
-    dma::Dma,
+    dma::{Dma, HDMA1_ADDRESS, HDMA5_ADDRESS, OAM_DMA_ADDRESS},
     int::{Interrupt, STAT_INT_FLAG, VBLANK_INT_FLAG},
     palette::Palette,
     surface::{Surface, SCREEN_HEIGHT, SCREEN_WIDTH},
@@ -34,7 +34,7 @@ pub struct Ppu {
     oam: Rc<RefCell<dyn Addressable>>,
     palette: Rc<RefCell<Palette>>,
     int: Rc<RefCell<Interrupt>>,
-    dma: Dma,
+    dma: Rc<RefCell<Dma>>,
     render_y: u8,
     bg_x: u8,
     bg_y: u8,
@@ -62,7 +62,7 @@ impl Ppu {
             oam,
             palette,
             int,
-            dma: Dma::new(bus),
+            dma: Rc::new(RefCell::new(Dma::new(bus))),
             render_y: 0,
             bg_x: 0,
             bg_y: 0,
@@ -238,9 +238,6 @@ impl Ppu {
             if self.stat & 0x08 != 0 {
                 self.int.borrow_mut().int(STAT_INT_FLAG);
             }
-
-            self.dma.scanline();
-            self.dma.oam();
         } else if self.render_y == VBLANK_HEIGHT_BEGIN as u8 {
             self.int.borrow_mut().int(VBLANK_INT_FLAG);
 
@@ -261,6 +258,10 @@ impl Ppu {
     pub fn get_lcdc(&self) -> u8 {
         self.lcdc
     }
+
+    pub fn ref_dma(&self) -> &Rc<RefCell<Dma>> {
+        &self.dma
+    }
 }
 
 impl Addressable for Ppu {
@@ -278,7 +279,8 @@ impl Addressable for Ppu {
                     | (self.lcdc >> 7)
                     | (if self.render_y == self.lyc { 4 } else { 0 }),
             ),
-            _ => self.dma.read(addr),
+            HDMA1_ADDRESS..HDMA5_ADDRESS | OAM_DMA_ADDRESS => self.dma.borrow_mut().read(addr),
+            _ => None,
         }
     }
 
@@ -291,7 +293,10 @@ impl Addressable for Ppu {
             WY_ADDRESS => self.wnd_y = value,
             LCDC_ADDRESS => self.lcdc = value,
             STAT_ADDRESS => self.stat = value,
-            _ => return self.dma.write(addr, value),
+            HDMA1_ADDRESS..HDMA5_ADDRESS | OAM_DMA_ADDRESS => {
+                return self.dma.borrow_mut().write(addr, value)
+            }
+            _ => return None,
         }
 
         Some(())
