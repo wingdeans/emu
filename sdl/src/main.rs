@@ -1,9 +1,15 @@
 use cpu::cpu::Cpu;
-use library::{clock::Clock, surface, system::System};
+use library::{apu::Sample, clock::Clock, surface, system::System};
 use std::{
     cell::RefCell,
     rc::{Rc, Weak},
 };
+
+struct Audio {}
+
+impl library::apu::Speaker for Audio {
+    fn play(&mut self, sample: Sample, volume: u8) {}
+}
 
 #[derive(Default)]
 struct CpuInterruptHandler {
@@ -110,6 +116,7 @@ fn main() -> Result<(), String> {
 
     let ctx = sdl2::init().map_err(|e| e.to_string())?;
     let video = ctx.video().map_err(|e| e.to_string())?;
+    let audio = ctx.audio().map_err(|e| e.to_string())?;
 
     let window = video
         .window("emu", surface::SCREEN_WIDTH * 4, surface::SCREEN_HEIGHT * 4)

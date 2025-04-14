@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 
 pub const MASTER_CONTROL_ADDR: u16 = 0xff26;
 pub const CHN_PAN_ADDR: u16 = 0xff25;
-pub const MASTER_VOL_ADDR: u16 = 0xff25;
+pub const MASTER_VOL_ADDR: u16 = 0xff24;
 pub const PULSE_CHN_SWEEP_OFF: u16 = 0;
 pub const PULSE_CHN_TIMER_OFF: u16 = 1;
 pub const PULSE_CHN_ENVELOPE_OFF: u16 = 2;
@@ -24,14 +24,8 @@ pub const WAVE_PATTERN_RAM_BEGIN: u16 = 0xff30;
 pub const WAVE_PATTERN_RAM_END: u16 = 0xff40;
 pub const WAVE_PATTERN_RAM_SIZE: usize = (WAVE_PATTERN_RAM_END - WAVE_PATTERN_RAM_BEGIN) as usize;
 
-pub enum Sample {
-    Flat,
-    Tone { frequency: f64 },
-    Square { frequency: f64, duty_cycle: f64 },
-}
-
-pub trait Speaker {
-    fn play(&mut self, sample: Sample, volume: u8);
+pub trait Generator {
+    fn generate(&mut self, frequency: u32, buffer: &mut [f32]);
 }
 
 #[derive(Default)]
@@ -46,46 +40,94 @@ struct PulseChannel<const BASE: u16> {
     period: u16,
     duty_cycle: u8,
     length_enable: bool,
-    timer: Option<Instant>,
+    timer: Duration,
     volume: u8,
     env_increase: bool,
     sweep_pace: u8,
-    acc1: Duration,
-    acc2: Duration,
 }
 
-impl<const BASE: u16> PulseChannel<BASE> {
-    pub fn update(&mut self, delta: Duration, speaker: &mut dyn Speaker) {
+impl<const BASE: u16> Generator for PulseChannel<BASE> {
+    fn generate(&mut self, frequency: u32, buffer: &mut [f32]) {
         if !self.enable {
             return;
         }
 
-        if let Some(instant) = self.timer {
-            if self.length_enable && instant.checked_duration_since(Instant::now()).is_some() {
-                self.enable = false;
-                self.timer = None;
+        let ratio = match self.duty_cycle & 3 {
+            0b00 => 0.125,
+            0b01 => 0.25,
+            0b10 => 0.50,
+            0b11 => 0.75,
+        };
+
+        let atom = Duration::from_secs_f64(1.0 / frequency as f64);
+        let pace = Duration::from_secs_f64(self.pace as f64 / 128.0);
+
+        let sweep_pace = if self.sweep_pace == 0 {
+            None
+        } else {
+            Some(Duration::from_secs_f64((self.sweep_pace as f64) / 64.0))
+        };
+
+        let period = if (self.period & (1 << 10)) != 0 {
+            self.period | 0xf800
+        } else {
+            self.period
+        } as i16;
+
+        let period = Duration::from_secs_f64(131072.0 / (2048.0 - (period as f64)));
+
+        let mut duration = atom * buffer.len();
+        let mut acc0 = 0;
+        let mut acc1 = 0;
+
+        let mut idx = 0;
+
+        while duration > period {
+            let items = period / atom;
+            let high = items * ratio;
+
+            for i in 0..high {
+                buffer[idx + i] = (self.volume as f32) / (0b1111 as f32);
             }
-        }
 
-        {
-            let mut delta = delta.clone() + self.acc1;
-            let hz = Duration::from_secs_f64((self.pace as f64) / 128.0);
+            idx += items;
+            duration -= period;
 
-            while delta > hz {
-                delta -= hz;
-                self.iter(speaker);
+            if self.length_enable {
+                if self.timer < period {
+                    self.enable = false;
+                    return;
+                } else {
+                    self.timer -= period;
+                }
             }
 
-            self.acc1 = delta;
-        }
+            acc0 += period;
+            acc1 += period;
 
-        if self.sweep_pace != 0 {
-            let mut delta = delta.clone() + self.acc2;
-            let hz = Duration::from_secs_f64((self.sweep_pace as f64) / 64.0);
+            if acc0 > pace {
+                let delta = period / 2u16.pow(self.step as u32);
 
-            while delta > hz {
-                delta -= hz;
+                period = if self.additive {
+                    period + delta
+                } else {
+                    period - delta
+                };
 
+                if period > 0x7ff {
+                    self.enable = false;
+                }
+
+                let period = if (period & (1 << 10)) != 0 {
+                    period | 0xf800
+                } else {
+                    period
+                } as i16;
+
+                acc0 -= pace;
+            }
+
+            if acc1 > sweep_pace {
                 if self.env_increase {
                     self.volume += 1;
                     if self.volume > 0xf {
@@ -97,46 +139,10 @@ impl<const BASE: u16> PulseChannel<BASE> {
                         self.volume = 0xf;
                     }
                 }
+
+                acc1 -= sweep_pace;
             }
-
-            self.acc2 = delta;
         }
-    }
-
-    fn iter(&mut self, speaker: &mut dyn Speaker) {
-        let delta = self.period / 2u16.pow(self.step as u32);
-
-        self.period = if self.additive {
-            self.period + delta
-        } else {
-            self.period - delta
-        };
-
-        if self.period > 0x7ff {
-            self.enable = false;
-        }
-
-        let period = if (self.period & (1 << 10)) != 0 {
-            self.period | 0xf800
-        } else {
-            self.period
-        } as i16;
-
-        let frequency = 131072.0 / (2048.0 - (period as f64));
-
-        speaker.play(
-            Sample::Square {
-                frequency,
-                duty_cycle: match self.duty_cycle & 3 {
-                    0b00 => 0.125,
-                    0b01 => 0.25,
-                    0b10 => 0.50,
-                    0b11 => 0.75,
-                    _ => unreachable!(),
-                },
-            },
-            self.volume,
-        );
     }
 }
 
@@ -157,10 +163,7 @@ impl<const BASE: u16> Addressable for PulseChannel<BASE> {
             }
             PULSE_CHN_TIMER_OFF => {
                 self.duty_cycle = value >> 6;
-                self.timer.replace(
-                    Instant::now()
-                        + Duration::from_secs_f64((64.0 - (value & 0x3f) as f64) / 256.0),
-                );
+                self.timer = Duration::from_secs_f64((64.0 - (value & 0x3f) as f64) / 256.0);
             }
             PULSE_CHN_ENVELOPE_OFF => {
                 self.volume = value >> 4;
@@ -194,52 +197,65 @@ impl<const BASE: u16> Addressable for PulseChannel<BASE> {
 
 #[derive(Default)]
 struct NoiseChannel {
-    enable: bool,
+    pub enable: bool,
+    pub left: bool,
+    pub right: bool,
     length_enable: bool,
-    timer: Option<Instant>,
+    timer: Duration,
     volume: u8,
-    left: bool,
-    right: bool,
     env_increase: bool,
     sweep_pace: u8,
     lfsr_short: bool,
     lfsr: u16,
     period: Duration,
-    acc1: Duration,
-    acc2: Duration,
 }
 
-impl NoiseChannel {
-    pub fn update(&mut self, delta: Duration, speaker: &mut dyn Speaker) {
+impl Generator for NoiseChannel {
+    fn generate(&mut self, frequency: u32, buffer: &mut [f32]) {
         if !self.enable {
             return;
         }
 
-        if let Some(instant) = self.timer {
-            if self.length_enable && instant.checked_duration_since(Instant::now()).is_some() {
-                self.enable = false;
-                self.timer = None;
+        let atom = Duration::from_secs_f64(1.0 / frequency as f64);
+
+        let sweep_pace = if self.sweep_pace == 0 {
+            None
+        } else {
+            Some(Duration::from_secs_f64((self.sweep_pace as f64) / 64.0))
+        };
+
+        let mut acc0 = 0;
+        let mut acc1 = 0;
+
+        for i in 0..buffer.len() {
+            buffer[i] = (self.lfsr & 1) * self.volume;
+
+            if self.length_enable {
+                if self.timer < atom {
+                    self.enable = false;
+                    return;
+                } else {
+                    self.timer -= atom;
+                }
             }
-        }
 
-        {
-            let mut delta = delta.clone() + self.acc1;
+            acc0 += atom;
+            acc1 += atom;
 
-            while delta > self.period {
-                delta -= self.period;
-                self.iter(speaker);
+            if acc0 > self.period {
+                self.lfsr =
+                    (self.lfsr & !(1 << 15)) | (((self.lfsr & 1) ^ ((self.lfsr >> 1) & 1)) << 15);
+
+                if self.lfsr_short {
+                    self.lfsr = (self.lfsr & !0x80) | ((self.lfsr >> 8) & 0x80);
+                }
+
+                self.lfsr >>= 1;
+
+                acc0 -= self.period;
             }
 
-            self.acc1 = delta;
-        }
-
-        if self.sweep_pace != 0 {
-            let mut delta = delta.clone() + self.acc2;
-            let hz = Duration::from_secs_f64((self.sweep_pace as f64) / 64.0);
-
-            while delta > hz {
-                delta -= hz;
-
+            if acc1 > sweep_pace {
                 if self.env_increase {
                     self.volume += 1;
                     if self.volume > 0xf {
@@ -251,23 +267,9 @@ impl NoiseChannel {
                         self.volume = 0xf;
                     }
                 }
+
+                acc1 -= sweep_pace;
             }
-
-            self.acc2 = delta;
-        }
-    }
-
-    fn iter(&mut self, speaker: &mut dyn Speaker) {
-        self.lfsr = (self.lfsr & !(1 << 15)) | (((self.lfsr & 1) ^ ((self.lfsr >> 1) & 1)) << 15);
-
-        if self.lfsr_short {
-            self.lfsr = (self.lfsr & !0x80) | ((self.lfsr >> 8) & 0x80);
-        }
-
-        self.lfsr >>= 1;
-
-        if (self.lfsr & 1) != 0 {
-            speaker.play(Sample::Flat, self.volume);
         }
     }
 }
@@ -283,10 +285,7 @@ impl Addressable for NoiseChannel {
     fn write(&mut self, addr: u16, value: u8) -> Option<()> {
         match addr {
             NOISE_CHN_TIMER_ADDR => {
-                self.timer.replace(
-                    Instant::now()
-                        + Duration::from_secs_f64((64.0 - (value & 0x3f) as f64) / 256.0),
-                );
+                self.timer = Duration::from_secs_f64((64.0 - (value & 0x3f) as f64) / 256.0);
             }
             NOISE_CHN_ENVELOPE_ADDR => {
                 self.volume = value >> 4;
@@ -326,6 +325,7 @@ impl Addressable for NoiseChannel {
     }
 }
 
+#[derive(Default)]
 struct WaveChannel {
     pub enable: bool,
     pub left: bool,
@@ -335,49 +335,17 @@ struct WaveChannel {
     output_level: u8,
     period_set: u16,
     period: u16,
-    idx: usize,
-    lo: bool,
     acc: Duration,
     ram: [u8; WAVE_PATTERN_RAM_SIZE],
 }
 
-impl WaveChannel {
-    pub fn update(&mut self, delta: Duration, speaker: &mut dyn Speaker) {
+impl Generator for WaveChannel {
+    fn generate(&mut self, frequency: u32, buffer: &mut [f32]) {
         if !self.enable {
             return;
         }
 
-        if let Some(instant) = self.timer {
-            if self.length_enable && instant.checked_duration_since(Instant::now()).is_some() {
-                self.enable = false;
-                self.timer = None;
-            }
-        }
-
-        // when do we iterate?
-    }
-
-    fn iter(&mut self, speaker: &mut dyn Speaker) {
-        let value = self.ram[self.idx];
-        let sample = if self.lo { value & 0x0f } else { value >> 4 };
-
-        let sample = match self.output_level & 3 {
-            0b00 => 0,
-            0b01 => sample,
-            0b10 => sample >> 1,
-            0b11 => sample >> 2,
-            _ => unreachable!(),
-        };
-
-        if self.lo {
-            self.idx += 1;
-
-            if self.idx >= WAVE_PATTERN_RAM_SIZE {
-                self.idx = 0;
-            }
-        }
-
-        self.lo = false;
+        let atom = Duration::from_secs_f64(1.0 / frequency as f64);
 
         let period = if (self.period & (1 << 10)) != 0 {
             self.period | 0xf800
@@ -385,8 +353,39 @@ impl WaveChannel {
             self.period
         } as i16;
 
-        let frequency = 65536.0 / (2048.0 - (period as f64));
-        speaker.play(Sample::Tone { frequency }, sample);
+        let period = Duration::from_secs_f64(65536.0 / (2048.0 - (period as f64)));
+
+        let mut duration = atom * buffer.len();
+        let mut idx = 0;
+
+        while duration > period {
+            for i in 0..32 {
+                let value = self.ram[i / 2];
+                let sample = if self.lo { value & 0x0f } else { value >> 4 };
+
+                let sample = match self.output_level & 3 {
+                    0b00 => 0,
+                    0b01 => sample,
+                    0b10 => sample >> 1,
+                    0b11 => sample >> 2,
+                    _ => unreachable!(),
+                };
+
+                buffer[idx + i] = sample;
+            }
+
+            idx += 32;
+            duration -= period;
+
+            if self.length_enable {
+                if self.timer < period {
+                    self.enable = false;
+                    return;
+                } else {
+                    self.timer -= period;
+                }
+            }
+        }
     }
 }
 
@@ -448,6 +447,20 @@ pub struct Apu {
 }
 
 impl Apu {
+    pub fn new(speaker: Rc<RefCell<dyn Speaker>>) -> Self {
+        Self {
+            enable: false,
+            chn_1: Default::default(),
+            chn_2: Default::default(),
+            chn_3: Default::default(),
+            chn_4: Default::default(),
+            left_volume: 1,
+            right_volume: 1,
+            then: Instant::now(),
+            speaker,
+        }
+    }
+
     pub fn update(&mut self) {
         let now = Instant::now();
         let delta = now - self.then;
