@@ -59,8 +59,11 @@ impl Addressable for Memory {
     }
 
     fn write(&mut self, addr: u16, value: u8) -> Option<()> {
-        if self.access.writable() && (addr as usize) < self.data.len() {
-            self.data[addr as usize] = value;
+        if (addr as usize) < self.data.len() {
+            if self.access.writable() {
+                self.data[addr as usize] = value;
+            }
+
             Some(())
         } else {
             None

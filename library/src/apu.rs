@@ -341,7 +341,6 @@ pub struct WaveChannel {
     output_level: u8,
     period_set: u16,
     period: u16,
-    acc: Duration,
     ram: [u8; WAVE_PATTERN_RAM_SIZE],
 }
 

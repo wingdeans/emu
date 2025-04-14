@@ -28,6 +28,9 @@ pub const HRAM_SIZE: usize = (HRAM_END - HRAM_BEGIN) as usize;
 pub const OAM_BEGIN: u16 = 0xfe00;
 pub const OAM_END: u16 = 0xfea0;
 pub const OAM_SIZE: usize = (OAM_END - OAM_BEGIN) as usize;
+pub const ILLEGAL_BEGIN: u16 = 0xfea0;
+pub const ILLEGAL_END: u16 = 0xff00;
+pub const ILLEGAL_SIZE: usize = (ILLEGAL_END - ILLEGAL_BEGIN) as usize;
 
 pub struct System {
     bus: Rc<RefCell<Bus>>,
@@ -118,6 +121,12 @@ impl System {
 
         let apu = Rc::new(RefCell::new(Apu::default()));
 
+        let illegal = map_to(
+            Rc::new(RefCell::new(Memory::new(ILLEGAL_SIZE, Access::ReadWrite))),
+            ILLEGAL_BEGIN..ILLEGAL_END,
+            ILLEGAL_SIZE as u16,
+        );
+
         {
             let mut b = bus.borrow_mut();
             b.add(cartridge);
@@ -137,6 +146,7 @@ impl System {
             b.add(oam);
             b.add(Rc::new(RefCell::new(Serial::default())));
             b.add(Rc::clone(&apu) as Rc<RefCell<dyn Addressable>>);
+            b.add(illegal)
         }
 
         Self {
