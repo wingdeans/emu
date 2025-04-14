@@ -1,4 +1,5 @@
 use crate::{
+    apu::Apu,
     bus::{bank, map_to, Addressable, Bus},
     cartridge::{Cartridge, CGB_FLAG_ADDRESS},
     input::{Input, InputHandler},
@@ -31,6 +32,7 @@ pub const OAM_SIZE: usize = (OAM_END - OAM_BEGIN) as usize;
 pub struct System {
     bus: Rc<RefCell<Bus>>,
     ppu: Rc<RefCell<Ppu>>,
+    apu: Rc<RefCell<Apu>>,
     io: Rc<RefCell<IO>>,
     palette: Rc<RefCell<Palette>>,
 }
@@ -114,6 +116,8 @@ impl System {
             Rc::clone(&int),
         )));
 
+        let apu = Rc::new(RefCell::new(Apu::default()));
+
         {
             let mut b = bus.borrow_mut();
             b.add(cartridge);
@@ -131,12 +135,14 @@ impl System {
             b.add(Rc::new(RefCell::new(Input::new(input_handler))));
             b.add(int);
             b.add(oam);
-            b.add(Rc::new(RefCell::new(Serial::default())))
+            b.add(Rc::new(RefCell::new(Serial::default())));
+            b.add(Rc::clone(&apu) as Rc<RefCell<dyn Addressable>>);
         }
 
         Self {
             bus,
             ppu,
+            apu,
             io,
             palette,
         }
@@ -148,6 +154,10 @@ impl System {
 
     pub fn ppu_ref(&self) -> &Rc<RefCell<Ppu>> {
         &self.ppu
+    }
+
+    pub fn apu_ref(&self) -> &Rc<RefCell<Apu>> {
+        &self.apu
     }
 
     pub fn io_ref(&self) -> &Rc<RefCell<IO>> {

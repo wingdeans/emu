@@ -1,14 +1,22 @@
 use cpu::cpu::Cpu;
-use library::{apu::Sample, clock::Clock, surface, system::System};
+use library::{clock::Clock, surface, system::System};
+use std::sync::{Arc, Mutex};
 use std::{
     cell::RefCell,
     rc::{Rc, Weak},
 };
 
-struct Audio {}
+struct Driver {
+    pub frequency: u32,
+    pub generator: Arc<Mutex<dyn library::apu::Generator + Send>>,
+}
 
-impl library::apu::Speaker for Audio {
-    fn play(&mut self, sample: Sample, volume: u8) {}
+impl sdl2::audio::AudioCallback for Driver {
+    type Channel = f32;
+
+    fn callback(&mut self, out: &mut [f32]) {
+        self.generator.lock().unwrap().generate(self.frequency, out);
+    }
 }
 
 #[derive(Default)]
@@ -160,6 +168,45 @@ fn main() -> Result<(), String> {
             Rc::clone(&input) as Rc<RefCell<dyn library::input::InputHandler>>,
             Rc::clone(&int) as Rc<RefCell<dyn library::int::InterruptHandler>>,
         )));
+
+        let desired_spec = sdl2::audio::AudioSpecDesired {
+            freq: Some(44100),
+            channels: Some(1),
+            samples: None,
+        };
+
+        let chn_1 = audio
+            .open_playback(None, &desired_spec, |spec| Driver {
+                frequency: spec.freq as u32,
+                generator: system.borrow().apu_ref().borrow().chn_1.clone(),
+            })
+            .map_err(|e| e.to_string())?;
+
+        let chn_2 = audio
+            .open_playback(None, &desired_spec, |spec| Driver {
+                frequency: spec.freq as u32,
+                generator: system.borrow().apu_ref().borrow().chn_2.clone(),
+            })
+            .map_err(|e| e.to_string())?;
+
+        let chn_3 = audio
+            .open_playback(None, &desired_spec, |spec| Driver {
+                frequency: spec.freq as u32,
+                generator: system.borrow().apu_ref().borrow().chn_3.clone(),
+            })
+            .map_err(|e| e.to_string())?;
+
+        let chn_4 = audio
+            .open_playback(None, &desired_spec, |spec| Driver {
+                frequency: spec.freq as u32,
+                generator: system.borrow().apu_ref().borrow().chn_4.clone(),
+            })
+            .map_err(|e| e.to_string())?;
+
+        chn_1.resume();
+        chn_2.resume();
+        chn_3.resume();
+        chn_4.resume();
 
         let cpu = Rc::new(RefCell::new(Cpu::new(
             Rc::clone(&system) as Rc<RefCell<dyn library::bus::Addressable>>
