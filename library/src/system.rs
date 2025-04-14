@@ -103,8 +103,12 @@ impl System {
 
         let cgb_flag = cartridge.borrow_mut().read(CGB_FLAG_ADDRESS).unwrap();
 
-        let io = Rc::new(RefCell::new(IO::new(Rc::clone(&wram), vram_bank)));
         let int = Rc::new(RefCell::new(Interrupt::new(interrupt_handler)));
+        let io = Rc::new(RefCell::new(IO::new(
+            Rc::clone(&int),
+            Rc::clone(&wram),
+            vram_bank,
+        )));
         let palette = Rc::new(RefCell::new(Palette::new(
             cgb_flag != 0x80 && cgb_flag != 0xc0,
         )));
@@ -146,7 +150,7 @@ impl System {
             b.add(oam);
             b.add(Rc::new(RefCell::new(Serial::default())));
             b.add(Rc::clone(&apu) as Rc<RefCell<dyn Addressable>>);
-            b.add(illegal)
+            b.add(illegal);
         }
 
         Self {

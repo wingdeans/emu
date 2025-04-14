@@ -27,11 +27,12 @@ impl Clock {
     }
 
     pub fn clock(&mut self, m_cycles: u32) -> bool {
+        let dma = self.ppu.borrow().ref_dma().clone();
+        dma.borrow_mut().oam();
+
         if self.cycles % CYCLES_PER_SCANLINE > (self.cycles + m_cycles) % CYCLES_PER_SCANLINE {
             self.ppu.borrow_mut().scanline();
 
-            let dma = self.ppu.borrow().ref_dma().clone();
-            dma.borrow_mut().oam();
             dma.borrow_mut().scanline();
         }
 

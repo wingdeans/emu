@@ -1,4 +1,7 @@
-use crate::bus::{Addressable, Bank};
+use crate::{
+    bus::{Addressable, Bank},
+    int::{Interrupt, TIMA_INT_FLAG},
+};
 use std::{cell::RefCell, rc::Rc};
 
 pub const WRAM_BANK_SELECT: u16 = 0xff70;
@@ -9,6 +12,7 @@ pub const TAC_ADDRESS: u16 = 0xff07;
 pub const DIV_ADDRESS: u16 = 0xff04;
 
 pub struct IO {
+    int: Rc<RefCell<Interrupt>>,
     wram: Rc<RefCell<Bank>>,
     vram: Rc<RefCell<Bank>>,
     tima: u8,
@@ -20,8 +24,13 @@ pub struct IO {
 }
 
 impl IO {
-    pub fn new(wram: Rc<RefCell<Bank>>, vram: Rc<RefCell<Bank>>) -> Self {
+    pub fn new(
+        int: Rc<RefCell<Interrupt>>,
+        wram: Rc<RefCell<Bank>>,
+        vram: Rc<RefCell<Bank>>,
+    ) -> Self {
         Self {
+            int,
             wram,
             vram,
             tima: 0,
@@ -53,6 +62,7 @@ impl IO {
 
                 if overflow {
                     self.tima = self.tma;
+                    self.int.borrow_mut().int(TIMA_INT_FLAG);
                 } else {
                     self.tima = value;
                 }

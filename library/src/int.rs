@@ -6,6 +6,7 @@ pub const IF_ADDRESS: u16 = 0xff0f;
 
 pub const VBLANK_INT_FLAG: u8 = 1;
 pub const STAT_INT_FLAG: u8 = 2;
+pub const TIMA_INT_FLAG: u8 = 3;
 
 pub trait InterruptHandler {
     fn ime(&self) -> bool;
