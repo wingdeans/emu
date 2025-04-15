@@ -22,6 +22,8 @@ pub const WRAM_X_BEGIN: u16 = 0xd000;
 pub const WRAM_X_END: u16 = 0xe000;
 pub const WRAM_BANK_SIZE: usize = (WRAM_X_END - WRAM_X_BEGIN) as usize;
 pub const WRAM_BANK_COUNT: u32 = 8;
+pub const ECHO_RAM_BEGIN: u16 = 0xe000;
+pub const ECHO_RAM_END: u16 = 0xfe00;
 pub const HRAM_BEGIN: u16 = 0xff7f; // Should be 0xff80, used as workaround
 pub const HRAM_END: u16 = 0xffff;
 pub const HRAM_SIZE: usize = (HRAM_END - HRAM_BEGIN) as usize;
@@ -185,10 +187,16 @@ impl System {
 
 impl Addressable for System {
     fn read(&mut self, addr: u16) -> Option<u8> {
-        self.bus.borrow_mut().read(addr)
+        match addr {
+            ECHO_RAM_BEGIN..ECHO_RAM_END => self.read(addr - ECHO_RAM_BEGIN + 0xc000),
+            _ => self.bus.borrow_mut().read(addr),
+        }
     }
 
     fn write(&mut self, addr: u16, value: u8) -> Option<()> {
-        self.bus.borrow_mut().write(addr, value)
+        match addr {
+            ECHO_RAM_BEGIN..ECHO_RAM_END => self.write(addr - ECHO_RAM_BEGIN + 0xc000, value),
+            _ => self.bus.borrow_mut().write(addr, value),
+        }
     }
 }

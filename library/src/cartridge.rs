@@ -1,7 +1,7 @@
 use crate::{
     bus::Addressable,
     error::{Error, Result},
-    mbc::{mbc5::Mbc5, mbc_none::MbcNone},
+    mbc::{mbc1::Mbc1, mbc5::Mbc5, mbc_none::MbcNone},
     rom,
 };
 use std::{cell::RefCell, fs::File, io::prelude::*, path::Path, ptr, rc::Rc};
@@ -17,6 +17,7 @@ pub const CGB_FLAG_ADDRESS: u16 = 0x0143;
 
 pub enum Mapper {
     NoMbc,
+    Mbc1,
     Mbc5,
 }
 
@@ -99,6 +100,7 @@ impl Header {
     pub fn ram_bank_count(&self) -> Result<u32> {
         match self.ram_size {
             0 => Ok(0),
+            1 => Ok(1), // Unofficial
             2 => Ok(1),
             3 => Ok(4),
             4 => Ok(16),
@@ -115,6 +117,7 @@ impl Header {
 
         match self.cartridge_type {
             0 => Ok(NoMbc),
+            0x01 | 0x02 | 0x03 => Ok(Mbc1),
             0x1a | 0x1b | 0x1c | 0x1d | 0x1e => Ok(Mbc5),
             _ => Err(Error::UnrecognizedCartridgeHeaderField(format!(
                 "unrecognized cartridge type: 0x{:02x}",
@@ -138,6 +141,9 @@ impl Cartridge {
         let mapper = match header.mapper()? {
             Mapper::NoMbc => {
                 Rc::new(RefCell::new(MbcNone::new(&header, rom)?)) as Rc<RefCell<dyn Addressable>>
+            }
+            Mapper::Mbc1 => {
+                Rc::new(RefCell::new(Mbc1::new(&header, rom)?)) as Rc<RefCell<dyn Addressable>>
             }
             Mapper::Mbc5 => {
                 Rc::new(RefCell::new(Mbc5::new(&header, rom)?)) as Rc<RefCell<dyn Addressable>>

@@ -88,7 +88,7 @@ pub fn bank(
 
 impl Bank {
     pub fn select(&mut self, bank: u32) {
-        self.index = bank.clamp(0, self.banks.len() as u32);
+        self.index = bank.clamp(0, self.banks.len() as u32 - 1);
     }
 
     pub fn selected(&self) -> u32 {
@@ -128,11 +128,13 @@ impl Addressable for Bus {
         self.components
             .iter()
             .find_map(|comp| comp.borrow_mut().read(addr))
+            .or(Some(0)) // WARN HACKY WORKAROUND
     }
 
     fn write(&mut self, addr: u16, value: u8) -> Option<()> {
         self.components
             .iter()
             .find_map(|comp| comp.borrow_mut().write(addr, value))
+            .or(Some(())) // WARN HACKY WORKAROUND
     }
 }

@@ -418,8 +418,8 @@ impl Addressable for WaveChannel {
                 self.timer = Duration::from_secs_f64((256.0 - (value & 0x3f) as f64) / 256.0);
             }
             WAVE_CHN_OUTPUT_ADDR => self.output_level = (value >> 5) & 3,
-            PULSE_CHN_PER_LO_OFF => self.period_set = (self.period_set & 0xff00) | (value as u16),
-            PULSE_CHN_PER_HI_OFF => {
+            WAVE_CHN_PER_LO_ADDR => self.period_set = (self.period_set & 0xff00) | (value as u16),
+            WAVE_CHN_PER_HI_ADDR => {
                 self.period_set = (self.period_set & 0x00ff) | ((value & 7) as u16);
                 self.length_enable = (value & 0x40) != 0;
 
