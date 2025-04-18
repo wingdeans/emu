@@ -189,14 +189,14 @@ impl Addressable for System {
     fn read(&mut self, addr: u16) -> Option<u8> {
         match addr {
             ECHO_RAM_BEGIN..ECHO_RAM_END => self.read(addr - ECHO_RAM_BEGIN + 0xc000),
-            _ => self.bus.borrow_mut().read(addr),
+            _ => self.bus.borrow_mut().read(addr).or(Some(0)),
         }
     }
 
     fn write(&mut self, addr: u16, value: u8) -> Option<()> {
         match addr {
             ECHO_RAM_BEGIN..ECHO_RAM_END => self.write(addr - ECHO_RAM_BEGIN + 0xc000, value),
-            _ => self.bus.borrow_mut().write(addr, value),
+            _ => self.bus.borrow_mut().write(addr, value).or(Some(())),
         }
     }
 }
