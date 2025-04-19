@@ -217,7 +217,7 @@ impl Ppu {
 
         if self.render_y < VBLANK_HEIGHT_BEGIN as u8 {
             if self.stat & 0x20 != 0 {
-                self.int.borrow_mut().int(STAT_INT_FLAG);
+                self.int.borrow_mut().set(STAT_INT_FLAG);
             }
 
             let mut surface = self.surface.borrow_mut();
@@ -233,13 +233,13 @@ impl Ppu {
             }
 
             if self.stat & 0x08 != 0 {
-                self.int.borrow_mut().int(STAT_INT_FLAG);
+                self.int.borrow_mut().set(STAT_INT_FLAG);
             }
         } else if self.render_y == VBLANK_HEIGHT_BEGIN as u8 {
-            self.int.borrow_mut().int(VBLANK_INT_FLAG);
+            self.int.borrow_mut().set(VBLANK_INT_FLAG);
 
             if self.stat & 0x10 != 0 {
-                self.int.borrow_mut().int(STAT_INT_FLAG);
+                self.int.borrow_mut().set(STAT_INT_FLAG);
             }
 
             self.surface.borrow_mut().flush();
@@ -248,7 +248,7 @@ impl Ppu {
         self.render_y = (self.render_y + 1) % (MAX_SCANLINE_HEIGHT as u8 + 1);
 
         if self.lyc == self.render_y && self.stat & 0x40 != 0 {
-            self.int.borrow_mut().int(STAT_INT_FLAG);
+            self.int.borrow_mut().set(STAT_INT_FLAG);
         }
     }
 

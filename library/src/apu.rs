@@ -304,7 +304,14 @@ impl Addressable for NoiseChannel {
             }
             NOISE_CHN_FREQ_ADDR => {
                 let shift = value >> 4;
-                let divider = value & 7;
+                let divider = {
+                    let div = value & 7;
+                    if div == 0 {
+                        0.5
+                    } else {
+                        div as f64
+                    }
+                };
 
                 self.lfsr_short = (value & 4) != 0;
 

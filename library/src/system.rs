@@ -24,7 +24,7 @@ pub const WRAM_BANK_SIZE: usize = (WRAM_X_END - WRAM_X_BEGIN) as usize;
 pub const WRAM_BANK_COUNT: u32 = 8;
 pub const ECHO_RAM_BEGIN: u16 = 0xe000;
 pub const ECHO_RAM_END: u16 = 0xfe00;
-pub const HRAM_BEGIN: u16 = 0xff7f; // Should be 0xff80, used as workaround
+pub const HRAM_BEGIN: u16 = 0xff80;
 pub const HRAM_END: u16 = 0xffff;
 pub const HRAM_SIZE: usize = (HRAM_END - HRAM_BEGIN) as usize;
 pub const OAM_BEGIN: u16 = 0xfe00;
@@ -39,6 +39,7 @@ pub struct System {
     ppu: Rc<RefCell<Ppu>>,
     apu: Rc<RefCell<Apu>>,
     io: Rc<RefCell<IO>>,
+    int: Rc<RefCell<Interrupt>>,
     palette: Rc<RefCell<Palette>>,
 }
 
@@ -148,7 +149,7 @@ impl System {
             b.add(Rc::clone(&palette) as Rc<RefCell<dyn Addressable>>);
             b.add(Rc::clone(&ppu) as Rc<RefCell<dyn Addressable>>);
             b.add(Rc::new(RefCell::new(Input::new(input_handler))));
-            b.add(int);
+            b.add(Rc::clone(&int) as Rc<RefCell<dyn Addressable>>);
             b.add(oam);
             b.add(Rc::new(RefCell::new(Serial::default())));
             b.add(Rc::clone(&apu) as Rc<RefCell<dyn Addressable>>);
@@ -159,6 +160,7 @@ impl System {
             bus,
             ppu,
             apu,
+            int,
             io,
             palette,
         }
@@ -178,6 +180,10 @@ impl System {
 
     pub fn io_ref(&self) -> &Rc<RefCell<IO>> {
         &self.io
+    }
+
+    pub fn int_ref(&self) -> &Rc<RefCell<Interrupt>> {
+        &self.int
     }
 
     pub fn palette_ref(&self) -> &Rc<RefCell<Palette>> {

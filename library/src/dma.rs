@@ -76,9 +76,9 @@ impl Dma {
                 bus.read(((addr as u16) << 8) | i)
                     .map(|value| bus.write(0xfe00 | i, value));
             }
-        }
 
-        self.oam_value = None;
+            self.oam_value = None;
+        }
     }
 }
 

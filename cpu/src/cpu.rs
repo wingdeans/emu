@@ -523,7 +523,7 @@ impl Cpu {
     fn stop(&mut self, _ins: u8) -> Result<u32> {
         //self.pc = self.pc.wrapping_add(1); // WARN Possible gbit bug
         self.state = State::Stopped;
-        Ok(0)
+        Ok(1) // Sort of inaccurate, but clocks must advance
     }
 
     fn ld_r8_r8(&mut self, ins: u8) -> Result<u32> {
@@ -1289,7 +1289,7 @@ impl Cpu {
 
     fn halt(&mut self, _ins: u8) -> Result<u32> {
         self.state = State::Halted;
-        Ok(0)
+        Ok(1) // Sort of inaccurate, but clocks must advance
     }
 
     fn decode(ins: u8) -> Result<fn(&mut Self, u8) -> Result<u32>> {
@@ -1456,7 +1456,7 @@ impl Cpu {
 
     pub fn execute(&mut self) -> Result<u32> {
         if self.state != State::Running {
-            return Ok(0);
+            return Ok(1); // Sort of inaccurate, but clocks must advance
         }
 
         let mut ins = self.read(self.pc)?;
@@ -1481,6 +1481,7 @@ impl Cpu {
         self.ime = false;
         self.pc = addr;
         self.cycle_queue = 5;
+        self.state = State::Running;
         self.stack_push(self.pc)
     }
 

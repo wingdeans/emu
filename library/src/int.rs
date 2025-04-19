@@ -14,9 +14,9 @@ pub trait InterruptHandler {
 }
 
 pub struct Interrupt {
-    enable: u8,
-    flag: u8,
-    handler: Rc<RefCell<dyn InterruptHandler>>,
+    pub enable: u8,
+    pub flag: u8,
+    pub handler: Rc<RefCell<dyn InterruptHandler>>,
 }
 
 impl Interrupt {
@@ -28,18 +28,8 @@ impl Interrupt {
         }
     }
 
-    pub fn int(&mut self, value: u8) {
-        self.flag |= value;
-        let mut mask = self.enable & self.flag;
-
-        if mask != 0 && self.handler.borrow().ime() {
-            for i in 0..5 {
-                if mask & (1 << i) != 0 {
-                    mask ^= 1 << i;
-                    self.handler.borrow_mut().handle(0x40 + i * 8);
-                }
-            }
-        }
+    pub fn set(&mut self, mask: u8) {
+        self.flag |= mask;
     }
 }
 
@@ -55,10 +45,7 @@ impl Addressable for Interrupt {
     fn write(&mut self, addr: u16, value: u8) -> Option<()> {
         match addr {
             IE_ADDRESS => self.enable = value,
-            IF_ADDRESS => {
-                self.flag = value;
-                self.int(0);
-            }
+            IF_ADDRESS => self.flag = value,
             _ => return None,
         }
 

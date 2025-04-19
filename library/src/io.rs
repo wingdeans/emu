@@ -62,7 +62,7 @@ impl IO {
 
                 if overflow {
                     self.tima = self.tma;
-                    self.int.borrow_mut().int(TIMA_INT_FLAG);
+                    self.int.borrow_mut().set(TIMA_INT_FLAG);
                 } else {
                     self.tima = value;
                 }
