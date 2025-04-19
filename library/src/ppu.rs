@@ -3,7 +3,7 @@ use crate::{
     dma::{Dma, HDMA1_ADDRESS, HDMA5_ADDRESS, OAM_DMA_ADDRESS},
     int::{Interrupt, STAT_INT_FLAG, VBLANK_INT_FLAG},
     palette::Palette,
-    surface::{Surface, SCREEN_HEIGHT, SCREEN_WIDTH},
+    surface::{Surface, SCREEN_WIDTH},
     system::OAM_BEGIN,
 };
 use std::{cell::RefCell, rc::Rc};
@@ -82,10 +82,10 @@ impl Ppu {
         idx: u8,
         obj: bool,
         x: i16,
-        y: u8,
+        y: i16,
         attr: u8,
     ) {
-        if obj && (self.lcdc & 1) == 0 || y > self.render_y {
+        if obj && (self.lcdc & 1) == 0 || y > self.render_y as i16 || y <= -(TILE_SIZE as i16) {
             return;
         }
 
@@ -99,13 +99,16 @@ impl Ppu {
 
         let addr = base
             + (TILE_BYTES as u16) * (idx as u16)
-            + ((self.render_y - y) as u16) * (TILE_BYTES / TILE_SIZE as usize) as u16;
+            + ((self.render_y as i16 - y) as u16) * (TILE_BYTES / TILE_SIZE as usize) as u16;
 
         let lo = vram.read(addr).unwrap();
         let hi = vram.read(addr + 1).unwrap();
 
         for i in 0..TILE_SIZE as u8 {
-            if obj && ((x + i as i16) < 0 || (x + i as i16) >= SCREEN_WIDTH as i16) {
+            if obj && ((x + i as i16) < 0 || (x + i as i16) >= SCREEN_WIDTH as i16)
+                || (x + i as i16) < 0
+                || (x + i as i16) >= SCREEN_WIDTH as i16
+            {
                 continue;
             }
 
@@ -125,7 +128,7 @@ impl Ppu {
             };
 
             surface.set_pixel(
-                (x + i as i16) as u32 % SCREEN_WIDTH,
+                (x + i as i16) as u32,
                 self.render_y as u32,
                 color.0,
                 color.1,
@@ -170,7 +173,7 @@ impl Ppu {
                 idx
             };
 
-            self.blit_tile(surface, vram, palette, tile, true, x, y as u8, attr);
+            self.blit_tile(surface, vram, palette, tile, true, x, y as i16, attr);
         }
     }
 
@@ -178,36 +181,30 @@ impl Ppu {
         &self,
         surface: &mut dyn Surface,
         vram0: &mut dyn Addressable,
-        vram1: &mut dyn Addressable,
+        _vram1: &mut dyn Addressable,
         palette: &Palette,
     ) {
-        let top = self.bg_y;
-        let bottom = self.bg_y.wrapping_add(SCREEN_HEIGHT as u8);
-
-        if self.render_y < top || self.render_y >= bottom {
-            return;
-        }
-
-        let y = self.render_y.wrapping_sub(top);
+        let y = self.render_y.wrapping_add(self.bg_y);
         let tile_y = y / TILE_SIZE as u8;
 
-        for tile_x in 0..(SCREEN_WIDTH / TILE_SIZE) {
+        for tile_x in 0..(SCREEN_WIDTH / TILE_SIZE) + 1 {
+            let bx = ((tile_x * TILE_SIZE) as u8).wrapping_add(self.bg_x) / TILE_SIZE as u8;
+
             let addr = 0x9800
                 | (((self.lcdc & (1 << 3)) as u16) << 7)
                 | ((tile_y as u16) << 5)
-                | (tile_x as u16);
+                | (bx as u16);
             let tile = vram0.read(addr).unwrap();
 
-            let x =
-                ((tile_x as u32 * TILE_SIZE + SCREEN_WIDTH * 2) - self.bg_x as u32) % SCREEN_WIDTH;
             self.blit_tile(
                 surface,
                 vram0,
                 palette,
                 tile,
                 false,
-                x as i16,
-                tile_y * TILE_SIZE as u8,
+                (tile_x * TILE_SIZE) as i16 - (self.bg_x % TILE_SIZE as u8) as i16,
+                (self.render_y - (self.render_y % TILE_SIZE as u8)) as i16
+                    - (self.bg_y % TILE_SIZE as u8) as i16,
                 0,
             );
         }
