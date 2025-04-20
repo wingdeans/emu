@@ -97,7 +97,7 @@ impl Addressable for Dma {
             HDMA3_ADDRESS => self.dma_dst = ((value as u16) << 8) | (self.dma_dst & 0xff),
             HDMA4_ADDRESS => self.dma_dst = (self.dma_dst & 0xff00) | (value as u16 & 0xf0),
             HDMA5_ADDRESS => self.handle(value),
-            OAM_DMA_ADDRESS => self.oam_value = Some(value),
+            OAM_DMA_ADDRESS if value < 0xe0 => self.oam_value = Some(value),
             _ => return None,
         }
 

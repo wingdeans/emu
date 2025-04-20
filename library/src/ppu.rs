@@ -43,6 +43,7 @@ pub struct Ppu {
     lcdc: u8,
     stat: u8,
     lyc: u8,
+    mode: u8,
 }
 
 impl Ppu {
@@ -71,6 +72,7 @@ impl Ppu {
             lcdc: 0x91,
             stat: 0,
             lyc: 0,
+            mode: 2,
         }
     }
 
@@ -211,16 +213,32 @@ impl Ppu {
         }
     }
 
+    pub fn clock(&mut self, cycles_in_scanline: u32) {
+        if self.render_y >= VBLANK_HEIGHT_BEGIN as u8 {
+            self.mode = 1;
+
+            if self.stat & 0x20 != 0 {
+                self.int.borrow_mut().set(STAT_INT_FLAG);
+            }
+        } else if cycles_in_scanline < 80 / 4 {
+            self.mode = 2;
+        } else if cycles_in_scanline > (80 + 172) / 4 {
+            self.mode = 0;
+
+            if self.stat & 0x08 != 0 {
+                self.int.borrow_mut().set(STAT_INT_FLAG);
+            }
+        } else {
+            self.mode = 3;
+        }
+    }
+
     pub fn scanline(&mut self) {
         if self.lcdc & 0x80 == 0 {
             return;
         }
 
         if self.render_y < VBLANK_HEIGHT_BEGIN as u8 {
-            if self.stat & 0x20 != 0 {
-                self.int.borrow_mut().set(STAT_INT_FLAG);
-            }
-
             let mut surface = self.surface.borrow_mut();
             let mut vram0 = self.vram0.borrow_mut();
             let mut vram1 = self.vram1.borrow_mut();
@@ -237,10 +255,6 @@ impl Ppu {
 
             if self.lcdc & 2 != 0 {
                 self.draw_obj(&mut *surface, &mut *vram0, &mut *oam, &*palette);
-            }
-
-            if self.stat & 0x08 != 0 {
-                self.int.borrow_mut().set(STAT_INT_FLAG);
             }
         } else if self.render_y == VBLANK_HEIGHT_BEGIN as u8 {
             self.int.borrow_mut().set(VBLANK_INT_FLAG);
@@ -280,7 +294,7 @@ impl Addressable for Ppu {
             LCDC_ADDRESS => Some(self.lcdc),
             STAT_ADDRESS => Some(
                 (self.stat & !0b111)
-                    | (self.lcdc >> 7)
+                    | (if self.lcdc & 0x80 != 0 { self.mode } else { 0 })
                     | (if self.render_y == self.lyc { 4 } else { 0 }),
             ),
             HDMA1_ADDRESS..HDMA5_ADDRESS | OAM_DMA_ADDRESS => self.dma.borrow_mut().read(addr),
@@ -296,7 +310,7 @@ impl Addressable for Ppu {
             WX_ADDRESS => self.wnd_x = value,
             WY_ADDRESS => self.wnd_y = value,
             LCDC_ADDRESS => self.lcdc = value,
-            STAT_ADDRESS => self.stat = value,
+            STAT_ADDRESS => self.stat = value & !7,
             HDMA1_ADDRESS..HDMA5_ADDRESS | OAM_DMA_ADDRESS => {
                 return self.dma.borrow_mut().write(addr, value)
             }

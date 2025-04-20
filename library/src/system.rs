@@ -38,6 +38,7 @@ pub struct System {
     bus: Rc<RefCell<Bus>>,
     ppu: Rc<RefCell<Ppu>>,
     apu: Rc<RefCell<Apu>>,
+    input: Rc<RefCell<Input>>,
     io: Rc<RefCell<IO>>,
     int: Rc<RefCell<Interrupt>>,
     palette: Rc<RefCell<Palette>>,
@@ -94,7 +95,7 @@ impl System {
 
         let wram_0 = map_to(
             Rc::clone(wram.borrow().bank(0)),
-            WRAM_0_BEGIN..WRAM_X_BEGIN,
+            WRAM_0_BEGIN..WRAM_0_END,
             WRAM_BANK_SIZE as u16,
         );
 
@@ -134,6 +135,8 @@ impl System {
             ILLEGAL_SIZE as u16,
         );
 
+        let input = Rc::new(RefCell::new(Input::new(input_handler)));
+
         {
             let mut b = bus.borrow_mut();
             b.add(cartridge);
@@ -148,7 +151,7 @@ impl System {
             b.add(Rc::clone(&io) as Rc<RefCell<dyn Addressable>>);
             b.add(Rc::clone(&palette) as Rc<RefCell<dyn Addressable>>);
             b.add(Rc::clone(&ppu) as Rc<RefCell<dyn Addressable>>);
-            b.add(Rc::new(RefCell::new(Input::new(input_handler))));
+            b.add(Rc::clone(&input) as Rc<RefCell<dyn Addressable>>);
             b.add(Rc::clone(&int) as Rc<RefCell<dyn Addressable>>);
             b.add(oam);
             b.add(Rc::new(RefCell::new(Serial::default())));
@@ -160,6 +163,7 @@ impl System {
             bus,
             ppu,
             apu,
+            input,
             int,
             io,
             palette,
@@ -180,6 +184,10 @@ impl System {
 
     pub fn io_ref(&self) -> &Rc<RefCell<IO>> {
         &self.io
+    }
+
+    pub fn input_ref(&self) -> &Rc<RefCell<Input>> {
+        &self.input
     }
 
     pub fn int_ref(&self) -> &Rc<RefCell<Interrupt>> {

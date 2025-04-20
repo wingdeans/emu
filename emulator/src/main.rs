@@ -142,12 +142,13 @@ impl App {
         let clock = Rc::new(RefCell::new(Clock::new(
             Rc::clone(system.borrow().ppu_ref()),
             Rc::clone(system.borrow().io_ref()),
+            Rc::clone(system.borrow().input_ref()),
             Rc::clone(system.borrow().int_ref()),
         )));
 
         Self {
             cpu,
-            memory_editor: MemoryEditor::new().with_address_range("All", 0..0xffff),
+            memory_editor: MemoryEditor::new().with_address_range("All", 0..0x10000),
             state: State {
                 control_open: true,
                 memory_editor_open: true,

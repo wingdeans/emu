@@ -216,6 +216,7 @@ fn main() -> Result<(), String> {
         let clock = Rc::new(RefCell::new(Clock::new(
             Rc::clone(system.borrow().ppu_ref()),
             Rc::clone(system.borrow().io_ref()),
+            Rc::clone(system.borrow().input_ref()),
             Rc::clone(system.borrow().int_ref()),
         )));
 

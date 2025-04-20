@@ -18,11 +18,30 @@ pub trait InputHandler {
 pub struct Input {
     handler: Rc<RefCell<dyn InputHandler>>,
     mode: u8,
+    last: Option<u8>,
 }
 
 impl Input {
     pub fn new(handler: Rc<RefCell<dyn InputHandler>>) -> Self {
-        Self { handler, mode: 3 }
+        Self {
+            handler,
+            mode: 3,
+            last: None,
+        }
+    }
+
+    pub fn should_interrupt(&mut self) -> bool {
+        let mut result = false;
+        let current = (self.get_select_buttons() << 4) | self.get_dpad_buttons();
+
+        if let Some(last) = self.last {
+            if last != current {
+                result = true;
+            }
+        }
+
+        self.last = Some(current);
+        result
     }
 
     fn get_select_buttons(&self) -> u8 {
