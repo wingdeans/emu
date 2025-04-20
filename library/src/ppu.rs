@@ -85,7 +85,10 @@ impl Ppu {
         y: i16,
         attr: u8,
     ) {
-        if obj && (self.lcdc & 1) == 0 || y > self.render_y as i16 || y <= -(TILE_SIZE as i16) {
+        if (obj && (self.lcdc & 1) == 0)
+            || y > self.render_y as i16
+            || (y + TILE_SIZE as i16) <= self.render_y as i16
+        {
             return;
         }
 
@@ -184,8 +187,7 @@ impl Ppu {
         _vram1: &mut dyn Addressable,
         palette: &Palette,
     ) {
-        let y = self.render_y.wrapping_add(self.bg_y);
-        let tile_y = y / TILE_SIZE as u8;
+        let tile_y = self.render_y.wrapping_add(self.bg_y) / TILE_SIZE as u8;
 
         for tile_x in 0..(SCREEN_WIDTH / TILE_SIZE) + 1 {
             let bx = ((tile_x * TILE_SIZE) as u8).wrapping_add(self.bg_x) / TILE_SIZE as u8;
@@ -203,8 +205,7 @@ impl Ppu {
                 tile,
                 false,
                 (tile_x * TILE_SIZE) as i16 - (self.bg_x % TILE_SIZE as u8) as i16,
-                (self.render_y - (self.render_y % TILE_SIZE as u8)) as i16
-                    - (self.bg_y % TILE_SIZE as u8) as i16,
+                self.render_y as i16 - ((self.render_y + self.bg_y) % TILE_SIZE as u8) as i16,
                 0,
             );
         }
@@ -226,7 +227,13 @@ impl Ppu {
             let mut oam = self.oam.borrow_mut();
             let palette = self.palette.borrow();
 
-            self.draw_bg(&mut *surface, &mut *vram0, &mut *vram1, &*palette);
+            if self.lcdc & 1 != 0 {
+                for i in 0..SCREEN_WIDTH {
+                    surface.set_pixel(i, self.render_y as u32, 0xff, 0x00, 0xdc);
+                }
+
+                self.draw_bg(&mut *surface, &mut *vram0, &mut *vram1, &*palette);
+            }
 
             if self.lcdc & 2 != 0 {
                 self.draw_obj(&mut *surface, &mut *vram0, &mut *oam, &*palette);
