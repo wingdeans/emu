@@ -1,4 +1,3 @@
-use cpu::cpu::Cpu;
 use library::{clock::Clock, surface, system::System};
 use std::sync::{Arc, Mutex};
 use std::{
@@ -19,18 +18,23 @@ impl sdl2::audio::AudioCallback for Driver {
     }
 }
 
-#[derive(Default)]
-struct CpuInterruptHandler {
-    pub cpu: Weak<RefCell<Cpu>>,
+struct CpuInterruptHandler<T: library::cpu::Cpu> {
+    pub cpu: Weak<RefCell<T>>,
 }
 
-impl library::int::InterruptHandler for CpuInterruptHandler {
+impl<T: library::cpu::Cpu> Default for CpuInterruptHandler<T> {
+    fn default() -> Self {
+        Self { cpu : Weak::default() }
+    }
+}
+
+impl<T: library::cpu::Cpu> library::int::InterruptHandler for CpuInterruptHandler<T> {
     fn ime(&self) -> bool {
-        self.cpu.upgrade().unwrap().borrow().ime
+        self.cpu.upgrade().unwrap().borrow().ime()
     }
 
     fn handle(&mut self, addr: u16) {
-        self.cpu.upgrade().unwrap().borrow_mut().int(addr).unwrap();
+        self.cpu.upgrade().unwrap().borrow_mut().int(addr);
     }
 }
 
@@ -208,7 +212,7 @@ fn main() -> Result<(), String> {
         chn_3.resume();
         chn_4.resume();
 
-        let cpu = Rc::new(RefCell::new(Cpu::new(
+        let cpu = Rc::new(RefCell::new(cpu::cpu::Cpu::new(
             Rc::clone(&system) as Rc<RefCell<dyn library::bus::Addressable>>
         )));
         int.borrow_mut().cpu = Rc::downgrade(&cpu);

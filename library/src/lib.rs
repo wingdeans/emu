@@ -2,6 +2,7 @@ pub mod apu;
 pub mod bus;
 pub mod cartridge;
 pub mod clock;
+pub mod cpu;
 pub mod dma;
 pub mod error;
 pub mod input;

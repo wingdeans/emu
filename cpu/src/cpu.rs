@@ -1489,3 +1489,9 @@ impl Cpu {
         self.state.clone()
     }
 }
+
+impl library::cpu::Cpu for Cpu {
+    fn execute(&mut self) -> u32 { self.execute().unwrap() }
+    fn ime(&self) -> bool { self.ime }
+    fn int(&mut self, addr: u16) { self.int(addr).unwrap() }
+}
