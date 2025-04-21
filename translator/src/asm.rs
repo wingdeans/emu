@@ -7,9 +7,10 @@ pub(crate) enum Reg16 {
     SP = 6,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub(crate) enum Reg8 {
     A = 0,
+    F = 4,
     B = 7,
     C = 3,
     D = 5,
@@ -39,7 +40,7 @@ pub(crate) enum AluOp {
     And = 0x20,
     Xor = 0x30,
     Or = 0x08,
-    Cmp = 0x38
+    Cmp = 0x38,
 }
 
 fn write(dst: &mut *mut u8, src: &[u8]) {
@@ -47,6 +48,192 @@ fn write(dst: &mut *mut u8, src: &[u8]) {
         std::ptr::copy(src.as_ptr(), *dst, src.len());
         *dst = dst.add(src.len());
     }
+}
+
+pub(crate) fn ret(buf: &mut *mut u8) {
+    write(buf, &[0xC3])
+}
+
+fn movabs_r08(buf: &mut *mut u8, addr: *const libc::c_void) {
+    let addr = addr as u64;
+    write(
+        buf,
+        &[
+            0x49, // prefix
+            0xB8, // MOV r64, imm64
+            addr as u8,
+            (addr >> 8) as u8,
+            (addr >> 16) as u8,
+            (addr >> 24) as u8,
+            (addr >> 32) as u8,
+            (addr >> 40) as u8,
+            (addr >> 48) as u8,
+            (addr >> 56) as u8,
+        ],
+    )
+}
+
+fn mov_r08addr_r16(buf: &mut *mut u8, reg: Reg16) {
+    write(
+        buf,
+        &[
+            0x66, // prefix
+            0x41,
+            0x89, // MOV r/m16, r16
+            0b00_000_000 | ((reg as u8) << 3),
+        ],
+    )
+}
+
+fn mov_r16_r08addr(buf: &mut *mut u8, reg: Reg16) {
+    write(
+        buf,
+        &[
+            0x66, // prefix
+            0x41,
+            0x8B, // MOV r16, r/m16
+            0b00_000_000 | ((reg as u8) << 3),
+        ],
+    )
+}
+
+fn lea_r08_add_imm8(buf: &mut *mut u8, imm: i8) {
+    write(
+        buf,
+        &[
+            0x4D, // prefix
+            0x8D, // LEA r64,m
+            0b01_000_000,
+            imm as u8,
+        ],
+    )
+}
+
+fn rot_r8_imm8(buf: &mut *mut u8, reg: Reg8, imm: u8) {
+    write(
+        buf,
+        &[
+            0xC0, // SAL r/m8, imm8
+            0b11_000_000 | (4 << 3) | reg as u8,
+            imm,
+        ],
+    )
+}
+
+fn or_r8_r8(buf: &mut *mut u8, dst: Reg8, src: Reg8) {
+    write(
+        buf,
+        &[
+            0x08, // OR r/m8, r8
+            0b11_000_000 | ((src as u8) << 3) | dst as u8,
+        ],
+    )
+}
+
+fn and_r8_imm(buf: &mut *mut u8, reg: Reg8, imm: u8) {
+    write(
+        buf,
+        &[
+            0x80, // AND r/m8, imm8
+            0b11_000_000 | (4 << 3) | reg as u8,
+            imm,
+        ],
+    )
+}
+
+pub(crate) fn test_r8_zero(buf: &mut *mut u8, reg: Reg8) {
+    write(
+        buf,
+        &[
+            // LAHF
+            0x9F,
+            // and ah, 0b1011_1111
+            0x80,
+            0xe4,
+            0b1011_1111,
+            // TEST r/m8, r8
+            0x84,
+            0b11_000_000 | ((reg as u8) << 3) | reg as u8,
+            // jne 3
+            0x75,
+            0x03,
+            0x80,
+            0xcc,
+            0b0100_0000,
+            // SAHF
+            0x9E,
+        ],
+    )
+}
+
+pub(crate) fn load_regs(buf: &mut *mut u8, regs: &crate::Regs) {
+    write(buf, &[0x53]); // push rbx
+    movabs_r08(buf, (regs as *const crate::Regs) as *const libc::c_void);
+    mov_r16_r08addr(buf, Reg16::AF);
+
+    write(buf, &[0x80, 0xf4, 0b1000_0000]); // XOR: invert F.Z
+    write(buf, &[0x0f, 0xb6, 0xcc]); // MOVZX ECX, AH
+
+    write(buf, &[0x40, 0x88, 0xcf]); // MOV DIL, CL
+    write(buf, &[0x40, 0x80, 0xe7, 0b0100_0000]); // and DIL
+    write(buf, &[0x41, 0x88, 0xc9]); // MOV R9L, CL
+    write(buf, &[0x41, 0x80, 0xe1, 0b0010_0000]); // and R9L
+
+    write(buf, &[0x83, 0xe1, 0b0001_0000]); // and ecx
+
+    write(buf, &[0xf6, 0xc4, 0b1000_0000]); // TEST: set ZF
+
+    write(buf, &[0x67, 0xE3, 0x01]); // jecxz
+    {
+        write(buf, &[0xF9]); // STC
+    }
+
+    lea_r08_add_imm8(buf, 2);
+    mov_r16_r08addr(buf, Reg16::BC);
+    lea_r08_add_imm8(buf, 2);
+    mov_r16_r08addr(buf, Reg16::DE);
+    lea_r08_add_imm8(buf, 2);
+    mov_r16_r08addr(buf, Reg16::HL);
+    lea_r08_add_imm8(buf, 2);
+    mov_r16_r08addr(buf, Reg16::SP);
+}
+
+pub(crate) fn save_regs(buf: &mut *mut u8, regs: &crate::Regs) {
+    movabs_r08(
+        buf,
+        ((regs as *const crate::Regs) as *const libc::c_void).wrapping_add(2),
+    );
+    mov_r08addr_r16(buf, Reg16::BC);
+    lea_r08_add_imm8(buf, -2);
+
+    // save flags after BH, BL are free
+    write(buf, &[0x0f, 0x92, 0b11_000_000 | Reg8::B as u8]); // SETC r/m8
+    write(buf, &[0x0f, 0x94, 0b11_000_000 | Reg8::C as u8]); // SETE r/m8
+    rot_r8_imm8(buf, Reg8::B, 4);
+    rot_r8_imm8(buf, Reg8::C, 7);
+    or_r8_r8(buf, Reg8::C, Reg8::B);
+    write(buf, &[0x40, 0x08, 0xfb]); // OR BL, DIL
+    write(buf, &[0x44, 0x08, 0xCB]); // OR BL, R9L
+    mov_r8_r8(buf, Reg8::F, Reg8::C);
+    mov_r08addr_r16(buf, Reg16::AF);
+
+    lea_r08_add_imm8(buf, 4);
+    mov_r08addr_r16(buf, Reg16::DE);
+    lea_r08_add_imm8(buf, 2);
+    mov_r08addr_r16(buf, Reg16::HL);
+    lea_r08_add_imm8(buf, 2);
+    mov_r08addr_r16(buf, Reg16::SP);
+    write(buf, &[0x5B]); // pop rbx
+}
+
+pub(crate) fn clear_n(buf: &mut *mut u8) {
+    // mov dil, 0
+    write(buf, &[0x40, 0xb7, 0x00])
+}
+
+pub(crate) fn clear_h(buf: &mut *mut u8) {
+    // mov r9l, 0
+    write(buf, &[0x41, 0xb1, 0x00])
 }
 
 pub(crate) fn add_hl_r16(buf: &mut *mut u8, reg: Reg16) {
@@ -65,30 +252,35 @@ pub(crate) fn incdec_r16(buf: &mut *mut u8, reg: Reg16, dec: bool) {
         buf,
         &[
             0x66, // prefix
-            0xFF, // INC r/m16
-            0b11_000_000 | reg as u8 | ((dec as u8) << 3),
+            0x8D, // LEA r16,m
+            0b01_000_000 | ((reg as u8) << 3) | reg as u8,
+            if dec { 0xFF } else { 1 },
         ],
     )
 }
 
 pub(crate) fn incdec_r8(buf: &mut *mut u8, reg: Reg8, dec: bool) {
-    write(
-        buf,
-        &[
-            0xFE, // INC r/m8
-            0b11_000_000 | reg as u8 | ((dec as u8) << 3),
-        ],
-    )
+    if reg != Reg8::MemHL {
+        write(
+            buf,
+            &[
+                0xFE, // INC r/m8
+                0b11_000_000 | reg as u8 | ((dec as u8) << 3),
+            ],
+        )
+    }
 }
 
 pub(crate) fn mov_r8_imm(buf: &mut *mut u8, reg: Reg8, imm: u8) {
-    write(
-        buf,
-        &[
-            0xB0 + reg as u8, // MOV r8, imm8
-            imm
-        ],
-    )
+    if reg != Reg8::MemHL {
+        write(
+            buf,
+            &[
+                0xB0 + reg as u8, // MOV r8, imm8
+                imm,
+            ],
+        )
+    }
 }
 
 pub(crate) fn rot(buf: &mut *mut u8, reg: Reg8, rot: Rot) {
@@ -96,8 +288,8 @@ pub(crate) fn rot(buf: &mut *mut u8, reg: Reg8, rot: Rot) {
         buf,
         &[
             0xD0, // r/m8, 1
-            0b11_000_000 | ((rot as u8) << 3) | reg as u8
-        ]
+            0b11_000_000 | ((rot as u8) << 3) | reg as u8,
+        ],
     )
 }
 
@@ -106,29 +298,33 @@ pub(crate) fn not_a(buf: &mut *mut u8) {
         buf,
         &[
             0xF6, // NOT r/m8
-            0b11_010_000 | Reg8::A as u8
-        ]
+            0b11_010_000 | Reg8::A as u8,
+        ],
     )
 }
 
 pub(crate) fn mov_r8_r8(buf: &mut *mut u8, dst: Reg8, src: Reg8) {
-    write(
-        buf,
-        &[
-            0x88, // MOV r/m8, r8
-            0b11_000_000 | ((src as u8) << 3) | dst as u8
-        ],
-    )
+    if dst != Reg8::MemHL && src != Reg8::MemHL {
+        write(
+            buf,
+            &[
+                0x88, // MOV r/m8, r8
+                0b11_000_000 | ((src as u8) << 3) | dst as u8,
+            ],
+        )
+    }
 }
 
 pub(crate) fn alu_a_r8(buf: &mut *mut u8, src: Reg8, op: AluOp) {
-    write(
-        buf,
-        &[
-            op as u8, // r/m8, r8
-            0b11_000_000 | ((src as u8) << 3) | Reg8::A as u8
-        ],
-    )
+    if src != Reg8::MemHL {
+        write(
+            buf,
+            &[
+                op as u8, // r/m8, r8
+                0b11_000_000 | ((src as u8) << 3) | Reg8::A as u8,
+            ],
+        )
+    }
 }
 
 pub(crate) fn mov_r16_r16(buf: &mut *mut u8, dst: Reg16, src: Reg16) {
@@ -138,7 +334,7 @@ pub(crate) fn mov_r16_r16(buf: &mut *mut u8, dst: Reg16, src: Reg16) {
             0x66, // prefix
             0x89, // MOV r/m16, r16
             0b11_000_000 | ((src as u8) << 3) | dst as u8,
-        ]
+        ],
     )
 }
 
@@ -148,10 +344,10 @@ pub(crate) fn mov_hl_sp_imm(buf: &mut *mut u8, imm: u8) {
         buf,
         &[
             0x66, // prefix
-            0x81, // ADD r/m16, imm8
+            0x83, // ADD r/m16, imm8
             0b11_000_000 | Reg16::HL as u8,
-            imm
-        ]
+            imm,
+        ],
     );
 }
 
@@ -161,8 +357,8 @@ pub(crate) fn rot4(buf: &mut *mut u8, reg: Reg8) {
         &[
             0xC0, // ROL r/m8, imm8
             0b11_000_000 | reg as u8,
-            4
-        ]
+            4,
+        ],
     )
 }
 
@@ -171,7 +367,7 @@ pub(crate) fn alu_a_imm(buf: &mut *mut u8, imm: u8, op: AluOp) {
         buf,
         &[
             4 + op as u8, // r/m8, r8
-            imm
+            imm,
         ],
     )
 }
@@ -186,7 +382,7 @@ mod tests {
         fn new(buf: &'a [u8]) -> Self {
             Decoder(
                 iced_x86::Decoder::new(64, buf, iced_x86::DecoderOptions::NONE),
-                iced_x86::IntelFormatter::new()
+                iced_x86::IntelFormatter::new(),
             )
         }
 
@@ -215,9 +411,12 @@ mod tests {
     fn test_incdec_r16() {
         let mut buf = [0; 64];
         incdec_r16(&mut buf.as_mut_ptr(), Reg16::BC, false);
-        assert_eq!(decode(&buf), "inc bx");
+        assert_eq!(decode(&buf), "lea bx,[rbx+1]");
         incdec_r16(&mut buf.as_mut_ptr(), Reg16::BC, true);
-        assert_eq!(decode(&buf), "dec bx");
+        assert_eq!(decode(&buf), "lea bx,[rbx-1]");
+
+        clear_n(&mut buf.as_mut_ptr());
+        assert_eq!(decode(&buf), "mov dil,0");
     }
 
     #[test]
@@ -247,6 +446,16 @@ mod tests {
         assert_eq!(decode(&buf), "rol al,1");
         rot(&mut buf.as_mut_ptr(), Reg8::A, Rot::Ror);
         assert_eq!(decode(&buf), "ror al,1");
+
+        // h
+        rot(&mut buf.as_mut_ptr(), Reg8::B, Rot::Rcl);
+        assert_eq!(decode(&buf), "rcl bh,1");
+        rot(&mut buf.as_mut_ptr(), Reg8::B, Rot::Rcr);
+        assert_eq!(decode(&buf), "rcr bh,1");
+        rot(&mut buf.as_mut_ptr(), Reg8::B, Rot::Rol);
+        assert_eq!(decode(&buf), "rol bh,1");
+        rot(&mut buf.as_mut_ptr(), Reg8::B, Rot::Ror);
+        assert_eq!(decode(&buf), "ror bh,1");
 
         // shifts
         rot(&mut buf.as_mut_ptr(), Reg8::A, Rot::Shr);
@@ -309,7 +518,7 @@ mod tests {
         mov_hl_sp_imm(&mut buf.as_mut_ptr(), 0xBE);
         let mut d = Decoder::new(&buf);
         assert_eq!(d.decode(), "mov dx,si");
-        assert_eq!(d.decode(), "add dx,0BEh");
+        assert_eq!(d.decode(), "add dx,0FFBEh");
     }
 
     #[test]
@@ -331,5 +540,28 @@ mod tests {
         assert_eq!(decode(&buf), "or al,42h");
         alu_a_imm(&mut buf.as_mut_ptr(), 0x42, AluOp::Cmp);
         assert_eq!(decode(&buf), "cmp al,42h");
+    }
+
+    #[test]
+    fn test_helpers() {
+        let mut buf = [0; 64];
+        movabs_r08(&mut buf.as_mut_ptr(), 0x1234_5678 as *const libc::c_void);
+        assert_eq!(decode(&buf), "mov r8,12345678h");
+        mov_r08addr_r16(&mut buf.as_mut_ptr(), Reg16::BC);
+        assert_eq!(decode(&buf), "mov [r8],bx");
+        mov_r16_r08addr(&mut buf.as_mut_ptr(), Reg16::BC);
+        assert_eq!(decode(&buf), "mov bx,[r8]");
+        lea_r08_add_imm8(&mut buf.as_mut_ptr(), 2);
+        assert_eq!(decode(&buf), "lea r8,[r8+2]");
+
+        mov_r08addr_r16(&mut buf.as_mut_ptr(), Reg16::HL);
+        assert_eq!(decode(&buf), "mov [r8],dx");
+        mov_r16_r08addr(&mut buf.as_mut_ptr(), Reg16::HL);
+        assert_eq!(decode(&buf), "mov dx,[r8]");
+
+        rot_r8_imm8(&mut buf.as_mut_ptr(), Reg8::B, 4);
+        assert_eq!(decode(&buf), "shl bh,4");
+        or_r8_r8(&mut buf.as_mut_ptr(), Reg8::F, Reg8::B);
+        assert_eq!(decode(&buf), "or ah,bh");
     }
 }

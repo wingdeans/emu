@@ -49,6 +49,7 @@
               ((rust-bin.selectLatestNightlyWith (toolchain: toolchain.default)).override {
                 extensions = [ "rustc-codegen-cranelift" ];
               })
+              SDL2
             ];
 
             LD_LIBRARY_PATH =

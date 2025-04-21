@@ -6,6 +6,13 @@ edition = "2021"
 [dependencies]
 thiserror = "2"
 libc = "0.2"
+library = { path = "../library" }
 
 [dev-dependencies]
 iced-x86 = "1.21.0"
+
+[features]
+gbit = []
+
+[lib]
+crate-type = ["staticlib"]
