@@ -70,9 +70,8 @@ impl Clock {
             .clock((self.cycles + m_cycles) % CYCLES_PER_SCANLINE);
 
         if self.cycles % CYCLES_PER_SCANLINE > (self.cycles + m_cycles) % CYCLES_PER_SCANLINE {
-            self.ppu.borrow_mut().scanline();
-
             dma.borrow_mut().scanline();
+            self.ppu.borrow_mut().next();
         }
 
         self.int();

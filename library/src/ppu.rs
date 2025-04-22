@@ -282,76 +282,80 @@ impl Ppu {
     }
 
     pub fn clock(&mut self, cycles_in_scanline: u32) {
-        if self.render_y >= VBLANK_HEIGHT_BEGIN as u8 && self.mode != 1 {
-            self.mode = 1;
-
-            if self.stat & 0x20 != 0 {
-                self.int.borrow_mut().set(STAT_INT_FLAG);
-            }
-        } else if cycles_in_scanline < 80 / 4 {
-            self.mode = 2;
-        } else if cycles_in_scanline > (80 + 172) / 4 && self.mode != 0 {
-            self.mode = 0;
-
-            if self.stat & 0x08 != 0 {
-                self.int.borrow_mut().set(STAT_INT_FLAG);
-            }
-        } else {
-            self.mode = 3;
-        }
-    }
-
-    pub fn scanline(&mut self) {
         if self.lcdc & 0x80 == 0 {
             return;
         }
 
-        if self.render_y < VBLANK_HEIGHT_BEGIN as u8 {
-            let mut surface = self.surface.borrow_mut();
-            let mut vram0 = self.vram0.borrow_mut();
-            let mut vram1 = self.vram1.borrow_mut();
-            let mut oam = self.oam.borrow_mut();
-            let palette = self.palette.borrow();
+        if self.render_y >= VBLANK_HEIGHT_BEGIN as u8 {
+            if self.mode != 1 {
+                self.mode = 1;
 
-            if self.lcdc & 1 != 0 {
-                for i in 0..SCREEN_WIDTH {
-                    surface.set_pixel(
-                        i,
-                        self.render_y as u32,
-                        0xff,
-                        0x00,
-                        0xdc,
-                        Metadata {
-                            layer: Layer::None,
-                            tile: 0,
-                        },
-                    );
-                }
+                self.int.borrow_mut().set(VBLANK_INT_FLAG);
+                self.surface.borrow_mut().flush();
 
-                self.draw_bg(&mut *surface, &mut *vram0, &mut *vram1, &*palette);
-
-                if self.lcdc & 32 != 0 {
-                    self.draw_wnd(&mut *surface, &mut *vram0, &mut *vram1, &*palette);
+                if self.stat & 0x20 != 0 {
+                    self.int.borrow_mut().set(STAT_INT_FLAG);
                 }
             }
+        } else if cycles_in_scanline < 80 / 4 {
+            self.mode = 2;
+        } else if cycles_in_scanline > (80 + 172) / 4 {
+            if self.mode != 0 {
+                self.mode = 0;
 
-            if self.lcdc & 2 != 0 {
-                self.draw_obj(&mut *surface, &mut *vram0, &mut *oam, &*palette);
+                if self.stat & 0x08 != 0 {
+                    self.int.borrow_mut().set(STAT_INT_FLAG);
+                }
             }
-        } else if self.render_y == VBLANK_HEIGHT_BEGIN as u8 {
-            self.int.borrow_mut().set(VBLANK_INT_FLAG);
+        } else if self.mode != 3 {
+            self.mode = 3;
+            self.draw();
+        }
+    }
 
-            if self.stat & 0x10 != 0 {
-                self.int.borrow_mut().set(STAT_INT_FLAG);
+    fn draw(&mut self) {
+        let mut surface = self.surface.borrow_mut();
+        let mut vram0 = self.vram0.borrow_mut();
+        let mut vram1 = self.vram1.borrow_mut();
+        let mut oam = self.oam.borrow_mut();
+        let palette = self.palette.borrow();
+
+        if self.lcdc & 1 != 0 {
+            for i in 0..SCREEN_WIDTH {
+                surface.set_pixel(
+                    i,
+                    self.render_y as u32,
+                    0xff,
+                    0x00,
+                    0xdc,
+                    Metadata {
+                        layer: Layer::None,
+                        tile: 0,
+                    },
+                );
             }
 
-            self.surface.borrow_mut().flush();
+            self.draw_bg(&mut *surface, &mut *vram0, &mut *vram1, &*palette);
+
+            if self.lcdc & 32 != 0 {
+                self.draw_wnd(&mut *surface, &mut *vram0, &mut *vram1, &*palette);
+            }
+        }
+
+        if self.lcdc & 2 != 0 {
+            self.draw_obj(&mut *surface, &mut *vram0, &mut *oam, &*palette);
+        }
+    }
+
+    pub fn next(&mut self) {
+        if self.lcdc & 0x80 == 0 {
+            return;
         }
 
         self.render_y = (self.render_y + 1) % (MAX_SCANLINE_HEIGHT as u8 + 1);
 
         if self.lyc == self.render_y && self.stat & 0x40 != 0 {
-            self.int.borrow_mut().set(VBLANK_INT_FLAG);
+            self.int.borrow_mut().set(STAT_INT_FLAG);
         }
     }
 
@@ -375,9 +379,7 @@ impl Addressable for Ppu {
             WY_ADDRESS => Some(self.wnd_y),
             LCDC_ADDRESS => Some(self.lcdc),
             STAT_ADDRESS => Some(
-                (self.stat & !0b111)
-                    | (if self.lcdc & 0x80 != 0 { self.mode } else { 0 })
-                    | (if self.render_y == self.lyc { 4 } else { 0 }),
+                (self.stat & !0b111) | self.mode | (if self.render_y == self.lyc { 4 } else { 0 }),
             ),
             HDMA1_ADDRESS..HDMA5_ADDRESS | OAM_DMA_ADDRESS => self.dma.borrow_mut().read(addr),
             _ => None,
