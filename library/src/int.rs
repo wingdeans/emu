@@ -49,7 +49,13 @@ impl Addressable for Interrupt {
 
     fn write(&mut self, addr: u16, value: u8) -> Option<()> {
         match addr {
-            IE_ADDRESS => self.enable = value,
+            IE_ADDRESS => {
+                self.enable = value;
+
+                if self.enable == 0 {
+                    panic!();
+                }
+            }
             IF_ADDRESS => self.flag = value,
             _ => return None,
         }

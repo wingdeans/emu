@@ -1479,10 +1479,12 @@ impl Cpu {
 
     pub fn int(&mut self, addr: u16) -> Result<()> {
         self.ime = false;
+        self.stack_push(self.pc)?;
         self.pc = addr;
         self.cycle_queue = 5;
         self.state = State::Running;
-        self.stack_push(self.pc)
+
+        Ok(())
     }
 
     pub fn state(&self) -> State {
