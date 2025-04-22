@@ -191,7 +191,7 @@ impl Ppu {
                 idx
             };
 
-            if attr & 4 == 0 {
+            if self.lcdc & 4 == 0 {
                 self.blit_tile(
                     surface,
                     vram,
