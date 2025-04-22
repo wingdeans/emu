@@ -1,5 +1,5 @@
 use crate::cpu::{Cpu, State as StateEnum};
-use library::{bus::Bus, error::Error as LibError, error::Result as LibResult};
+use library::{bus::Addressable, error::Error as LibError};
 use std::{cell::RefCell, mem::MaybeUninit, os::raw::c_int, rc::Rc};
 
 type CBool = bool;
@@ -45,28 +45,25 @@ struct Global {
 #[derive(Default)]
 struct GlobalBus {}
 
-impl Bus for GlobalBus {
-    fn read(&mut self, addr: u16) -> LibResult<u8> {
+impl Addressable for GlobalBus {
+    fn read(&mut self, addr: u16) -> Option<u8> {
         unsafe {
             let g = GLOBAL.assume_init_ref();
 
             if addr as usize >= g.memory_size {
-                Ok(0xaa)
+                Some(0xaa)
             } else {
-                Ok(*g.memory.offset(addr as isize))
+                Some(*g.memory.offset(addr as isize))
             }
         }
     }
 
-    fn write(&mut self, addr: u16, value: u8) -> LibResult<()> {
+    fn write(&mut self, addr: u16, value: u8) -> Option<()> {
         unsafe {
             let g = GLOBAL.assume_init_mut();
 
             if g.num_mem_access == 16 {
-                Err(LibError::BusFault {
-                    addr,
-                    msg: "write failed (out of space)".to_string(),
-                })
+                None
             } else {
                 g.mem_accesses.push(MemoryAccess {
                     mode: MEMORY_ACCESS_MODE_WRITE,
@@ -75,7 +72,7 @@ impl Bus for GlobalBus {
                 });
 
                 g.num_mem_access += 1;
-                Ok(())
+                Some(())
             }
         }
     }
