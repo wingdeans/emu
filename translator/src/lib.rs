@@ -121,7 +121,7 @@ impl<T: library::bus::Addressable> Cpu<T> {
                         println!("TODO")
                     } else {
                         // ADD HL, r16
-                        asm::add_hl_r16(&mut self.buf, decode_r16((b >> 4) & 0b11))
+                        asm::add_hl_r16(&mut self.buf, decode_r16((b >> 4) & 0b11));
                     }
                 }
                 0b010 => {
@@ -187,25 +187,56 @@ impl<T: library::bus::Addressable> Cpu<T> {
                 decode_r8((b >> 3) & 0b111),
                 decode_r8(b & 0b111),
             ),
-            0b10 => match (b >> 3) & 0b111 {
-                // ADD A, r8
-                0b000 => asm::alu_a_r8(&mut self.buf, decode_r8(b & 0b111), AluOp::Add),
-                // ADC A, r8
-                0b001 => asm::alu_a_r8(&mut self.buf, decode_r8(b & 0b111), AluOp::Adc),
-                // SUB A, r8
-                0b010 => asm::alu_a_r8(&mut self.buf, decode_r8(b & 0b111), AluOp::Sub),
-                // SBC A, r8
-                0b011 => asm::alu_a_r8(&mut self.buf, decode_r8(b & 0b111), AluOp::Sbb),
-                // AND A, r8
-                0b100 => asm::alu_a_r8(&mut self.buf, decode_r8(b & 0b111), AluOp::And),
-                // XOR A, r8
-                0b101 => asm::alu_a_r8(&mut self.buf, decode_r8(b & 0b111), AluOp::Xor),
-                // OR A, r8
-                0b110 => asm::alu_a_r8(&mut self.buf, decode_r8(b & 0b111), AluOp::Or),
-                // CP A, r8
-                0b111 => asm::alu_a_r8(&mut self.buf, decode_r8(b & 0b111), AluOp::Cmp),
-                _ => unreachable!(),
-            },
+            0b10 => {
+                let reg = decode_r8(b & 0b111);
+                match (b >> 3) & 0b111 {
+                    // ADD A, r8
+                    0b000 => {
+                        asm::alu_a_r8(&mut self.buf, reg, AluOp::Add);
+                        asm::clear_n(&mut self.buf);
+                        asm::save_hc(&mut self.buf);
+                    }
+                    // ADC A, r8
+                    0b001 => {
+                        asm::alu_a_r8(&mut self.buf, reg, AluOp::Adc);
+                        asm::clear_n(&mut self.buf);
+                        asm::save_hc(&mut self.buf);
+                    }
+                    // SUB A, r8
+                    0b010 => {
+                        asm::alu_a_r8(&mut self.buf, reg, AluOp::Sub);
+                        asm::set_n(&mut self.buf);
+                        asm::save_hc(&mut self.buf);
+                    }
+                    // SBC A, r8
+                    0b011 => {
+                        asm::alu_a_r8(&mut self.buf, reg, AluOp::Sbb);
+                        asm::set_n(&mut self.buf);
+                        asm::save_hc(&mut self.buf);
+                    }
+                    // AND A, r8
+                    0b100 => {
+                        asm::alu_a_r8(&mut self.buf, reg, AluOp::And);
+                        asm::clear_n(&mut self.buf);
+                        asm::set_h(&mut self.buf);
+                    }
+                    // XOR A, r8
+                    0b101 => {
+                        asm::alu_a_r8(&mut self.buf, reg, AluOp::Xor);
+                        asm::clear_n(&mut self.buf);
+                        asm::clear_h(&mut self.buf);
+                    }
+                    // OR A, r8
+                    0b110 => {
+                        asm::alu_a_r8(&mut self.buf, reg, AluOp::Or);
+                        asm::clear_n(&mut self.buf);
+                        asm::clear_h(&mut self.buf);
+                    }
+                    // CP A, r8
+                    0b111 => asm::alu_a_r8(&mut self.buf, reg, AluOp::Cmp),
+                    _ => unreachable!(),
+                }
+            }
             0b11 => match b & 0b111 {
                 0b000 => match (b >> 3) & 0b111 {
                     0b000..=0b011 => println!("TODO"), // RET cond,
@@ -241,10 +272,11 @@ impl<T: library::bus::Addressable> Cpu<T> {
                     // PREFIX
                     0b001 => {
                         let b = self.read8();
+                        let b3 = (b >> 3) & 0b111;
+                        let reg = decode_r8(b & 0b111);
                         match (b >> 6) & 0b11 {
                             0b00 => {
-                                let reg = decode_r8(b & 0b111);
-                                match (b >> 3) & 0b111 {
+                                match b3 {
                                     // RLC r8
                                     0b000 => {
                                         asm::rot(&mut self.buf, reg, Rot::Rol);
@@ -274,22 +306,43 @@ impl<T: library::bus::Addressable> Cpu<T> {
                                         asm::test_r8_zero(&mut self.buf, reg);
                                     }
                                     // SLA r8
-                                    0b100 => asm::rot(&mut self.buf, reg, Rot::Shl),
+                                    0b100 => {
+                                        asm::rot(&mut self.buf, reg, Rot::Shl);
+                                        asm::clear_n(&mut self.buf);
+                                        asm::clear_h(&mut self.buf);
+                                    }
                                     // SRA r8
-                                    0b101 => asm::rot(&mut self.buf, reg, Rot::Sar),
+                                    0b101 => {
+                                        asm::rot(&mut self.buf, reg, Rot::Sar);
+                                        asm::clear_n(&mut self.buf);
+                                        asm::clear_h(&mut self.buf);
+                                    }
                                     // SWAP r8
-                                    0b110 => asm::rot4(&mut self.buf, reg),
+                                    0b110 => {
+                                        asm::rot4(&mut self.buf, reg);
+                                        asm::clear_n(&mut self.buf);
+                                        asm::clear_h(&mut self.buf);
+                                        asm::test_r8_zero_raw(&mut self.buf, reg);
+                                    }
                                     // SRL r8
-                                    0b111 => asm::rot(&mut self.buf, reg, Rot::Shr),
+                                    0b111 => {
+                                        asm::rot(&mut self.buf, reg, Rot::Shr);
+                                        asm::clear_n(&mut self.buf);
+                                        asm::clear_h(&mut self.buf);
+                                    }
                                     _ => unreachable!(),
                                 }
                             }
                             // BIT b3, r8
-                            0b01 => (),
+                            0b01 => {
+                                asm::test_r8_imm(&mut self.buf, reg, 1 << b3);
+                                asm::clear_n(&mut self.buf);
+                                asm::set_h(&mut self.buf);
+                            }
                             // RES b3, r8
-                            0b10 => (),
+                            0b10 => asm::and_flagless(&mut self.buf, reg, !(1 << b3)),
                             // SET b3, r8
-                            0b11 => (),
+                            0b11 => asm::or_flagless(&mut self.buf, reg, 1 << b3),
                             _ => unreachable!(),
                         }
                     }
@@ -322,11 +375,23 @@ impl<T: library::bus::Addressable> Cpu<T> {
                         // SBC A, imm8
                         0b011 => asm::alu_a_imm(&mut self.buf, imm, AluOp::Sbb),
                         // AND A, imm8
-                        0b100 => asm::alu_a_imm(&mut self.buf, imm, AluOp::And),
+                        0b100 => {
+                            asm::alu_a_imm(&mut self.buf, imm, AluOp::And);
+                            asm::clear_n(&mut self.buf);
+                            asm::set_h(&mut self.buf);
+                        }
                         // XOR A, imm8
-                        0b101 => asm::alu_a_imm(&mut self.buf, imm, AluOp::Xor),
+                        0b101 => {
+                            asm::alu_a_imm(&mut self.buf, imm, AluOp::Xor);
+                            asm::clear_n(&mut self.buf);
+                            asm::clear_h(&mut self.buf);
+                        }
                         // OR  A, imm8
-                        0b110 => asm::alu_a_imm(&mut self.buf, imm, AluOp::Or),
+                        0b110 => {
+                            asm::alu_a_imm(&mut self.buf, imm, AluOp::Or);
+                            asm::clear_n(&mut self.buf);
+                            asm::clear_h(&mut self.buf);
+                        }
                         // CP  A, imm8
                         0b111 => asm::alu_a_imm(&mut self.buf, imm, AluOp::Cmp),
                         _ => unreachable!(),

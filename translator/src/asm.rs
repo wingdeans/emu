@@ -141,6 +141,17 @@ fn and_r8_imm(buf: &mut *mut u8, reg: Reg8, imm: u8) {
     )
 }
 
+pub(crate) fn test_r8_zero_raw(buf: &mut *mut u8, reg: Reg8) {
+    write(
+        buf,
+        &[
+            // TEST r/m8, r8
+            0x84,
+            0b11_000_000 | ((reg as u8) << 3) | reg as u8,
+        ],
+    )
+}
+
 pub(crate) fn test_r8_zero(buf: &mut *mut u8, reg: Reg8) {
     write(
         buf,
@@ -160,6 +171,54 @@ pub(crate) fn test_r8_zero(buf: &mut *mut u8, reg: Reg8) {
             0x80,
             0xcc,
             0b0100_0000,
+            // SAHF
+            0x9E,
+        ],
+    )
+}
+
+pub(crate) fn test_r8_imm(buf: &mut *mut u8, reg: Reg8, imm: u8) {
+    if reg != Reg8::MemHL {
+        write(
+            buf,
+            &[
+                // LAHF
+                0x9F,
+                // and ah, 0b1011_1111
+                0x80,
+                0xe4,
+                0b1011_1111,
+                // TEST r/m8, r8
+                0xF6,
+                0b11_000_000 | reg as u8,
+                imm,
+                // jne 3
+                0x75,
+                0x03,
+                0x80,
+                0xcc,
+                0b0100_0000,
+                // SAHF
+                0x9E,
+            ],
+        )
+    }
+}
+
+pub(crate) fn save_hc(buf: &mut *mut u8) {
+    write(
+        buf,
+        &[
+            // LAHF
+            0x9F,
+            // TEST r/m8, 0b1_0000
+            0xF6,
+            0b11_000_000 | Reg8::F as u8,
+            0b1_0000,
+            // SETNZ r9l
+            0x41, 0x0f, 0x95, 0xc1,
+            // shl r9b, 5
+            0x41, 0xc0, 0xe1, 0x05,
             // SAHF
             0x9E,
         ],
@@ -234,6 +293,16 @@ pub(crate) fn clear_n(buf: &mut *mut u8) {
 pub(crate) fn clear_h(buf: &mut *mut u8) {
     // mov r9l, 0
     write(buf, &[0x41, 0xb1, 0x00])
+}
+
+pub(crate) fn set_n(buf: &mut *mut u8) {
+    // mov dil, 0
+    write(buf, &[0x40, 0xb7, 0b0100_0000])
+}
+
+pub(crate) fn set_h(buf: &mut *mut u8) {
+    // mov r9l, 0
+    write(buf, &[0x41, 0xb1, 0b0010_0000])
 }
 
 pub(crate) fn add_hl_r16(buf: &mut *mut u8, reg: Reg16) {
@@ -370,6 +439,42 @@ pub(crate) fn alu_a_imm(buf: &mut *mut u8, imm: u8, op: AluOp) {
             imm,
         ],
     )
+}
+
+pub(crate) fn or_flagless(buf: &mut *mut u8, reg: Reg8, imm: u8) {
+    if reg != Reg8::MemHL {
+        write(
+            buf,
+            &[
+                // LAHF
+                0x9F,
+                // OR r/m8, imm8
+                0x80,
+                0b11_001_000 | reg as u8,
+                imm,
+                // SAHF
+                0x9E,
+            ],
+        )
+    }
+}
+
+pub(crate) fn and_flagless(buf: &mut *mut u8, reg: Reg8, imm: u8) {
+    if reg != Reg8::MemHL {
+        write(
+            buf,
+            &[
+                // LAHF
+                0x9F,
+                // AND r/m8, imm8
+                0x80,
+                0b11_100_000 | reg as u8,
+                imm,
+                // SAHF
+                0x9E,
+            ],
+        )
+    }
 }
 
 #[cfg(test)]
