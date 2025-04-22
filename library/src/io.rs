@@ -36,7 +36,7 @@ impl IO {
             tima: 0,
             tma: 0,
             div: 0,
-            enable_tima: false,
+            enable_tima: true,
             tima_clock: 0,
             tima_acc: 0,
         }
@@ -50,13 +50,13 @@ impl IO {
 
             let boundary = match self.tima_clock & 3 {
                 0b00 => 256,
-                0b01 => 4000,
-                0b10 => 16000000,
-                0b11 => 64000000,
+                0b01 => 4,
+                0b10 => 16,
+                0b11 => 64,
                 _ => unreachable!(),
             };
 
-            if self.tima_acc > boundary {
+            while self.tima_acc > boundary {
                 self.tima_acc -= boundary;
                 let (value, overflow) = self.tima.overflowing_add(1);
 

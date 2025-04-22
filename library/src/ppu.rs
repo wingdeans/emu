@@ -282,7 +282,7 @@ impl Ppu {
     }
 
     pub fn clock(&mut self, cycles_in_scanline: u32) {
-        if self.render_y >= VBLANK_HEIGHT_BEGIN as u8 {
+        if self.render_y >= VBLANK_HEIGHT_BEGIN as u8 && self.mode != 1 {
             self.mode = 1;
 
             if self.stat & 0x20 != 0 {
@@ -290,7 +290,7 @@ impl Ppu {
             }
         } else if cycles_in_scanline < 80 / 4 {
             self.mode = 2;
-        } else if cycles_in_scanline > (80 + 172) / 4 {
+        } else if cycles_in_scanline > (80 + 172) / 4 && self.mode != 0 {
             self.mode = 0;
 
             if self.stat & 0x08 != 0 {
@@ -351,7 +351,7 @@ impl Ppu {
         self.render_y = (self.render_y + 1) % (MAX_SCANLINE_HEIGHT as u8 + 1);
 
         if self.lyc == self.render_y && self.stat & 0x40 != 0 {
-            self.int.borrow_mut().set(STAT_INT_FLAG);
+            self.int.borrow_mut().set(VBLANK_INT_FLAG);
         }
     }
 
