@@ -106,13 +106,17 @@ impl Ppu {
 
         let addr = base
             + (TILE_BYTES as u16) * (idx as u16)
-            + ((self.render_y as i16 - y) as u16) * (TILE_BYTES / TILE_SIZE as usize) as u16;
+            + (if layer == Layer::Object && attr & 0x40 != 0 {
+                (TILE_SIZE as i16 - (self.render_y as i16 - y)) as u16 - 1
+            } else {
+                (self.render_y as i16 - y) as u16
+            }) * (TILE_BYTES / TILE_SIZE as usize) as u16;
 
         let lo = vram.read(addr).unwrap();
         let hi = vram.read(addr + 1).unwrap();
 
         for i in 0..TILE_SIZE as u8 {
-            let di = if attr & 0x20 != 0 {
+            let di = if layer == Layer::Object && attr & 0x20 != 0 {
                 TILE_SIZE as u8 - i - 1
             } else {
                 i
