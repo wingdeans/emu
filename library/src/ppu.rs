@@ -3,7 +3,7 @@ use crate::{
     dma::{Dma, HDMA1_ADDRESS, HDMA5_ADDRESS, OAM_DMA_ADDRESS},
     int::{Interrupt, STAT_INT_FLAG, VBLANK_INT_FLAG},
     palette::Palette,
-    surface::{Surface, SCREEN_WIDTH},
+    surface::{Layer, Metadata, Surface, SCREEN_WIDTH},
     system::OAM_BEGIN,
 };
 use std::{cell::RefCell, rc::Rc};
@@ -82,11 +82,13 @@ impl Ppu {
         vram: &mut dyn Addressable,
         palette: &Palette,
         idx: u8,
-        obj: bool,
+        layer: Layer,
         x: i16,
         y: i16,
         attr: u8,
     ) {
+        let obj = layer == Layer::Object;
+
         if (obj && (self.lcdc & 1) == 0)
             || y > self.render_y as i16
             || (y + TILE_SIZE as i16) <= self.render_y as i16
@@ -110,6 +112,12 @@ impl Ppu {
         let hi = vram.read(addr + 1).unwrap();
 
         for i in 0..TILE_SIZE as u8 {
+            let di = if attr & 0x20 != 0 {
+                TILE_SIZE as u8 - i - 1
+            } else {
+                i
+            };
+
             if obj && ((x + i as i16) < 0 || (x + i as i16) >= SCREEN_WIDTH as i16)
                 || (x + i as i16) < 0
                 || (x + i as i16) >= SCREEN_WIDTH as i16
@@ -117,8 +125,8 @@ impl Ppu {
                 continue;
             }
 
-            let col = (if lo & (1 << (7 - i)) != 0 { 1 } else { 0 })
-                | (if (hi & (1 << (7 - i))) != 0 { 2 } else { 0 });
+            let col = (if lo & (1 << (7 - di)) != 0 { 1 } else { 0 })
+                | (if (hi & (1 << (7 - di))) != 0 { 2 } else { 0 });
 
             if obj && col == 0 {
                 continue;
@@ -138,6 +146,7 @@ impl Ppu {
                 color.0,
                 color.1,
                 color.2,
+                Metadata { layer, tile: idx },
             );
         }
     }
@@ -178,7 +187,31 @@ impl Ppu {
                 idx
             };
 
-            self.blit_tile(surface, vram, palette, tile, true, x, y as i16, attr);
+            if attr & 4 == 0 {
+                self.blit_tile(
+                    surface,
+                    vram,
+                    palette,
+                    tile,
+                    Layer::Object,
+                    x,
+                    y as i16,
+                    attr,
+                );
+            } else {
+                self.blit_tile(surface, vram, palette, tile & !1, Layer::Object, x, y, attr);
+
+                self.blit_tile(
+                    surface,
+                    vram,
+                    palette,
+                    tile | 1,
+                    Layer::Object,
+                    x,
+                    y as i16 + TILE_SIZE as i16,
+                    attr,
+                );
+            }
         }
     }
 
@@ -205,9 +238,44 @@ impl Ppu {
                 vram0,
                 palette,
                 tile,
-                false,
+                Layer::Background,
                 (tile_x * TILE_SIZE) as i16 - (self.bg_x % TILE_SIZE as u8) as i16,
-                self.render_y as i16 - ((self.render_y + self.bg_y) % TILE_SIZE as u8) as i16,
+                self.render_y as i16
+                    - ((self.render_y as u16 + self.bg_y as u16) % TILE_SIZE as u16) as i16,
+                0,
+            );
+        }
+    }
+
+    fn draw_wnd(
+        &self,
+        surface: &mut dyn Surface,
+        vram0: &mut dyn Addressable,
+        _vram1: &mut dyn Addressable,
+        palette: &Palette,
+    ) {
+        if self.render_y < self.wnd_y {
+            return;
+        }
+
+        let tile_y = (self.render_y - self.wnd_y) / TILE_SIZE as u8;
+
+        for tile_x in 0..(SCREEN_WIDTH / TILE_SIZE) + 1 {
+            let addr = if self.lcdc & 128 != 0 { 0x9c00 } else { 0x9800 }
+                | (((self.lcdc & (1 << 3)) as u16) << 7)
+                | ((tile_y as u16) << 5)
+                | (tile_x as u16);
+            let tile = vram0.read(addr).unwrap();
+
+            self.blit_tile(
+                surface,
+                vram0,
+                palette,
+                tile,
+                Layer::Window,
+                (tile_x * TILE_SIZE) as i16 + self.wnd_x as i16 - 7,
+                self.render_y as i16 + self.wnd_y as i16
+                    - ((self.render_y as i16 + self.wnd_y as i16) % TILE_SIZE as i16),
                 0,
             );
         }
@@ -247,10 +315,24 @@ impl Ppu {
 
             if self.lcdc & 1 != 0 {
                 for i in 0..SCREEN_WIDTH {
-                    surface.set_pixel(i, self.render_y as u32, 0xff, 0x00, 0xdc);
+                    surface.set_pixel(
+                        i,
+                        self.render_y as u32,
+                        0xff,
+                        0x00,
+                        0xdc,
+                        Metadata {
+                            layer: Layer::None,
+                            tile: 0,
+                        },
+                    );
                 }
 
                 self.draw_bg(&mut *surface, &mut *vram0, &mut *vram1, &*palette);
+
+                if self.lcdc & 32 != 0 {
+                    self.draw_wnd(&mut *surface, &mut *vram0, &mut *vram1, &*palette);
+                }
             }
 
             if self.lcdc & 2 != 0 {

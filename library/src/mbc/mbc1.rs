@@ -1,5 +1,5 @@
 use crate::{
-    bus::{bank, map_from, map_to, Addressable, Bank, Bus},
+    bus::{bank, map_to, Addressable, Bank, Bus},
     cartridge::Header,
     error::Result,
     memory::{Access, Memory},
@@ -68,7 +68,7 @@ impl Mbc1 {
             header.rom_bank_count()?,
         );
 
-        bus.add(map_from(
+        bus.add(map_to(
             Rc::clone(&rom) as Rc<RefCell<dyn Addressable>>,
             ROM_BANKX0_BEGIN..ROM_BANKX0_END,
             ROM_BANKX0_SIZE as u16,
@@ -95,7 +95,7 @@ impl Mbc1 {
     fn rebank(&mut self) {
         if self.bank_mode {
             self.rom_bank.borrow_mut().select(
-                ((((self.ram_bank_value as u16) & 3) << 4) | ((self.rom_bank_value as u16) & 0xf))
+                ((((self.ram_bank_value as u16) & 3) << 5) | ((self.rom_bank_value as u16) & 0x1f))
                     as u32,
             );
         } else {
@@ -104,7 +104,7 @@ impl Mbc1 {
 
         if let Some(ram_bank) = self.ram_bank.as_ref() {
             ram_bank.borrow_mut().select(
-                ((((self.ram_bank_value as u16) & 3) << 4) | ((self.rom_bank_value as u16) & 0xf))
+                ((((self.ram_bank_value as u16) & 3) << 5) | ((self.rom_bank_value as u16) & 0x1f))
                     as u32,
             );
         }
@@ -124,11 +124,11 @@ impl Addressable for Mbc1 {
     fn write(&mut self, addr: u16, value: u8) -> Option<()> {
         match addr {
             ROM_BANK_BEGIN..ROM_BANK_END => {
-                self.rom_bank_value = std::cmp::min(1, value);
+                self.rom_bank_value = (if value & 0b11111 == 0 { 1 } else { value })
+                    % self.rom_bank.borrow().count() as u8;
                 self.rebank();
             }
-            RAM_ENABLE_BEGIN..RAM_ENABLE_END if value == 0x0a => self.ram_enable = true,
-            RAM_ENABLE_BEGIN..RAM_ENABLE_END if value == 0x00 => self.ram_enable = false,
+            RAM_ENABLE_BEGIN..RAM_ENABLE_END => self.ram_enable = value & 0xf == 0xa,
             RAM_BEGIN..RAM_END if self.ram_enable && self.ram_map.is_some() => {
                 return self
                     .ram_map
@@ -138,7 +138,7 @@ impl Addressable for Mbc1 {
                     .write(addr, value)
             }
             RAM_BANK_BEGIN..RAM_BANK_END => {
-                self.ram_bank_value = value;
+                self.ram_bank_value = value & 3;
                 self.rebank();
             }
             BANK_MODE_BEGIN..BANK_MODE_END => {

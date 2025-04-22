@@ -1,7 +1,7 @@
 use crate::{
     apu::Apu,
     bus::{bank, map_to, Addressable, Bus},
-    cartridge::{Cartridge, CGB_FLAG_ADDRESS},
+    cartridge::Cartridge,
     input::{Input, InputHandler},
     int::{Interrupt, InterruptHandler},
     io::IO,
@@ -105,7 +105,7 @@ impl System {
             HRAM_SIZE as u16,
         );
 
-        let cgb_flag = cartridge.borrow_mut().read(CGB_FLAG_ADDRESS).unwrap();
+        // let cgb_flag = cartridge.borrow_mut().read(CGB_FLAG_ADDRESS).unwrap();
 
         let int = Rc::new(RefCell::new(Interrupt::new(interrupt_handler)));
         let io = Rc::new(RefCell::new(IO::new(
@@ -114,7 +114,7 @@ impl System {
             vram_bank,
         )));
         let palette = Rc::new(RefCell::new(Palette::new(
-            cgb_flag != 0x80 && cgb_flag != 0xc0,
+            true, // cgb_flag != 0x80 && cgb_flag != 0xc0,
         )));
 
         let ppu = Rc::new(RefCell::new(Ppu::new(

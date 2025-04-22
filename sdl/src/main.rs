@@ -24,7 +24,9 @@ struct CpuInterruptHandler<T: library::cpu::Cpu> {
 
 impl<T: library::cpu::Cpu> Default for CpuInterruptHandler<T> {
     fn default() -> Self {
-        Self { cpu : Weak::default() }
+        Self {
+            cpu: Weak::default(),
+        }
     }
 }
 
@@ -99,8 +101,10 @@ impl<'a> DisplayTexture<'a> {
 }
 
 impl surface::Surface for DisplayTexture<'_> {
-    fn set_pixel(&mut self, x: u32, y: u32, r: u8, g: u8, b: u8) {
-        self.pixels[(y * surface::SCREEN_WIDTH + x) as usize] = (r, g, b);
+    fn set_pixel(&mut self, x: u32, y: u32, r: u8, g: u8, b: u8, metadata: surface::Metadata) {
+        if metadata.layer != surface::Layer::None {
+            self.pixels[(y * surface::SCREEN_WIDTH + x) as usize] = (r, g, b);
+        }
     }
 
     fn flush(&mut self) {

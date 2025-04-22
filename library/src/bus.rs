@@ -98,6 +98,10 @@ impl Bank {
     pub fn bank(&self, index: usize) -> &Rc<RefCell<dyn Addressable>> {
         &self.banks[index]
     }
+
+    pub fn count(&self) -> u32 {
+        self.banks.len() as u32
+    }
 }
 
 impl Addressable for Bank {

@@ -89,6 +89,13 @@ impl InputHandler for EguiInputHandler {
     }
 }
 
+pub struct Graphics {
+    show_background: bool,
+    show_window: bool,
+    show_objects: bool,
+    show_tiles: bool,
+}
+
 struct State {
     control_open: bool,
     memory_editor_open: bool,
@@ -102,6 +109,7 @@ struct App {
     cpu: Rc<RefCell<Cpu>>,
     memory_editor: MemoryEditor,
     state: State,
+    graphics: Rc<RefCell<Graphics>>,
     cartridge: Rc<RefCell<Cartridge>>,
     last_execute: Option<CpuResult<u32>>,
     system: Rc<RefCell<System>>,
@@ -117,7 +125,14 @@ impl App {
         let args: Vec<_> = env::args().collect();
         let path = &args[1];
 
-        let display = Rc::new(RefCell::new(Display::default()));
+        let graphics = Rc::new(RefCell::new(Graphics {
+            show_background: true,
+            show_window: true,
+            show_objects: true,
+            show_tiles: false,
+        }));
+
+        let display = Rc::new(RefCell::new(Display::new(Rc::clone(&graphics))));
 
         let cartridge = Rc::new(RefCell::new(
             Cartridge::load_from_file(Path::new(path)).expect("Failed to load cartridge"),
@@ -149,6 +164,7 @@ impl App {
         Self {
             cpu,
             memory_editor: MemoryEditor::new().with_address_range("All", 0..0x10000),
+            graphics,
             state: State {
                 control_open: true,
                 memory_editor_open: true,
@@ -411,6 +427,14 @@ impl App {
                             });
                         });
                     });
+
+                ui.horizontal(|ui| {
+                    let mut graphics = self.graphics.borrow_mut();
+                    ui.toggle_value(&mut graphics.show_background, "Background");
+                    ui.toggle_value(&mut graphics.show_window, "Window");
+                    ui.toggle_value(&mut graphics.show_objects, "Objects");
+                    ui.toggle_value(&mut graphics.show_tiles, "Tiles");
+                });
             });
     }
 }
