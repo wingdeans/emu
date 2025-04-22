@@ -1,10 +1,13 @@
 mod asm;
+mod fallback;
 
 #[cfg(feature = "gbit")]
 mod gbit;
 
 use crate::asm::{AluOp, Reg16, Reg8, Rot};
-use std::cell::RefCell;
+use libc::c_void;
+use library::bus::Addressable;
+use std::cell::{OnceCell, RefCell};
 use std::rc::Rc;
 
 #[derive(thiserror::Error, Debug)]
@@ -13,7 +16,7 @@ enum TranslateError {
     IOErr(#[from] std::io::Error),
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 #[repr(C)]
 struct Regs {
     // AF (AL) (AH)
@@ -32,11 +35,21 @@ struct Regs {
     sp: u16,
 }
 
-struct Cpu<T: library::bus::Addressable> {
+#[derive(Debug, Clone, PartialEq)]
+pub enum State {
+    Running,
+    Halted,
+    Stopped,
+}
+
+#[derive(Debug)]
+struct Cpu<T: Addressable> {
     adrb: Rc<RefCell<T>>,
     buf: *mut u8,
     pc: u16,
     regs: Regs,
+    state: State, // fallback
+    ime: bool,
 }
 
 // Registers
@@ -45,12 +58,6 @@ struct Cpu<T: library::bus::Addressable> {
 // DE (D) (E) | CX (CH) (CL)
 // HL (H) (L) | DX (DH) (DL)
 // SP         | SI
-
-// fn read16(iter: &mut std::slice::Iter<u8>) -> u16 {
-// let lo = *iter.next().unwrap() as u16;
-// let hi = *iter.next().unwrap() as u16;
-// (hi << 8) | lo
-// }
 
 fn decode_r16(b: u8) -> Reg16 {
     match b {
@@ -76,7 +83,29 @@ fn decode_r8(b: u8) -> Reg8 {
     }
 }
 
-impl<T: library::bus::Addressable> Cpu<T> {
+#[cfg(feature = "gbit")]
+thread_local! {
+    static CPU: RefCell<OnceCell<Rc<RefCell<Cpu<crate::gbit::MemoryAccessTracker<'static>>>>>> =
+        RefCell::default();
+}
+
+extern "C" fn read(addr: u16) -> u8 {
+    CPU.with_borrow_mut(|cell| {
+        let mut g = Rc::get_mut(cell.get_mut().unwrap()).unwrap().borrow_mut();
+        let mut adrb = Rc::get_mut(&mut g.adrb).unwrap().borrow_mut();
+        adrb.read(addr).unwrap()
+    })
+}
+
+extern "C" fn write(addr: u16, value: u8) {
+    CPU.with_borrow_mut(|cell| {
+        let mut g = Rc::get_mut(cell.get_mut().unwrap()).unwrap().borrow_mut();
+        let mut adrb = Rc::get_mut(&mut g.adrb).unwrap().borrow_mut();
+        adrb.write(addr, value).unwrap()
+    })
+}
+
+impl<T: Addressable> Cpu<T> {
     fn new(adrb: Rc<RefCell<T>>) -> Self {
         let buf = unsafe {
             libc::mmap(
@@ -94,6 +123,8 @@ impl<T: library::bus::Addressable> Cpu<T> {
             buf,
             pc: 0,
             regs: Regs::default(),
+            state: State::Running,
+            ime: false,
         }
     }
 
@@ -101,6 +132,12 @@ impl<T: library::bus::Addressable> Cpu<T> {
         let v = self.adrb.borrow_mut().read(self.pc).unwrap();
         self.pc += 1;
         v
+    }
+
+    fn read16(&mut self) -> u16 {
+        let lo = self.read8() as u16;
+        let hi = self.read8() as u16;
+        (hi << 8) | lo
     }
 
     fn translate_insn(&mut self) -> Result<(), ()> {
@@ -118,7 +155,13 @@ impl<T: library::bus::Addressable> Cpu<T> {
                 0b001 => {
                     if b & 0b1000 == 0 {
                         // LD r16, imm16
-                        println!("TODO")
+                        // asm::mov_rdi_r16(&mut self.buf, decode_r16((b >> 4) & 0b11));
+                        // let imm = self.read16();
+                        // asm::mov_rdi_imm(&mut self.buf, imm);
+                        // asm::save_regs(&mut self.buf, &self.regs);
+                        // asm::call(&mut self.buf, unsafe { std::mem::transmute(&read) });
+                        // asm::load_regs(&mut self.buf, &self.regs);
+                        // asm::mov_r16_r10(&mut self.buf, decode_r16((b >> 4) & 0b11));
                     } else {
                         // ADD HL, r16
                         asm::add_hl_r16(&mut self.buf, decode_r16((b >> 4) & 0b11));
@@ -406,7 +449,7 @@ impl<T: library::bus::Addressable> Cpu<T> {
     }
 }
 
-impl<T: library::bus::Addressable> library::cpu::Cpu for Cpu<T> {
+impl<T: Addressable> library::cpu::Cpu for Cpu<T> {
     fn execute(&mut self) -> u32 {
         let buf = self.buf;
         asm::load_regs(&mut self.buf, &self.regs);

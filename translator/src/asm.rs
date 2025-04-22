@@ -216,9 +216,15 @@ pub(crate) fn save_hc(buf: &mut *mut u8) {
             0b11_000_000 | Reg8::F as u8,
             0b1_0000,
             // SETNZ r9l
-            0x41, 0x0f, 0x95, 0xc1,
+            0x41,
+            0x0f,
+            0x95,
+            0xc1,
             // shl r9b, 5
-            0x41, 0xc0, 0xe1, 0x05,
+            0x41,
+            0xc0,
+            0xe1,
+            0x05,
             // SAHF
             0x9E,
         ],
@@ -475,6 +481,53 @@ pub(crate) fn and_flagless(buf: &mut *mut u8, reg: Reg8, imm: u8) {
             ],
         )
     }
+}
+
+pub(crate) fn call(buf: &mut *mut u8, addr: *const libc::c_void) {
+    let addr = addr as u64;
+    write(
+        buf,
+        &[
+            0x49, // prefix
+            0xBA, // MOV r64, imm64
+            addr as u8,
+            (addr >> 8) as u8,
+            (addr >> 16) as u8,
+            (addr >> 24) as u8,
+            (addr >> 32) as u8,
+            (addr >> 40) as u8,
+            (addr >> 48) as u8,
+            (addr >> 56) as u8,
+            // CALL R10
+            0x41,
+            0xff,
+            0xd2,
+            // mov r10, rax
+            0x49,
+            0x89,
+            0xc2,
+        ],
+    )
+}
+
+pub(crate) fn mov_r16_r10(buf: &mut *mut u8, reg: Reg16) {
+    write(buf, &[0x66, 0x44, 0x89, 0b11_001_000 | reg as u8])
+}
+
+pub(crate) fn mov_rdi_imm(buf: &mut *mut u8, imm: u16) {
+    write(buf, &[0x66, 0xbf, imm as u8, (imm >> 8) as u8])
+}
+
+pub(crate) fn mov_rdi_r16(buf: &mut *mut u8, reg: Reg16) {
+    write(
+        buf,
+        &[
+            0x48,
+            0x0f, // MOVZX r32, r/m16
+            0xb7,
+            0b11_111_000 | reg as u8,
+        ],
+    )
 }
 
 #[cfg(test)]
