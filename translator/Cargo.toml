@@ -1,5 +1,5 @@
 [package]
-name = "emu-translator"
+name = "translator"
 version = "0.1.0"
 edition = "2021"
 
@@ -15,4 +15,4 @@ iced-x86 = "1.21.0"
 gbit = []
 
 [lib]
-crate-type = ["staticlib"]
+crate-type = ["lib", "staticlib"]

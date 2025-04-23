@@ -139,8 +139,7 @@ unsafe extern "C" fn get_state(state: *mut State) {
 
         let mut adrb = Rc::get_mut(&mut g.adrb).unwrap().borrow_mut();
         s.num_mem_access = adrb.mem_accesses.len() as c_int;
-        s.mem_accesses[..adrb.mem_accesses.len()]
-            .copy_from_slice(&adrb.mem_accesses);
+        s.mem_accesses[..adrb.mem_accesses.len()].copy_from_slice(&adrb.mem_accesses);
     });
 }
 

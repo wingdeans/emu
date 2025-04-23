@@ -1,4 +1,4 @@
-LIB_TRANSLATOR=$(realpath $(CURDIR)/../target/debug/libemu_translator.a)
+LIB_TRANSLATOR=$(realpath $(CURDIR)/../target/debug/libtranslator.a)
 
 .PHONY: build test clean
 

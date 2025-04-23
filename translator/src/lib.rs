@@ -43,13 +43,14 @@ pub enum State {
 }
 
 #[derive(Debug)]
-struct Cpu<T: Addressable> {
+pub struct Cpu<T: Addressable> {
     adrb: Rc<RefCell<T>>,
     buf: *mut u8,
     pc: u16,
     regs: Regs,
     state: State, // fallback
     ime: bool,
+    cycle_queue: u32,
 }
 
 // Registers
@@ -89,24 +90,30 @@ thread_local! {
         RefCell::default();
 }
 
-extern "C" fn read(addr: u16) -> u8 {
-    CPU.with_borrow_mut(|cell| {
-        let mut g = Rc::get_mut(cell.get_mut().unwrap()).unwrap().borrow_mut();
-        let mut adrb = Rc::get_mut(&mut g.adrb).unwrap().borrow_mut();
-        adrb.read(addr).unwrap()
-    })
+#[cfg(not(feature = "gbit"))]
+thread_local! {
+    pub static CPU: RefCell<OnceCell<Rc<RefCell<Cpu<library::system::System>>>>> =
+        RefCell::default();
 }
 
-extern "C" fn write(addr: u16, value: u8) {
-    CPU.with_borrow_mut(|cell| {
-        let mut g = Rc::get_mut(cell.get_mut().unwrap()).unwrap().borrow_mut();
-        let mut adrb = Rc::get_mut(&mut g.adrb).unwrap().borrow_mut();
-        adrb.write(addr, value).unwrap()
-    })
-}
+// extern "C" fn read(addr: u16) -> u8 {
+// CPU.with_borrow_mut(|cell| {
+// let mut g = Rc::get_mut(cell.get_mut().unwrap()).unwrap().borrow_mut();
+// let mut adrb = Rc::get_mut(&mut g.adrb).unwrap().borrow_mut();
+// adrb.read(addr).unwrap()
+// })
+// }
+//
+// extern "C" fn write(addr: u16, value: u8) {
+// CPU.with_borrow_mut(|cell| {
+// let mut g = Rc::get_mut(cell.get_mut().unwrap()).unwrap().borrow_mut();
+// let mut adrb = Rc::get_mut(&mut g.adrb).unwrap().borrow_mut();
+// adrb.write(addr, value).unwrap()
+// })
+// }
 
 impl<T: Addressable> Cpu<T> {
-    fn new(adrb: Rc<RefCell<T>>) -> Self {
+    pub fn new(adrb: Rc<RefCell<T>>) -> Self {
         let buf = unsafe {
             libc::mmap(
                 std::ptr::null_mut(),
@@ -125,6 +132,7 @@ impl<T: Addressable> Cpu<T> {
             regs: Regs::default(),
             state: State::Running,
             ime: false,
+            cycle_queue: 0,
         }
     }
 

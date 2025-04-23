@@ -1484,10 +1484,19 @@ impl<T: library::bus::Addressable> crate::Cpu<T> {
             Self::decode(ins)?
         };
 
-        // let cycles = self.cycle_queue;
-        // self.cycle_queue = 0;
-        let cycles = 0; // TODO
+        let cycles = self.cycle_queue;
+        self.cycle_queue = 0;
 
         Ok(func(self, ins)? + cycles)
+    }
+
+    pub fn int(&mut self, addr: u16) -> Result<()> {
+        self.ime = false;
+        self.stack_push(self.pc)?;
+        self.pc = addr;
+        self.cycle_queue = 5;
+        self.state = State::Running;
+
+        Ok(())
     }
 }

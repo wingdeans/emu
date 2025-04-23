@@ -939,16 +939,6 @@ name = "emu"
 version = "0.1.0"
 
 [[package]]
-name = "emu-translator"
-version = "0.1.0"
-dependencies = [
- "iced-x86",
- "libc",
- "library",
- "thiserror 2.0.11",
-]
-
-[[package]]
 name = "emulator"
 version = "0.1.0"
 dependencies = [
@@ -2472,6 +2462,7 @@ dependencies = [
  "cpu",
  "library",
  "sdl2",
+ "translator",
 ]
 
 [[package]]
@@ -2822,6 +2813,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e672c95779cf947c5311f83787af4fa8fffd12fb27e4993211a84bdfd9610f9c"
 dependencies = [
  "once_cell",
+]
+
+[[package]]
+name = "translator"
+version = "0.1.0"
+dependencies = [
+ "iced-x86",
+ "libc",
+ "library",
+ "thiserror 2.0.11",
 ]
 
 [[package]]

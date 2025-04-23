@@ -216,9 +216,11 @@ fn main() -> Result<(), String> {
         chn_3.resume();
         chn_4.resume();
 
-        let cpu = Rc::new(RefCell::new(cpu::cpu::Cpu::new(
-            Rc::clone(&system) as Rc<RefCell<dyn library::bus::Addressable>>
-        )));
+        let cpu = Rc::new(RefCell::new(translator::Cpu::new(Rc::clone(&system))));
+        translator::CPU.with_borrow_mut(|cell| {
+            cell.set(Rc::clone(&cpu)).unwrap_or_else(|_| panic!())
+        });
+
         int.borrow_mut().cpu = Rc::downgrade(&cpu);
 
         let clock = Rc::new(RefCell::new(Clock::new(

@@ -6,4 +6,5 @@ edition = "2021"
 [dependencies]
 library = { path = "../library" }
 cpu = { path = "../cpu" }
+translator = { path = "../translator" }
 sdl2 = "0.37.0"
