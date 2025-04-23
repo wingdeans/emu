@@ -469,7 +469,7 @@ impl<T: Addressable> library::cpu::Cpu for Cpu<T> {
         0
     }
     fn ime(&self) -> bool {
-        todo!()
+        self.ime
     }
     fn int(&mut self, _: u16) {
         todo!()
