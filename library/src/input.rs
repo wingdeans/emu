@@ -30,6 +30,7 @@ impl Input {
         }
     }
 
+    /// Interrupt should occur when the input has changed from the previous state
     pub fn should_interrupt(&mut self) -> bool {
         let mut result = false;
         let current = (self.get_select_buttons() << 4) | self.get_dpad_buttons();
@@ -44,6 +45,7 @@ impl Input {
         result
     }
 
+    /// Button-mode nibble
     fn get_select_buttons(&self) -> u8 {
         let start = if self.handler.borrow().start() { 0 } else { 1 };
         let select = if self.handler.borrow().select() { 0 } else { 1 };
@@ -53,6 +55,7 @@ impl Input {
         start << 3 | select << 2 | b << 1 | a
     }
 
+    /// D-pad-mode nibble
     fn get_dpad_buttons(&self) -> u8 {
         let up = if self.handler.borrow().up() { 0 } else { 1 };
         let down = if self.handler.borrow().down() { 0 } else { 1 };

@@ -40,7 +40,8 @@ impl Clock {
         }
     }
 
-    // Should be in Interrupt, but that causes a bus conflict
+    /// Interrupt routine handler
+    /// Should be in Interrupt, but that causes a bus conflict
     fn int(&mut self) {
         let (mask, handler) = {
             let int = self.int.borrow();
@@ -58,10 +59,12 @@ impl Clock {
     }
 
     pub fn clock(&mut self, m_cycles: u32) -> bool {
+        // Trigger input interrupt only if input changed
         if self.input.borrow_mut().should_interrupt() {
             self.int.borrow_mut().set(JOYPAD_INT_FLAG);
         }
 
+        // Trigger dma functions
         let dma = self.ppu.borrow().ref_dma().clone();
         dma.borrow_mut().oam();
 
@@ -80,6 +83,10 @@ impl Clock {
         self.io.borrow_mut().clock(m_cycles);
 
         if self.cycles >= CYCLES_PER_FRAME {
+            // self.cycles acts as an accumulator that only gets reduced when a sufficient number
+            // of cycles has been completed, wherein the program sleeps.
+            // Currently, this is done once per frame.
+
             self.cycles -= CYCLES_PER_FRAME;
 
             let frame = Duration::from_secs_f64(SECONDS_PER_FRAME);

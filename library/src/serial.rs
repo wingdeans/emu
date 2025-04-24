@@ -3,6 +3,7 @@ use crate::bus::Addressable;
 pub const DATA_ADDR: u16 = 0xff01;
 pub const CONTROL_ADDR: u16 = 0xff02;
 
+/// Serial is not supported, but a stub implementation is necessary
 #[derive(Default)]
 pub struct Serial {
     control: u8,

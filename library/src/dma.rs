@@ -29,6 +29,7 @@ impl Dma {
         }
     }
 
+    /// DMA functions executed every scanline
     pub fn scanline(&mut self) {
         if self.dma_length == 0 {
             return;
@@ -46,6 +47,7 @@ impl Dma {
         self.dma_dst += 0x10;
     }
 
+    /// Register-mapped IO used to start the DMA process
     fn handle(&mut self, mode: u8) {
         if self.dma_length != 0 && mode & 0x80 != 0 {
             self.dma_result = (self.dma_length / 0x10 - 1) as u8 + 0x80;
@@ -68,6 +70,8 @@ impl Dma {
         }
     }
 
+    /// Designed to be executed by the clock consistently
+    /// OAM function is handled internally
     pub fn oam(&mut self) {
         if let Some(addr) = self.oam_value {
             let mut bus = self.bus.borrow_mut();

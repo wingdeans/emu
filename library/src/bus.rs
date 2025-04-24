@@ -1,17 +1,24 @@
 use std::ops::Range;
 use std::{cell::RefCell, rc::Rc};
 
+/// Implemented for all components that have memory-mapped values (including memory)
 pub trait Addressable {
+    /// Returns None when address does not belong to device
     fn read(&mut self, addr: u16) -> Option<u8>;
+
+    /// Returns None when address does not belong to device
     fn write(&mut self, addr: u16, value: u8) -> Option<()>;
 }
 
+/// Map is the core address resolution interface used to simplify bus design
 struct Map {
     elem: Rc<RefCell<dyn Addressable>>,
     from: Range<u16>,
     to: Range<u16>,
 }
 
+/// Maps an addressable to an address space from the origin address space
+/// Ex. 0x0000..0x0100 -> 0xF000.0xF100
 pub fn map_to(
     elem: Rc<RefCell<dyn Addressable>>,
     range: Range<u16>,
@@ -24,6 +31,8 @@ pub fn map_to(
     }))
 }
 
+/// Maps an addressable from an address space to the origin address space
+/// Ex. 0xF000..0xF100 -> 0x0000.0x0100
 pub fn map_from(
     elem: Rc<RefCell<dyn Addressable>>,
     range: Range<u16>,
@@ -36,6 +45,7 @@ pub fn map_from(
     }))
 }
 
+/// Raw map constructor (not intended for use)
 pub fn map(
     elem: Rc<RefCell<dyn Addressable>>,
     from: Range<u16>,
@@ -66,11 +76,15 @@ impl Addressable for Map {
     }
 }
 
+/// Banks are common throughout the system used to fit large data on a small address space
 pub struct Bank {
     index: u32,
     banks: Vec<Rc<RefCell<dyn Addressable>>>,
 }
 
+/// Primary mode of constructing a bank
+///
+/// @param bank_size Size of each individual bank
 pub fn bank(
     elem: Rc<RefCell<dyn Addressable>>,
     bank_size: usize,
@@ -116,6 +130,7 @@ impl Addressable for Bank {
     }
 }
 
+/// The bus interface is simply a dispatcher for other addressable components
 #[derive(Default)]
 pub struct Bus {
     components: Vec<Rc<RefCell<dyn Addressable>>>,

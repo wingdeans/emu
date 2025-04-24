@@ -51,6 +51,21 @@ impl System {
         input_handler: Rc<RefCell<dyn InputHandler>>,
         interrupt_handler: Rc<RefCell<dyn InterruptHandler>>,
     ) -> Self {
+        // | Start | End   | Description                          |
+        // |-------|-------|--------------------------------------|
+        // | 0000  | 3FFF  | 16 KiB ROM Bank 00                   |
+        // | 4000  | 7FFF  | 16 KiB ROM Bank 01–NN                |
+        // | 8000  | 9FFF  | 8 KiB Video RAM (VRAM)               |
+        // | A000  | BFFF  | 8 KiB External RAM                   |
+        // | C000  | CFFF  | 4 KiB Work RAM (WRAM)                |
+        // | D000  | DFFF  | 4 KiB Work RAM (WRAM)                |
+        // | E000  | FDFF  | *Echo RAM* (mirror of C000–DDFF)     |
+        // | FE00  | FE9F  | *Object attribute memory (OAM)*      |
+        // | FEA0  | FEFF  | *Not Usable*                         |
+        // | FF00  | FF7F  | *I/O Registers*                      |
+        // | FF80  | FFFE  | *High RAM (HRAM)*                    |
+        // | FFFF  | FFFF  | *Interrupt Enable register (IE)*     |
+
         let bus: Rc<RefCell<Bus>> = Default::default();
 
         let vram_bank = bank(
@@ -129,6 +144,7 @@ impl System {
 
         let apu = Rc::new(RefCell::new(Apu::default()));
 
+        // Treated as usable memory by some cartridges
         let illegal = map_to(
             Rc::new(RefCell::new(Memory::new(ILLEGAL_SIZE, Access::ReadWrite))),
             ILLEGAL_BEGIN..ILLEGAL_END,
