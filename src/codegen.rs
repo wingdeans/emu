@@ -1,7 +1,7 @@
 use crate::pcode::{Offset, Pcode, Size, Space, VarnodeTpl};
 use crate::slamodel::{
     Constructor, Decision, Expr, Mask, OpExpr, Operand, Print, Sleigh, Subtable, Sym, SymbolTable,
-    TokenField, Varlist,
+    TokenField, Varlist, Varnode
 };
 
 use proc_macro2::TokenStream;
@@ -83,8 +83,7 @@ fn gen_tokenfield(tokenfield: &TokenField, off: u8) -> TokenStream {
     let TokenField {
         startbit,
         endbit,
-        startbyte,
-        endbyte,
+        signed,
         shift,
     } = tokenfield;
     let endbit = std::cmp::min(endbit + 1, 8); // TODO
@@ -107,6 +106,10 @@ fn gen_space(s: Space) -> TokenStream {
 fn gen_offset(o: Offset) -> TokenStream {
     match o {
         Offset::Real(x) => quote!(#x),
+        Offset::Handle(op) => {
+            let op_ident = format_ident!("op{}", op);
+            quote!(#op_ident.offset())
+        }
         _ => quote!(123), // TODO
     }
 }
@@ -298,6 +301,10 @@ fn gen_subtable(subtable: &Subtable, symtab: &SymbolTable, idx: usize) -> TokenS
                 #decode_body
             }
 
+            fn offset(&self) -> u64 {
+                321 // TODO
+            }
+
             #pcode
         }
 
@@ -351,12 +358,12 @@ fn gen_operand(op: &Operand, idx: usize) -> TokenStream {
         _ => None,
     };
 
-    let write_args = (0..op.args.len()).map(|i| {
+    let args = (0..op.args.len()).map(|i| {
         let name = format_ident!("arg{}", i);
         quote! {
-            #name: u64
+            #name: u64 // TODO
         }
-    });
+    }).collect::<Vec<_>>();
 
     let write = match &op.expr {
         OpExpr::Subsym(_) => quote!("{}", self.0),
@@ -377,6 +384,15 @@ fn gen_operand(op: &Operand, idx: usize) -> TokenStream {
         _ => None,
     };
 
+    let offset = match &op.expr {
+        OpExpr::Subsym(_) => quote!(self.0.offset()),
+        OpExpr::Tok(_) => quote!(self.0.into()),
+        OpExpr::Expr(expr) => {
+            let expr = gen_expr(expr);
+            quote!(#expr)
+        }
+    };
+
     quote! {
         struct #name(#struct_body);
 
@@ -385,15 +401,20 @@ fn gen_operand(op: &Operand, idx: usize) -> TokenStream {
                 Some(Self(#decode_arg))
             }
 
-            fn write(&self, f: &mut std::fmt::Formatter, #(#write_args),*) -> std::fmt::Result {
+            fn offset(&self, #(#args),*) -> u64 {
+                #offset
+            }
+
+            fn write(&self, f: &mut std::fmt::Formatter, #(#args),*) -> std::fmt::Result {
                 write!(f, #write)
             }
         }
     }
 }
 
-fn gen_varnode(text: &str, idx: usize) -> TokenStream {
+fn gen_varnode(vn: &Varnode, text: &str, idx: usize) -> TokenStream {
     let name = format_ident!("Sym{}", idx);
+    let offset = vn.offset;
 
     quote! {
         struct #name();
@@ -401,6 +422,10 @@ fn gen_varnode(text: &str, idx: usize) -> TokenStream {
         impl #name {
             fn decode(_: &[u8]) -> Option<Self> {
                 Some(Self())
+            }
+
+            fn offset(&self) -> u64 {
+                #offset
             }
         }
 
@@ -443,6 +468,19 @@ fn gen_varlist(varlist: &Varlist, idx: usize) -> TokenStream {
             })
         });
 
+    let offset_arms = varlist
+        .vars
+        .iter()
+        .enumerate()
+        .filter_map(|(i, maybe_idx)| {
+            maybe_idx.map(|_| {
+                let variant_name = format_ident!("Variant{}", i);
+                Some(quote! {
+                    Self::#variant_name(x) => x.offset(),
+                })
+            })
+        });
+
     let write_arms = varlist
         .vars
         .iter()
@@ -468,6 +506,12 @@ fn gen_varlist(varlist: &Varlist, idx: usize) -> TokenStream {
                 match #tokenfield {
                     #(#decode_arms)*
                     _ => None
+                }
+            }
+
+            fn offset(&self) -> u64 {
+                match self {
+                    #(#offset_arms)*
                 }
             }
         }
@@ -559,7 +603,7 @@ pub(crate) fn emit(sleigh: Sleigh) {
         let tokens = match sym {
             Sym::Subtable(subtable) => gen_subtable(subtable, &sleigh.symtab, i),
             Sym::Op(operand) => gen_operand(operand, i),
-            Sym::Varnode => gen_varnode(&sleigh.symtab.sym_names[i], i),
+            Sym::Varnode(vn) => gen_varnode(vn, &sleigh.symtab.sym_names[i], i),
             Sym::Varlist(varlist) => gen_varlist(varlist, i),
             _ => continue,
         };

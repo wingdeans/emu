@@ -52,9 +52,8 @@ pub(crate) enum Decision {
 pub(crate) struct TokenField {
     pub(crate) startbit: u8,
     pub(crate) endbit: u8,
-    pub(crate) startbyte: u8,
-    pub(crate) endbyte: u8,
     pub(crate) shift: u8,
+    pub(crate) signed: bool
 }
 
 #[derive(Debug)]
@@ -88,6 +87,11 @@ pub(crate) struct Subtable {
 }
 
 #[derive(Debug)]
+pub(crate) struct Varnode {
+    pub(crate) offset: u64
+}
+
+#[derive(Debug)]
 pub(crate) struct Varlist {
     pub(crate) tokenfield: TokenField,
     pub(crate) vars: Vec<Option<SymIdx>>,
@@ -99,7 +103,7 @@ pub(crate) enum Sym {
     Op(Operand),
     Subtable(Subtable),
     Varlist(Varlist),
-    Varnode,
+    Varnode(Varnode),
 }
 
 /*
@@ -280,10 +284,10 @@ fn model_op_tpl(tpl: &Sla) -> Pcode {
             ref unk => unreachable!("{:?}", unk),
         },
         PcodeOp::CALLOTHER => {
-            let mut args = model_pcode(tpl);
-            let dst = args[0];
+            let args = model_pcode(tpl);
+            let out = args[0];
             let args = args[1..].iter().map(|a| a.unwrap()).collect();
-            Pcode::Callother(dst, args)
+            Pcode::Callother(out, args)
         }
         PcodeOp::MULTIEQUAL => Pcode::Multiequal,
         _ => {
@@ -382,11 +386,18 @@ fn model_decision(decision: &Sla) -> Option<Decision> {
 // SYMS
 
 fn model_tokenfield(tokenfield: &Sla) -> TokenField {
+    let startbit = tokenfield.get_int(AId::STARTBIT);
+    let endbit = tokenfield.get_int(AId::ENDBIT);
+    let startbyte: u8 = tokenfield.get_int(AId::STARTBYTE);
+    let endbyte: u8 = tokenfield.get_int(AId::ENDBYTE);
+    assert_eq!((endbit - startbit) / 8, endbyte - startbyte);
+    let Attribute::Bool(signed) = tokenfield.attrs[&AId::SIGNBIT] else {
+        unreachable!();
+    };
     TokenField {
-        startbit: tokenfield.get_int(AId::STARTBIT),
-        endbit: tokenfield.get_int(AId::ENDBIT),
-        startbyte: tokenfield.get_int(AId::STARTBYTE),
-        endbyte: tokenfield.get_int(AId::ENDBYTE),
+        startbit,
+        endbit,
+        signed,
         shift: tokenfield.get_int(AId::SHIFT),
     }
 }
@@ -478,6 +489,12 @@ fn model_varlist(varlist: &Sla) -> Sym {
     Sym::Varlist(Varlist { tokenfield, vars })
 }
 
+
+fn model_varnode(varnode: &Sla) -> Sym {
+    let offset = varnode.get_int(AId::OFF);
+    Sym::Varnode(Varnode { offset })
+}
+
 // SPACES
 /*
 fn model_spaces(spaces: &Sla) -> Vec<Space> {
@@ -520,7 +537,7 @@ fn model_symtab(symtab: &Sla) -> SymbolTable {
             EId::SUBTABLE_SYM => model_subtable(el),
             EId::OPERAND_SYM => model_operand(el),
             EId::VARLIST_SYM => model_varlist(el),
-            EId::VARNODE_SYM => Sym::Varnode,
+            EId::VARNODE_SYM => model_varnode(el),
             _ => continue,
         };
 
