@@ -935,10 +935,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "emu"
-version = "0.1.0"
-
-[[package]]
 name = "emu-translator"
 version = "0.1.0"
 dependencies = [
